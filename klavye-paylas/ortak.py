@@ -14,6 +14,7 @@ import socket
 import struct
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 TCP_PORT = 24800
 KESIF_PORT = 24801
@@ -34,7 +35,8 @@ _TUZ = b"klavye-paylas-v1"
 
 
 def ana_anahtar(sifre):
-    return hashlib.scrypt(sifre.encode("utf-8"), salt=_TUZ, n=2 ** 14, r=8, p=1, dklen=32)
+    # hashlib.scrypt macOS'un yerlesik Python'unda yok, bu yuzden cryptography'ninkini kullaniyoruz.
+    return Scrypt(salt=_TUZ, length=32, n=2 ** 14, r=8, p=1).derive(sifre.encode("utf-8"))
 
 
 def _turet(anahtar, etiket, nonce_mac, nonce_win):
