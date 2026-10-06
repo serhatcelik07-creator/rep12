@@ -104,8 +104,9 @@ class ProtokolTesti(unittest.TestCase):
         self.assertIsInstance(s["win_hata"], p.EslesmeHatasi)
 
     def test_kesif(self):
-        bilgi = p.kesif_cevabini_coz(p.kesif_cevabi("mac-1", "Serhat'ın Mac mini"))
+        bilgi = p.kesif_cevabini_coz(p.kesif_cevabi("mac-1", "Serhat'ın Mac mini", "mac"))
         self.assertEqual(bilgi["ad"], "Serhat'ın Mac mini")
+        self.assertEqual(bilgi["platform"], "mac")
         self.assertIsNone(p.kesif_cevabini_coz(b"KB2!bozuk"))
         self.assertIsNone(p.kesif_cevabini_coz(b"baska"))
 

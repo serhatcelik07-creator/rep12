@@ -1,16 +1,18 @@
-"""Windows ve Mac uygulamasinin ortak kullandigi protokol.
+"""Iki urunun (PC->Mac ve Mac->PC) ortak kullandigi protokol.
+
+Roller: klavyesi kullanilan bilgisayar "yoneten" (istemci), kontrol edilen
+bilgisayar "yonetilen" (sunucu).
 
 Akis:
-  1. Kesif: Windows yerel aga UDP yayini ile "kim var?" sorar, Mac kendi
-     adiyla cevap verir. (Windows yalnizca giden baglanti kurar; boylece
-     Windows Guvenlik Duvari'nda izin istemeye gerek kalmaz.)
-  2. Windows Mac'e TCP ile baglanir. Iki taraf gecici X25519 anahtarlariyla
-     ortak sir uretir; tum trafik AES-GCM ile sifrelenir.
-  3. Ilk baglantida eslestirme: iki ekranda ayni 6 haneli kod gorunur, Mac'te
-     "Izin ver" denince Mac kalici bir eslesme anahtari uretip Windows'a
-     gonderir. Sonraki baglantilarda bu anahtar sorulmadan kullanilir.
+  1. Kesif: yoneten yerel aga UDP yayini ile "kim var?" sorar, yonetilen
+     kendi adiyla cevap verir.
+  2. Yoneten TCP ile baglanir. Iki taraf gecici X25519 anahtarlariyla ortak
+     sir uretir; tum trafik AES-GCM ile sifrelenir.
+  3. Ilk baglantida eslestirme: iki ekranda ayni 6 haneli kod gorunur,
+     yonetilen bilgisayarda "Izin ver" denince kalici bir eslesme anahtari
+     uretilip yonetene gonderilir. Sonraki baglantilarda sorulmaz.
 
-Sifre yok: kullanici Mac'te bir kere onay verir, gerisi kendiliginden olur.
+Sifre yok: kullanici kontrol edilecek bilgisayarda bir kere onay verir.
 """
 
 import base64
@@ -41,24 +43,29 @@ MSG_DUGME = 3      # a=dugme (1 sol, 2 sag, 3 orta, 4 X1, 5 X2), b=basildi(1)/bi
 MSG_TEKER = 4      # a=dikey delta, b=yatay delta (Windows birimi, 120 = bir tik)
 MSG_BIRAK = 5      # basili kalan her seyi birak
 MSG_PING = 6
-MSG_AKTIF = 7      # a=1 Mac'e gecildi, 0 Windows'a donuldu
-# Degisken boyutlu mesaj: tip baytindan sonra JSON.
-MSG_AYAR = 8       # Windows'taki ayarlar (fare hizi, Ctrl/Cmd vb.)
+MSG_AKTIF = 7      # a=1 kontrol uzak bilgisayara gecti, 0 geri dondu
+# Degisken boyutlu mesajlar
+MSG_AYAR = 8         # JSON: yoneten taraftaki ayarlar (fare hizi, Ctrl/Cmd vb.)
+MSG_PANO_BASLA = 9   # JSON: pano aktarimi basliyor (tur, boyut, dosya listesi)
+MSG_PANO_PARCA = 10  # 4 bayt aktarim no + veri
+MSG_PANO_BITTI = 11  # 4 bayt aktarim no
+_JSON_MESAJLAR = (MSG_AYAR, MSG_PANO_BASLA)
 
 _MSG = struct.Struct("!Bhhh")
 _UZUNLUK = struct.Struct("!H")
 _MERHABA_MAC = b"merhaba-mac"
 _MERHABA_WIN = b"merhaba-windows"
-ONAY_SURESI = 120  # Mac'te kullanicinin "Izin ver"e basmasi icin taninan sure (sn)
+ONAY_SURESI = 120  # kullanicinin "Izin ver"e basmasi icin taninan sure (sn)
 
 
 class EslesmeHatasi(Exception):
-    """Mac eslesmeyi reddetti ya da anahtarlar uyusmadi."""
+    """Eslesme reddedildi ya da anahtarlar uyusmadi."""
 
 
 # ---------------------------------------------------------------- kesif
-def kesif_cevabi(kimlik, ad, port=TCP_PORT):
-    bilgi = {"id": kimlik, "ad": ad, "port": port, "v": PROTOKOL}
+def kesif_cevabi(kimlik, ad, platform, port=TCP_PORT):
+    """Yonetilen taraf (klavyesi kullanilacak olmayan bilgisayar) kendini tanitir."""
+    bilgi = {"id": kimlik, "ad": ad, "platform": platform, "port": port, "v": PROTOKOL}
     return KESIF_CEVAP + json.dumps(bilgi, ensure_ascii=False).encode("utf-8")
 
 
@@ -120,17 +127,40 @@ class SifreliKanal:
         return veri
 
     def gonder(self, tip, a=0, b=0, c=0):
-        self.gonder_ham(_MSG.pack(tip, a, b, c))
+        self.gonder_ham(sabit_mesaj(tip, a, b, c))
 
     def ayar_gonder(self, ayarlar):
-        self.gonder_ham(bytes([MSG_AYAR]) + json.dumps(ayarlar).encode("utf-8"))
+        self.gonder_ham(json_mesaji(MSG_AYAR, ayarlar))
 
     def al(self):
-        """(tip, a, b, c) ya da MSG_AYAR icin (MSG_AYAR, sozluk, 0, 0) dondurur."""
+        """Her zaman dort ogeli demet dondurur:
+        sabit mesajlar (tip, a, b, c); JSON mesajlari (tip, sozluk, 0, 0);
+        MSG_PANO_PARCA (tip, no, veri, 0); MSG_PANO_BITTI (tip, no, 0, 0)."""
         veri = self.al_ham()
-        if veri[:1] == bytes([MSG_AYAR]):
-            return MSG_AYAR, json.loads(veri[1:].decode("utf-8")), 0, 0
+        tip = veri[0]
+        if tip in _JSON_MESAJLAR:
+            return tip, json.loads(veri[1:].decode("utf-8")), 0, 0
+        if tip == MSG_PANO_PARCA:
+            return tip, int.from_bytes(veri[1:5], "big"), veri[5:], 0
+        if tip == MSG_PANO_BITTI:
+            return tip, int.from_bytes(veri[1:5], "big"), 0, 0
         return _MSG.unpack(veri)
+
+
+def sabit_mesaj(tip, a=0, b=0, c=0):
+    return _MSG.pack(tip, a, b, c)
+
+
+def json_mesaji(tip, veri):
+    return bytes([tip]) + json.dumps(veri, ensure_ascii=False).encode("utf-8")
+
+
+def parca_mesaji(no, veri):
+    return bytes([MSG_PANO_PARCA]) + no.to_bytes(4, "big") + veri
+
+
+def bitti_mesaji(no):
+    return bytes([MSG_PANO_BITTI]) + no.to_bytes(4, "big")
 
 
 # ---------------------------------------------------------------- el sikisma
@@ -167,25 +197,25 @@ def kodu_bicimle(kod):
     return f"{kod[:3]} {kod[3:]}"
 
 
-def istemci_el_sikis(sock, ben, hedef_mac_id, anahtar_bul, kod_goster, anahtar_kaydet):
-    """Windows tarafi.
+def istemci_el_sikis(sock, ben, hedef_id, anahtar_bul, kod_goster, anahtar_kaydet):
+    """Yoneten taraf (istemci).
 
-    ben: {"id", "ad"}; anahtar_bul(mac_id) -> bytes | None;
-    kod_goster(kod) eslestirmede Mac onayi beklenirken cagrilir;
-    anahtar_kaydet(mac_id, mac_ad, anahtar) yeni eslesmeyi saklar.
-    Basarida (kanal, mac_bilgisi) dondurur.
+    ben: {"id", "ad"}; anahtar_bul(karsi_id) -> bytes | None;
+    kod_goster(kod) eslestirmede karsi tarafin onayi beklenirken cagrilir;
+    anahtar_kaydet(karsi_id, karsi_ad, anahtar) yeni eslesmeyi saklar.
+    Basarida (kanal, karsi_bilgi) dondurur.
     """
     gizli, acik = _yeni_anahtar_cifti()
-    kayitli = anahtar_bul(hedef_mac_id)
+    kayitli = anahtar_bul(hedef_id)
     merhaba1 = json.dumps({"v": PROTOKOL, "id": ben["id"], "ad": ben["ad"], "pk": _b64(acik),
                            "anahtar_var": kayitli is not None}).encode("utf-8")
     _cerceve_gonder(sock, merhaba1)
     merhaba2 = _cerceve_al(sock)
     mac = json.loads(merhaba2.decode("utf-8"))
     if mac.get("v") != PROTOKOL:
-        raise EslesmeHatasi("Mac uygulamasinin surumu uyumsuz; iki uygulamayi da guncelleyin.")
-    if mac.get("id") != hedef_mac_id:
-        raise EslesmeHatasi("Baglanilan cihaz beklenen Mac degil.")
+        raise EslesmeHatasi("Karsi taraftaki uygulamanin surumu uyumsuz; iki uygulamayi da guncelleyin.")
+    if mac.get("id") != hedef_id:
+        raise EslesmeHatasi("Baglanilan cihaz beklenen bilgisayar degil.")
     ortak_sir = gizli.exchange(X25519PublicKey.from_public_bytes(_b64_coz(mac["pk"])))
     ozet = hashlib.sha256(merhaba1 + merhaba2).digest()
 
@@ -196,7 +226,7 @@ def istemci_el_sikis(sock, ben, hedef_mac_id, anahtar_bul, kod_goster, anahtar_k
             raise EslesmeHatasi("Eslesme anahtari uyusmadi.")
         return kanal, mac
 
-    # Eslestirme: once gecici anahtarlarla sifreli kanal, sonra Mac'te onay.
+    # Eslestirme: once gecici anahtarlarla sifreli kanal, sonra karsi tarafta onay.
     kanal = SifreliKanal(sock, *_oturum_anahtarlari(ortak_sir, None, ozet))
     kanal.gonder_ham(_MERHABA_MAC)
     kod_goster(eslestirme_kodu(ortak_sir, ozet))
@@ -207,23 +237,23 @@ def istemci_el_sikis(sock, ben, hedef_mac_id, anahtar_bul, kod_goster, anahtar_k
     finally:
         sock.settimeout(eski_sure)
     if not cevap.get("izin"):
-        raise EslesmeHatasi("Mac'te baglanti izni verilmedi.")
+        raise EslesmeHatasi("Karsi bilgisayarda baglanti izni verilmedi.")
     anahtar_kaydet(mac["id"], mac.get("ad", ""), _b64_coz(cevap["anahtar"]))
     return kanal, mac
 
 
 def sunucu_el_sikis(sock, ben, anahtar_bul, onay_iste, anahtar_kaydet):
-    """Mac tarafi.
+    """Yonetilen taraf (sunucu).
 
-    ben: {"id", "ad"}; anahtar_bul(win_id) -> bytes | None;
-    onay_iste(win_ad, kod) -> bool kullaniciya sorar (bloklayabilir);
-    anahtar_kaydet(win_id, win_ad, anahtar) yeni eslesmeyi saklar.
-    Basarida (kanal, windows_bilgisi) dondurur.
+    ben: {"id", "ad"}; anahtar_bul(karsi_id) -> bytes | None;
+    onay_iste(karsi_ad, kod) -> bool kullaniciya sorar (bloklayabilir);
+    anahtar_kaydet(karsi_id, karsi_ad, anahtar) yeni eslesmeyi saklar.
+    Basarida (kanal, karsi_bilgi) dondurur.
     """
     merhaba1 = _cerceve_al(sock)
     win = json.loads(merhaba1.decode("utf-8"))
     if win.get("v") != PROTOKOL:
-        raise EslesmeHatasi("Windows uygulamasinin surumu uyumsuz.")
+        raise EslesmeHatasi("Karsi taraftaki uygulamanin surumu uyumsuz.")
     kayitli = anahtar_bul(win["id"]) if win.get("anahtar_var") else None
     kip = "dogrula" if kayitli is not None else "eslestir"
     gizli, acik = _yeni_anahtar_cifti()
@@ -241,7 +271,7 @@ def sunucu_el_sikis(sock, ben, anahtar_bul, onay_iste, anahtar_kaydet):
         kanal.gonder_ham(_MERHABA_WIN)
         return kanal, win
 
-    izin = bool(onay_iste(win.get("ad", "Windows"), eslestirme_kodu(ortak_sir, ozet)))
+    izin = bool(onay_iste(win.get("ad", "?"), eslestirme_kodu(ortak_sir, ozet)))
     if not izin:
         kanal.gonder_ham(json.dumps({"izin": False}).encode("utf-8"))
         raise EslesmeHatasi("Kullanici izin vermedi.")

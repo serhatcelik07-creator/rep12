@@ -71,8 +71,8 @@ class Motor:
         self._fare.stop()
 
     @property
-    def mac_modu(self):
-        return self.karar.mac_modu
+    def uzakta(self):
+        return self.karar.uzakta
 
     def kisayollari_ayarla(self, git, don):
         self.karar.git, self.karar.don = git, don
@@ -111,8 +111,8 @@ class Motor:
 
     def windowsa_don(self):
         """Baglanti koptugunda veya uygulama kapanirken: klavye Windows'ta kalsin."""
-        if self.karar.mac_modu:
-            self.karar.windows_moduna_al()
+        if self.karar.uzakta:
+            self.karar.geri_al()
             self._windowsa_donuldu()
 
     # ---- kancalar ----
@@ -126,9 +126,9 @@ class Motor:
             if eylem == karar.KULLANILAMAZ:
                 self.olay_bildir("kullanilamaz", None)
             return True
-        if eylem == karar.MACA_GEC:
+        if eylem == karar.UZAGA_GEC:
             self._maca_gecildi()
-        elif eylem == karar.WINDOWSA_DON:
+        elif eylem == karar.GERI_DON:
             self._windowsa_donuldu()
         elif eylem == karar.YAKALANDI:
             self.olay_bildir("yakalandi", ek)
@@ -140,7 +140,7 @@ class Motor:
         self._klavye.suppress_event()
 
     def _fare_filtresi(self, msg, data):
-        if not self.karar.mac_modu or data.flags & LLMHF_INJECTED:
+        if not self.karar.uzakta or data.flags & LLMHF_INJECTED:
             return True
         if msg == WM_MOUSEMOVE:
             dx, dy = data.pt.x - self.merkez[0], data.pt.y - self.merkez[1]
