@@ -1,0 +1,4 @@
+config.php
+data/install.lock
+data/uploads/*
+!data/uploads/.keep

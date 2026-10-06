@@ -1,0 +1,13 @@
+# Bearer token'ın PHP'ye ulaşması için (bazı paylaşımlı hostinglerde gerekli)
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+Options -Indexes
+
+# Ayar ve şema dosyalarına dışarıdan erişimi kapat
+<FilesMatch "^(config\.php|config\.sample\.php|.*\.sql|.*\.md)$">
+  Require all denied
+</FilesMatch>
