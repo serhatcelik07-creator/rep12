@@ -372,8 +372,23 @@ $flash = flash();
       }catch(e){}
     }
     const f = document.getElementById('chatform'), b = document.getElementById('chatbody');
-    f.addEventListener('submit', async e => { e.preventDefault(); if(!b.value.trim()) return;
-      const fd = new FormData(f); fd.append('ajax','1'); b.value=''; await fetch('', {method:'POST', body:fd, credentials:'same-origin'}); poll(); });
+    const btn = f.querySelector('button');
+    // Mesaj yalnızca sunucu kaydettiğini söyleyince silinir; hata olursa kutuda kalır ve neden gitmediği yazılır
+    f.addEventListener('submit', async e => { e.preventDefault(); if(!b.value.trim() || btn.disabled) return;
+      const fd = new FormData(f); fd.append('ajax','1'); btn.disabled = true;
+      try {
+        const r = await fetch('', {method:'POST', body:fd, credentials:'same-origin'});
+        const j = await r.json().catch(() => null);
+        if (!r.ok || !j || !j.ok) {
+          const why = r.status === 400 ? 'Form süresi dolmuş (CSRF).'
+            : (r.status === 403 || r.status === 406 || r.status === 418) ? 'Sunucunun güvenlik duvarı mesajı engelledi; komut içeren metni dosya olarak yükleyin.'
+            : (r.ok ? 'Oturum kapanmış olabilir.' : 'Sunucu hatası.');
+          throw new Error(why + ' (HTTP ' + r.status + ') Sayfayı yenileyip tekrar deneyin; mesajınız kutuda duruyor.');
+        }
+        b.value = '';
+      } catch (err) { alert('Mesaj gönderilemedi: ' + err.message); }
+      finally { btn.disabled = false; }
+      poll(); });
     b.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); f.requestSubmit(); } });
     poll().then(()=>{ th.scrollTop = th.scrollHeight; }); setInterval(poll, 4000);
   })();
