@@ -1,11 +1,14 @@
 @echo off
 rem Cift tiklayinca calisir. Ilk seferde gerekli paketleri kendisi kurar.
 cd /d "%~dp0"
-where py >nul 2>&1 && (set PY=py) || (set PY=python)
-rem Python yoksa Windows'un Microsoft Store kisayolu calisir ve hata verir.
-%PY% -c "import sys" >nul 2>&1
-if errorlevel 1 (
-    echo Python kurulu degil.
+rem Python'u bul: once py baslaticisi, sonra PATH, sonra standart kurulum klasorleri.
+rem (PATH'te yoksa "python" Microsoft Store kisayoluna gider ve "Python bulunamadi" der.)
+set PY=
+py -c "import sys" >nul 2>&1 && set PY=py
+if not defined PY python -c "import sys" >nul 2>&1 && set PY=python
+if not defined PY for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*" "%ProgramFiles%\Python3*" "C:\Python3*") do if exist "%%~D\python.exe" set PY="%%~D\python.exe"
+if not defined PY (
+    echo Python bulunamadi.
     echo Acilan sayfadan Python'u indir. Kurarken en alttaki
     echo "Add python.exe to PATH" kutusunu isaretle, sonra bu dosyaya tekrar cift tikla.
     start https://www.python.org/downloads/
