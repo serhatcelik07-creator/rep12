@@ -52,6 +52,10 @@ function hub_tool_defs(): array
             . 'yüklenen dosyalar buradadır. İçerik için: metinse hub_file_read; Claude Code\'da hub_download; bulut oturumunda '
             . 'MEPCENTER_TOKEN ile curl (talimata bak).', $o(['q' => $s, 'code' => $s, 'limit' => $i])],
         'hub_file_read' => ['file_get', 'Hub\'daki bir metin/kod dosyasının içeriğini okur.', $o(['id' => $i], ['id']), ['format' => 'text']],
+        'hub_file_delete' => ['file_delete',
+            'Hub\'daki bir dosyayı siler. Dosya paylaşma protokolü: hub aktarım alanıdır, asıllar bilgisayarlarda durur; '
+            . 'paslas/ altındaki aktarım dosyalarını işin bitince sil (unutulanlar birkaç gün sonra kendiliğinden silinir).',
+            $o(['id' => $i], ['id'])],
         'hub_kv_set' => ['kv_set', 'Ortak veriye yazar (ns varsayılan: görev kodu). value metin veya JSON metni.',
             $o(['key' => $s, 'value' => $s, 'ns' => $s], ['key', 'value'])],
         'hub_kv_get' => ['kv_get', 'Ortak veriden okur.', $o(['key' => $s, 'ns' => $s], ['key'])],

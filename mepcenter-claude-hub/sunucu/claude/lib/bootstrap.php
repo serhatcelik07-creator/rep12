@@ -21,6 +21,8 @@ function hub_config(): array
             'session_active_minutes' => 30,
             'upload_dir' => HUB_ROOT . '/data/uploads',
             'timezone' => 'Europe/Istanbul',
+            // Dosya paylaşma protokolü: paslas/ altındaki aktarım dosyaları en çok bu kadar gün saklanır
+            'transfer_keep_days' => 7,
         ];
         date_default_timezone_set($cfg['timezone']);
     }

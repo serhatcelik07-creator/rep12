@@ -187,11 +187,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash("$n dosya yüklendi." . ($errs ? ' Yüklenemeyenler: ' . implode(', ', $errs) : ''));
             redirect('p=files' . ($code !== '' ? '&code=' . urlencode($code) : ''));
         case 'file_delete':
-            $f = q('SELECT stored_name FROM hub_files WHERE id = ?', [(int)$_POST['id']])->fetch();
+            $f = q('SELECT id, stored_name FROM hub_files WHERE id = ?', [(int)$_POST['id']])->fetch();
             if ($f) {
-                @unlink(hub_config()['upload_dir'] . '/' . $f['stored_name']);
-                q('DELETE FROM hub_files WHERE id = ?', [(int)$_POST['id']]);
+                delete_file_row($f);
             }
+            redirect('p=files');
+        case 'transfer_purge': // Dosya paylaşma protokolü: biten aktarımları sil
+            $n = purge_transfers((int)($_POST['days'] ?? 1));
+            flash("$n aktarım dosyası silindi.");
             redirect('p=files');
         case 'session_end':
             q('UPDATE hub_sessions SET ended_at = NOW() WHERE id = ?', [(int)$_POST['id']]);
@@ -535,6 +538,17 @@ $flash = flash();
     d.addEventListener('drop',ev=>{ev.preventDefault();i.files=ev.dataTransfer.files;d.firstChild.textContent=i.files.length+' dosya seçildi ';});
     i.addEventListener('change',()=>{d.firstChild.textContent=i.files.length+' dosya seçildi ';});})();
   </script>
+  <?php $use = q("SELECT COUNT(*) n, COALESCE(SUM(size),0) b, COALESCE(SUM(rel_path LIKE 'paslas/%'),0) tn,
+                          COALESCE(SUM(CASE WHEN rel_path LIKE 'paslas/%' THEN size ELSE 0 END),0) tb FROM hub_files")->fetch(); ?>
+  <div class="card">
+    <b>Depolama:</b> <?= (int)$use['n'] ?> dosya, <?= fmt_size((int)$use['b']) ?> —
+    aktarım alanı (paslas/): <?= (int)$use['tn'] ?> dosya, <?= fmt_size((int)$use['tb']) ?>
+    <form method="post" class="inline"><?= csrf() ?><input type="hidden" name="a" value="transfer_purge">
+      <select name="days" style="width:auto;display:inline-block;margin:0 6px"><option value="1">1 günden eski</option><option value="0">tümü</option></select>
+      <button class="link danger" onclick="return confirm('Aktarım dosyaları silinsin mi? Asılları bilgisayarlarda duruyor.')">aktarımları temizle</button></form>
+    <p class="meta">Dosya paylaşma protokolü: asıllar bilgisayarlarda durur; hub yalnızca aktarım alanıdır.
+      paslas/ altındaki dosyalar iş bitince silinir, unutulanlar <?= (int)hub_config()['transfer_keep_days'] ?> gün sonra kendiliğinden silinir.</p>
+  </div>
   <h2>Yüklenen dosyalar<?= $fcode !== '' ? ' — görev ' . h($fcode) . ' <a class="chip" href="?p=files">tümü</a>' : '' ?></h2>
   <div class="scroll"><table><tr><th>#</th><th>Dosya</th><th>Görev · klasör / yol</th><th>Kaynak</th><th>Boyut</th><th>Tarih</th><th></th></tr>
   <?php foreach ($rows as $f): ?>

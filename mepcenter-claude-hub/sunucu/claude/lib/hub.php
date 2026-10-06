@@ -248,6 +248,27 @@ function store_file(string $data, string $name, string $relPath, string $code, ?
     return ['id' => (int)db()->lastInsertId()];
 }
 
+/** Dosya paylaşma protokolü: hub kalıcı arşiv değil, aktarım alanıdır. Asıllar kullanıcının bilgisayarında durur. */
+const TRANSFER_PREFIX = 'paslas/';
+
+function delete_file_row(array $f): void
+{
+    @unlink(hub_config()['upload_dir'] . '/' . $f['stored_name']);
+    q('DELETE FROM hub_files WHERE id = ?', [(int)$f['id']]);
+}
+
+/** Süresi dolan aktarım dosyalarını siler (yükleme sırasında çağrılır; ayrı zamanlayıcı gerekmez). */
+function purge_transfers(?int $olderThanDays = null): int
+{
+    $days = max(0, $olderThanDays ?? (int)hub_config()['transfer_keep_days']);
+    $rows = q("SELECT id, stored_name FROM hub_files WHERE rel_path LIKE ? AND created_at < (NOW() - INTERVAL $days DAY) LIMIT 500",
+              [TRANSFER_PREFIX . '%'])->fetchAll();
+    foreach ($rows as $f) {
+        delete_file_row($f);
+    }
+    return count($rows);
+}
+
 function arg_str(array $a, string $k, string $default = ''): string
 {
     return isset($a[$k]) && $a[$k] !== null ? trim((string)$a[$k]) : $default;
@@ -451,7 +472,22 @@ function hub_action(string $r, array $agent, array &$session, array $a): array
                 throw new HubFail('Dosya çok büyük (sınır ' . hub_config()['max_upload_mb'] . ' MB)', 413);
             }
             $c = arg_str($a, 'code') ?: $code;
+            if (random_int(1, 20) === 1) {
+                purge_transfers();
+            }
             return store_file($data, $name, arg_str($a, 'rel_path', $name), $c, (int)$session['id'], arg_str($a, 'note'));
+
+        case 'file_delete': // Aktarım dosyalarını (paslas/) herkes, diğerlerini yalnız yükleyen bilgisayar silebilir
+            $f = q('SELECT f.id, f.stored_name, f.rel_path, s.agent_id FROM hub_files f LEFT JOIN hub_sessions s ON s.id = f.session_id
+                     WHERE f.id = ?', [(int)($a['id'] ?? 0)])->fetch();
+            if (!$f) {
+                throw new HubFail('Bulunamadı', 404);
+            }
+            if (strpos((string)$f['rel_path'], TRANSFER_PREFIX) !== 0 && (int)$f['agent_id'] !== (int)$agent['id']) {
+                throw new HubFail('Bu dosyayı yalnızca yükleyen bilgisayar ya da panel silebilir', 403);
+            }
+            delete_file_row($f);
+            return ['deleted' => (int)$f['id']];
 
         case 'files':
             $where = ['1=1'];

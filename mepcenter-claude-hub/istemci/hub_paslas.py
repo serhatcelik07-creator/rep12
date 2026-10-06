@@ -9,6 +9,10 @@ Kullanım:
                                                         flutter analyze + flutter test çalıştırır, sonucu hub'a yazar
   python3 hub_paslas.py al --kod pofuduk --test-yok     yalnızca uygula
   python3 hub_paslas.py geri --kod pofuduk              son uygulanan yamayı geri alır (yedekten)
+  python3 hub_paslas.py temizle --kod pofuduk           hub'daki bu göreve ait aktarım dosyalarını siler
+
+Dosya paylaşma protokolü: asıllar bu bilgisayarda durur, hub yalnızca aktarım alanıdır (paslas/<kod>/).
+İşi biten aktarım dosyaları silinir; unutulanları sunucu birkaç gün sonra kendisi siler.
 Seçenekler:
   --kaynak YOL    kaynak klasör (varsayılan: <kod> için bilinen yollar, örn. /Volumes/*/center_pdf, G:\\center_pdf)
   --derleme YOL   derleme kopyası (varsayılan: ~/dev/<klasör adı>, Windows'ta C:\\dev\\<klasör adı>)
@@ -89,12 +93,27 @@ def upload_blob(data, rel_path, code, note):
     return ids
 
 
+def transfer_files(code, prefix=""):
+    files = api("files", params={"q": f"paslas/{code}/{prefix}", "code": code, "limit": 300})["files"]
+    return [f for f in files if f["rel_path"].startswith(f"paslas/{code}/{prefix}")]
+
+
+def delete_files(ids):
+    n = 0
+    for i in ids:
+        try:
+            api("file_delete", {"id": i})
+            n += 1
+        except HubError as e:
+            print(f"  ! {i} silinemedi: {e}")
+    return n
+
+
 def download_latest(code, prefix):
-    """prefix ile başlayan en yeni dosyayı (parçalıysa tüm parçalarını) indirir."""
-    files = api("files", params={"q": f"paslas/{code}/{prefix}", "code": code, "limit": 200})["files"]
-    files = [f for f in files if f["rel_path"].startswith(f"paslas/{code}/{prefix}")]
+    """prefix ile başlayan en yeni dosyayı (parçalıysa tüm parçalarını) indirir. Dönüş: (ad, veri, kimlikler)."""
+    files = transfer_files(code, prefix)
     if not files:
-        return None, None
+        return None, None, []
     base = files[0]["rel_path"].split(".part")[0]
     group = sorted((f for f in files if f["rel_path"].split(".part")[0] == base), key=lambda f: f["rel_path"])
     want = int(group[0]["rel_path"].rsplit("of", 1)[1]) if ".part" in group[0]["rel_path"] else 1
@@ -105,7 +124,7 @@ def download_latest(code, prefix):
         sys.exit(f"{base}: {want} parçadan {len(seen)} tanesi hub'da; yükleme bitmemiş olabilir.")
     order = sorted(seen, key=lambda k: int(k.rsplit(".part", 1)[1].split("of")[0]) if ".part" in k else 0)
     data = b"".join(api("download", params={"id": seen[k]["id"]}, raw=True, timeout=600) for k in order)
-    return base, data
+    return base, data, [f["id"] for f in group]
 
 
 def report(code, text, title):
@@ -134,6 +153,10 @@ def cmd_gonder(a):
                                               ensure_ascii=False, indent=1))
     data = buf.getvalue()
     print(f"{root}: {len(manifest)} dosya, {len(data) // 1024} KB zip")
+    old = [f["id"] for f in transfer_files(a.kod, "kaynak-")]
+    if old:
+        print(f"  eski kaynak gönderimi siliniyor ({len(old)} dosya)")
+        delete_files(old)
     upload_blob(data, f"paslas/{a.kod}/kaynak-{time.strftime('%Y%m%d-%H%M%S')}.zip", a.kod, "paslaşma: kaynak")
     api("send", {"to": f"project:{a.kod}", "topic": "paslaşma: kaynak hazır",
                  "body": f"{load_config()['machine']} kaynağı gönderdi: {len(manifest)} dosya ({root})."})
@@ -143,7 +166,7 @@ def cmd_gonder(a):
 # --- al ---------------------------------------------------------------------------------------------------
 def cmd_al(a):
     root = find_source(a.kod, a.kaynak)
-    base, data = download_latest(a.kod, "yama-")
+    base, data, ids = download_latest(a.kod, "yama-")
     if not data:
         sys.exit("Hub'da yama yok.")
     z = zipfile.ZipFile(io.BytesIO(data))
@@ -177,6 +200,7 @@ def cmd_al(a):
     with open(os.path.join(root, ".paslas_yedek", "son.json"), "w", encoding="utf-8") as f:
         json.dump({"yama": base, "yedek": stamp, "dosyalar": meta["dosyalar"]}, f, ensure_ascii=False)
     print(f"{len(changed)} dosya uygulandı (yedek: {backup}).")
+    delete_files(ids)  # protokol: uygulanan yama hub'da kalmaz (geri almak için yerel yedek var)
     if a.test_yok:
         return
     build = mirror(root, a.derleme, changed)
@@ -233,6 +257,13 @@ def run_checks(build):
     return "\n\n".join(res)
 
 
+# --- temizle ----------------------------------------------------------------------------------------------
+def cmd_temizle(a):
+    files = transfer_files(a.kod)
+    print(f"Hub'da {len(files)} aktarım dosyası; siliniyor…")
+    print(f"{delete_files([f['id'] for f in files])} dosya silindi. Asıllar bu bilgisayarda duruyor.")
+
+
 # --- geri -------------------------------------------------------------------------------------------------
 def cmd_geri(a):
     root = find_source(a.kod, a.kaynak)
@@ -253,7 +284,7 @@ def cmd_geri(a):
 
 def main():
     ap = argparse.ArgumentParser(description="Bulut oturumuyla kaynak/yama paslaşması")
-    ap.add_argument("islem", choices=["gonder", "al", "geri"])
+    ap.add_argument("islem", choices=["gonder", "al", "geri", "temizle"])
     ap.add_argument("--kod", required=True)
     ap.add_argument("--kaynak")
     ap.add_argument("--derleme")
@@ -261,7 +292,7 @@ def main():
     ap.add_argument("--test-yok", action="store_true")
     a = ap.parse_args()
     try:
-        {"gonder": cmd_gonder, "al": cmd_al, "geri": cmd_geri}[a.islem](a)
+        {"gonder": cmd_gonder, "al": cmd_al, "geri": cmd_geri, "temizle": cmd_temizle}[a.islem](a)
     except HubError as e:
         sys.exit(f"Hub hatası: {e}")
 
