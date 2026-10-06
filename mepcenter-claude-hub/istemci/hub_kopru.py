@@ -20,7 +20,7 @@ Ayarlar (~/.mepcenter/config.json içindeki "kopru" bölümü):
   accept_from      ["admin"] -> yalnızca panelden gelen mesajlar iş başlatır;
                    ["admin", "claude"] -> diğer Claude'ların mesajları da iş başlatır
   timeout_min      bir işin en uzun süresi (dakika, varsayılan 30)
-  prevent_sleep    true -> köprü çalışırken bilgisayarın uykuya geçmesini engelle
+  prevent_sleep    true (varsayılan) -> köprü çalışırken bilgisayarın uykuya geçmesini engelle
   claude_path      claude komutunun tam yolu (kur.py otomatik bulur)
   model            isteğe bağlı model adı
 """
@@ -28,6 +28,7 @@ Ayarlar (~/.mepcenter/config.json içindeki "kopru" bölümü):
 import json
 import os
 import platform
+import random
 import shutil
 import socket
 import subprocess
@@ -48,7 +49,7 @@ DEFAULTS = {
     "allowed_tools": ["Read", "Grep", "Glob", "LS", "WebSearch", "WebFetch", "TodoWrite", "mcp__mepcenter"],
     "accept_from": ["admin"],
     "timeout_min": 30,
-    "prevent_sleep": False,
+    "prevent_sleep": True,  # köprü 7/24 erişilebilir kalsın (ekran yine kapanır)
     "claude_path": "",
     "model": "",
 }
@@ -147,6 +148,7 @@ class Kopru:
         self.queue = []
         self.lock = threading.Lock()
         self.started = time.time()
+        self.last_loop = time.time()
         os.makedirs(KOPRU_DIR, exist_ok=True)
 
     # --- hub yardımcıları ---------------------------------------------------
@@ -301,33 +303,60 @@ class Kopru:
         if self.k.get("prevent_sleep"):
             keep_awake()
         threading.Thread(target=self.worker, daemon=True).start()
+        threading.Thread(target=self.watchdog, daemon=True).start()
         backoff = 5
         announced = False
+        offline_since = None  # bağlantı koptuğu an; geri gelince panele neden ve süre yazılır
+        last_error = ""
         while True:
+            self.last_loop = time.time()
             try:
-                if not announced:
-                    self.idle_status()
-                    announced = True
-                    log("hub'a bağlandı")
-                msgs = self.call("wait", params={"timeout": 25}, timeout=60)["messages"]
+                # bağlanırken kısa yokla ki "hazır" durumu hemen görünsün
+                msgs = self.call("wait", params={"timeout": 25 if announced else 1}, timeout=60)["messages"]
                 backoff = 5
-            except HubError as e:
-                log("hub'a ulaşılamadı:", e, f"({backoff} sn sonra tekrar)")
+                if not announced:  # yalnızca hub gerçekten cevap verince "bağlandı" say
+                    announced = True
+                    self.idle_status()
+                    log("hub'a bağlandı")
+                    if offline_since and time.time() - offline_since > 60:
+                        mins = max(1, int((time.time() - offline_since) / 60))
+                        self.reply(f"⚠️ {self.cfg['machine']} köprüsü {mins} dk hub'a ulaşamadı, yeniden bağlandı. "
+                                   f"Son hata: {last_error[:300]}")
+                    offline_since = None
+            except Exception as e:  # noqa: BLE001 - köprü hiçbir hatada durmamalı
+                last_error = f"{type(e).__name__}: {e}"
+                offline_since = offline_since or time.time()
+                log("hub'a ulaşılamadı:", last_error, f"({backoff} sn sonra tekrar)")
                 announced = False
-                time.sleep(backoff)
-                backoff = min(backoff * 2, 300)
+                time.sleep(backoff + random.uniform(0, 3))
+                backoff = min(backoff * 2, 60)  # kesinti bitince en geç ~1 dk içinde geri gel
                 continue
             for m in msgs:
-                text = (m.get("body") or "").strip()
-                to = "admin" if m["from_session_id"] is None else f"session:{m['from_session_id']}"
-                if text.startswith("/"):
-                    if m["to_type"] == "session" or text.split()[0].lower() in ("/durum", "/status"):
-                        self.command(text, to)
-                elif self.accepts(m):
-                    with self.lock:
-                        self.queue.append((text, to))
-                    if self.proc or len(self.queue) > 1:
-                        self.reply(f"Sıraya alındı ({len(self.queue)}. sırada). Çalışan işi durdurmak için /iptal.", to)
+                try:
+                    self.handle(m)
+                except Exception as e:  # noqa: BLE001
+                    log("mesaj işlenemedi:", type(e).__name__, e)
+
+    def handle(self, m):
+        text = (m.get("body") or "").strip()
+        to = "admin" if m.get("from_session_id") is None else f"session:{m['from_session_id']}"
+        if text.startswith("/"):
+            if m.get("to_type") == "session" or text.split()[0].lower() in ("/durum", "/status"):
+                self.command(text, to)
+        elif self.accepts(m):
+            with self.lock:
+                self.queue.append((text, to))
+            if self.proc or len(self.queue) > 1:
+                self.reply(f"Sıraya alındı ({len(self.queue)}. sırada). Çalışan işi durdurmak için /iptal.", to)
+
+    def watchdog(self):
+        """Ana döngü takılırsa (ör. ağ yığını yanıt vermezse) süreçten çık; LaunchAgent / systemd /
+        Windows başlatıcısı köprüyü yeniden başlatır."""
+        while True:
+            time.sleep(30)
+            if time.time() - self.last_loop > 600:
+                log("ana döngü 10 dk ilerlemedi; yeniden başlamak için çıkılıyor")
+                os._exit(3)
 
 
 def main():

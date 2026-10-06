@@ -255,6 +255,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ---- Sohbet akışı (JSON, panel tarafından yoklanır) -------------------------
+/** Oturumun bağlantı durumu: köprüler ~25 sn'de bir yoklar; 90 sn sessizlik = koptu. */
+function link_state(array $s): array
+{
+    $idle = (int)($s['idle_sec'] ?? 0);
+    $bridge = ($s['project'] ?? '') === 'kopru';
+    if ($idle <= 90) {
+        return ['on', 'çevrimiçi'];
+    }
+    $ago = $idle < 3600 ? intdiv($idle, 60) . ' dk' : intdiv($idle, 3600) . ' sa';
+    return $bridge ? ['off', "bağlantı yok ($ago)"] : ['warn', "$ago önce"];
+}
+
+/** Paneldan gönderilen mesajlardan alıcı(lar)ın okudukları. */
+function delivered_ids(array $ids): array
+{
+    $ids = array_values(array_filter(array_map('intval', $ids)));
+    if (!$ids) {
+        return [];
+    }
+    $in = implode(',', $ids);
+    return array_map('intval', q("SELECT DISTINCT message_id FROM hub_message_reads WHERE message_id IN ($in)")->fetchAll(PDO::FETCH_COLUMN));
+}
+
 function chat_thread(string $sid, int $after = 0): array
 {
     if ($sid === 'all') {
@@ -271,7 +294,10 @@ function chat_thread(string $sid, int $after = 0): array
 if ($p === 'chat_json') {
     header('Content-Type: application/json; charset=utf-8');
     $rows = array_reverse(chat_thread((string)($_GET['s'] ?? 'all'), (int)($_GET['after'] ?? 0)));
-    echo json_encode(['messages' => $rows, 'sessions' => active_sessions()], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    $sessions = array_map(fn($a) => ['id' => (int)$a['id'], 'state' => link_state($a)], active_sessions());
+    $mine = array_filter(explode(',', (string)($_GET['mine'] ?? '')), 'ctype_digit');
+    echo json_encode(['messages' => $rows, 'sessions' => $sessions, 'delivered' => delivered_ids(array_slice($mine, -100))],
+                     JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
 
@@ -341,7 +367,9 @@ $flash = flash();
     <aside>
       <a class="sess <?= $sel === 'all' ? 'on' : '' ?>" href="?p=chat&s=all"><b>Herkes</b><small>tüm aktif Claude'lara</small></a>
       <div id="sesslist"><?php foreach ($act as $a): ?>
-        <a class="sess <?= $sel === (string)$a['id'] ? 'on' : '' ?>" href="?p=chat&s=<?= $a['id'] ?>"><b><span class="dot on"></span>#<?= $a['id'] ?> <?= h($a['agent'] . '@' . $a['machine']) ?></b>
+        <?php [$cls, $lbl] = link_state($a); ?>
+        <a class="sess <?= $sel === (string)$a['id'] ? 'on' : '' ?>" href="?p=chat&s=<?= $a['id'] ?>" data-sid="<?= $a['id'] ?>"><b><span class="dot <?= $cls ?>"></span>#<?= $a['id'] ?> <?= h($a['agent'] . '@' . $a['machine']) ?></b>
+          <small class="link"><?= h($lbl) ?></small>
           <small><?= $a['project'] === 'kopru' ? '🔌 köprü ajanı (7/24) — yazdığınız işi bu bilgisayardaki Claude yapar' : h(($a['project_code'] ? $a['project_code'] . ' · ' : '') . $a['project']) ?></small>
           <small><?= h(str_cut((string)$a['status_text'], 90)) ?></small></a>
       <?php endforeach; ?></div>
@@ -357,18 +385,25 @@ $flash = flash();
   <script>
   (function(){
     const sel = <?= json_encode($sel) ?>; let last = 0; const th = document.getElementById('thread');
+    const pending = {}; // panelden gönderilen, henüz okunmamış mesajlar: id -> durum öğesi
     function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
     function add(m){
       const mine = m.from_session_id === null;
       const el = document.createElement('div'); el.className = 'bubble ' + (mine ? 'me' : 'them');
       el.innerHTML = '<div class="meta">' + esc(mine ? 'Sen' + (m.to_type==='all' ? ' → herkes' : '') : m.from_label) + ' · ' + esc(m.created_at.substr(11,5)) + '</div>' + esc(m.body).replace(/\n/g,'<br>');
+      if (mine) { const st = document.createElement('div'); st.className = 'meta tick'; st.textContent = '⏳ alıcı henüz almadı';
+        el.appendChild(st); pending[m.id] = st; }
       th.appendChild(el); last = Math.max(last, m.id);
     }
     async function poll(){
       try{
-        const r = await fetch('?p=chat_json&s=' + encodeURIComponent(sel) + '&after=' + last, {credentials:'same-origin'});
+        const r = await fetch('?p=chat_json&s=' + encodeURIComponent(sel) + '&after=' + last
+          + '&mine=' + Object.keys(pending).join(','), {credentials:'same-origin'});
         const j = await r.json(); const atBottom = th.scrollHeight - th.scrollTop - th.clientHeight < 60;
         j.messages.forEach(add); if (j.messages.length && atBottom) th.scrollTop = th.scrollHeight;
+        (j.delivered || []).forEach(id => { if (pending[id]) { pending[id].textContent = '✓ alındı'; delete pending[id]; } });
+        (j.sessions || []).forEach(s => { const a = document.querySelector('[data-sid="' + s.id + '"]'); if (!a) return;
+          a.querySelector('.dot').className = 'dot ' + s.state[0]; const l = a.querySelector('.link'); if (l) l.textContent = s.state[1]; });
       }catch(e){}
     }
     const f = document.getElementById('chatform'), b = document.getElementById('chatbody');

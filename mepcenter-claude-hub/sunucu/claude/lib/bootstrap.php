@@ -119,7 +119,8 @@ function active_sessions(?int $excludeId = null): array
     $min = (int)hub_config()['session_active_minutes'];
     return q(
         "SELECT s.id, a.name AS agent, a.type AS agent_type, s.machine, s.project, s.project_code, s.cwd,
-                s.status_text, s.started_at, s.last_seen_at
+                s.status_text, s.started_at, s.last_seen_at,
+                TIMESTAMPDIFF(SECOND, s.last_seen_at, NOW()) AS idle_sec
            FROM hub_sessions s JOIN hub_agents a ON a.id = s.agent_id
           WHERE s.ended_at IS NULL AND s.last_seen_at >= (NOW() - INTERVAL $min MINUTE)
             AND (? IS NULL OR s.id <> ?)

@@ -285,8 +285,12 @@ def install_kopru(cfg, cfg_path):
     elif os.name == "nt":
         pyw = py  # pencere, aşağıdaki Run(..., 0) ile gizlenir
         # Pencere açmadan çalıştır, çıktıyı günlüğe yaz
+        # Köprü herhangi bir nedenle kapanırsa 30 sn sonra yeniden başlat (macOS'taki KeepAlive karşılığı)
         vbs = (f'Set sh = CreateObject("WScript.Shell")\r\n'
-               f'sh.Run "cmd /c """"{pyw}"" ""{script}"" >> ""{logf}"" 2>&1""", 0, False\r\n')
+               f'Do\r\n'
+               f'  sh.Run "cmd /c """"{pyw}"" ""{script}"" >> ""{logf}"" 2>&1""", 0, True\r\n'
+               f'  WScript.Sleep 30000\r\n'
+               f'Loop\r\n')
         os.makedirs(os.path.dirname(WIN_STARTUP), exist_ok=True)
         with open(WIN_STARTUP, "w", encoding="utf-8") as f:
             f.write(vbs)
@@ -320,6 +324,11 @@ def stop_running_kopru():
         with open(pid_file) as f:
             pid = int(f.read().strip())
         if os.name == "nt":
+            # önce yeniden başlatma döngüsünü (wscript) durdur, yoksa eski köprüyü hemen geri açar
+            subprocess.run(["powershell", "-NoProfile", "-Command",
+                            "Get-CimInstance Win32_Process -Filter \"Name='wscript.exe'\" | "
+                            "Where-Object { $_.CommandLine -like '*kopru*' } | "
+                            "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"], capture_output=True)
             subprocess.run(["taskkill", "/F", "/PID", str(pid)], capture_output=True)
         else:
             os.kill(pid, 15)
