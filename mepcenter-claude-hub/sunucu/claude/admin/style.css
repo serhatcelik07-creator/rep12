@@ -1,0 +1,28 @@
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1d2330;--mut:#6b7385;--line:#e2e5ea;--acc:#c96442;--ok:#e7f6ec;--okf:#1e6b3a;--err:#fdeceb;--errf:#9b2c25}
+@media (prefers-color-scheme:dark){:root{--bg:#15171c;--card:#1e2128;--fg:#e6e8ec;--mut:#9aa1ae;--line:#2e323b;--ok:#183524;--okf:#8fd6a7;--err:#3a1d1b;--errf:#f2a39c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+header nav{display:flex;flex-wrap:wrap;gap:4px}header nav a{padding:4px 10px;border-radius:6px;color:var(--fg);text-decoration:none}
+header nav a.on,header nav a:hover{background:var(--bg)}main{padding:16px;max-width:1200px;margin:0 auto}main.narrow{max-width:520px;margin-top:40px}
+a{color:var(--acc)}h1,h2{font-weight:600}h2{font-size:18px;margin:24px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:8px 0}.card.warn{border-color:var(--acc)}
+label{display:block;margin:8px 0;color:var(--mut);font-size:13px}input,select,textarea{display:block;width:100%;margin-top:4px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+button,.btn{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 14px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block;margin-top:8px}
+button.link{background:none;color:var(--acc);padding:0 4px;margin:0}button.danger{color:var(--errf)}form.inline{display:inline}
+.ok{background:var(--ok);color:var(--okf);padding:10px;border-radius:6px}.err{background:var(--err);color:var(--errf);padding:10px;border-radius:6px}
+.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}th{color:var(--mut);font-weight:500}tr.dim td{opacity:.55}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mut);margin-right:6px}.dot.on{background:#2fa35a}
+.stats{display:flex;flex-wrap:wrap;gap:8px}.stats div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;color:var(--mut);font-size:13px}.stats b{display:block;font-size:22px;color:var(--fg)}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}.meta{color:var(--mut);font-size:13px}.body{margin-top:4px;white-space:normal;word-wrap:break-word}.small{font-size:13px}
+pre{white-space:pre-wrap;word-wrap:break-word;margin:0}pre.content{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}pre.token{background:var(--bg);padding:10px;border-radius:6px;font-size:14px;user-select:all}
+.search{display:flex;gap:8px}.search input{margin:0}.search button{margin:0}.chip{display:inline-block;padding:3px 10px;border:1px solid var(--line);border-radius:20px;text-decoration:none;margin:2px}.chip.on{background:var(--acc);color:#fff}
+code{font-size:13px}
+.chat{display:grid;grid-template-columns:260px 1fr;gap:12px}@media (max-width:700px){.chat{grid-template-columns:1fr}}
+.chat aside{display:flex;flex-direction:column;gap:6px}.sess{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--fg);text-decoration:none}
+.sess.on{border-color:var(--acc)}.sess small{display:block;color:var(--mut);font-size:12px}
+.thread{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.bubble{max-width:80%;padding:8px 12px;border-radius:12px;background:var(--bg);word-wrap:break-word}.bubble.me{align-self:flex-end;background:var(--acc);color:#fff}.bubble.me .meta{color:#ffe}
+.chatform{display:flex;gap:8px;align-items:flex-end;margin-top:8px}.chatform textarea{margin:0}.chatform button{margin:0}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:24px;text-align:center;color:var(--mut);cursor:pointer}.drop.on{border-color:var(--acc);color:var(--acc)}
+.drop input{margin-top:10px}
