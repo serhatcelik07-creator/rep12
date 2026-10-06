@@ -1,16 +1,15 @@
-"""Windows dusuk seviye klavye/fare kancalari.
+"""Windows dusuk seviye klavye/fare kancalari (yoneten taraf: PC->Mac).
 
-Kararlari karar.py verir; burasi onlari uygular: Mac modunda olaylari yutar,
-Mac'e gonderilecekleri kuyruga atar, imleci ekranin ortasinda sabitler.
+Kararlari cekirdek/karar.py verir; burasi onlari uygular: uzak modda
+olaylari yutar ve oturuma iletir, imleci ekranin ortasinda sabitler.
 """
 
 import ctypes
-import queue
 import threading
 
 from pynput import keyboard, mouse
 
-import karar
+from cekirdek import karar
 from cekirdek import protokol as p
 
 WM_KEYDOWN, WM_SYSKEYDOWN = 0x100, 0x104
@@ -44,20 +43,21 @@ def _int16(deger):
     return max(-32768, min(32767, int(deger)))
 
 
-class Motor:
-    """olay_bildir(ad, ek) ile arayuze haber verir:
-    "mac" / "windows" (gecis), "kullanilamaz", "yakalandi" (Kisayol)."""
+class Yakalayici:
+    """olay_bildir(ad, ek) ile uygulamaya haber verir:
+    "uzakta" / "yerelde" (gecis), "kullanilamaz", "yakalandi" (Kisayol).
+    ayrilirken() kontrol uzaga gecmeden hemen once cagrilir (pano esitleme)."""
 
-    def __init__(self, git, don, olay_bildir, ses_acik=lambda: True):
-        self.karar = karar.KlavyeKarari(git, don)
+    def __init__(self, git, don, olay_bildir, ayrilirken=lambda: None, ses_acik=lambda: True):
+        self.karar = karar.KlavyeKarari(git, don, "windows")
         self.olay_bildir = olay_bildir
+        self.ayrilirken = ayrilirken
         self.ses_acik = ses_acik
-        self.kuyruk = queue.Queue()
-        self.bagli = False
-        self.kullanilabilir = True
+        self.oturum = None          # baglantili oturum; yoksa None
+        self.kullanilabilir = True  # lisans
         self.merkez = (0, 0)
         self.eski_konum = POINT()
-        self.kilit = threading.Lock()
+        self._kilit = threading.Lock()
         self._klavye = keyboard.Listener(win32_event_filter=self._klavye_filtresi)
         self._fare = mouse.Listener(win32_event_filter=self._fare_filtresi)
 
@@ -66,7 +66,7 @@ class Motor:
         self._fare.start()
 
     def durdur(self):
-        self.windowsa_don()
+        self.geri_don()
         self._klavye.stop()
         self._fare.stop()
 
@@ -81,8 +81,9 @@ class Motor:
         self.karar.yakalamaya_basla()
 
     def _gonder(self, tip, a=0, b=0, c=0):
-        if self.bagli:
-            self.kuyruk.put_nowait((tip, a, b, c))
+        o = self.oturum
+        if o:
+            o.olay(tip, a, b, c)
 
     def _bip(self, frekans):
         if self.ses_acik():
@@ -90,46 +91,49 @@ class Motor:
             threading.Thread(target=winsound.Beep, args=(frekans, 70), daemon=True).start()
 
     # ---- gecisler ----
-    def _maca_gecildi(self):
-        with self.kilit:
+    def _uzaga_gecildi(self):
+        with self._kilit:
             user32.GetCursorPos(ctypes.byref(self.eski_konum))
             # Imleci ana ekranin ortasina sabitliyoruz; fare hareketleri buradan
-            # olculup Mac'e gonderiliyor, boylece kenara takilma olmuyor.
+            # olculup gonderiliyor, boylece kenara takilma olmuyor.
             self.merkez = (user32.GetSystemMetrics(0) // 2, user32.GetSystemMetrics(1) // 2)
             user32.SetCursorPos(*self.merkez)
-            self._gonder(p.MSG_AKTIF, 1)
+        o = self.oturum
+        if o:
+            threading.Thread(target=self.ayrilirken, daemon=True).start()
+        self._gonder(p.MSG_AKTIF, 1)
         self._bip(880)
-        self.olay_bildir("mac", None)
+        self.olay_bildir("uzakta", None)
 
-    def _windowsa_donuldu(self):
-        with self.kilit:
+    def _geri_donuldu(self):
+        with self._kilit:
             self._gonder(p.MSG_BIRAK)
             self._gonder(p.MSG_AKTIF, 0)
             user32.SetCursorPos(self.eski_konum.x, self.eski_konum.y)
         self._bip(440)
-        self.olay_bildir("windows", None)
+        self.olay_bildir("yerelde", None)
 
-    def windowsa_don(self):
-        """Baglanti koptugunda veya uygulama kapanirken: klavye Windows'ta kalsin."""
+    def geri_don(self):
+        """Baglanti koptugunda veya uygulama kapanirken: klavye bu bilgisayarda kalsin."""
         if self.karar.uzakta:
             self.karar.geri_al()
-            self._windowsa_donuldu()
+            self._geri_donuldu()
 
     # ---- kancalar ----
-    # Windows'un kanca zaman asimi kisadir: burada ag islemi yapilmaz, sadece kuyruga atilir.
+    # Windows'un kanca zaman asimi kisadir: burada ag islemi yapilmaz, oturum kuyruga atar.
     def _klavye_filtresi(self, msg, data):
         if data.flags & LLKHF_INJECTED:
             return True
         basildi = msg in (WM_KEYDOWN, WM_SYSKEYDOWN)
-        eylem, ek = self.karar.olay(data.vkCode, basildi, self.bagli, self.kullanilabilir)
+        eylem, ek = self.karar.olay(data.vkCode, basildi, self.oturum is not None, self.kullanilabilir)
         if eylem in (karar.GECIR, karar.KULLANILAMAZ):
             if eylem == karar.KULLANILAMAZ:
                 self.olay_bildir("kullanilamaz", None)
             return True
         if eylem == karar.UZAGA_GEC:
-            self._maca_gecildi()
+            self._uzaga_gecildi()
         elif eylem == karar.GERI_DON:
-            self._windowsa_donuldu()
+            self._geri_donuldu()
         elif eylem == karar.YAKALANDI:
             self.olay_bildir("yakalandi", ek)
         elif eylem == karar.GONDER:

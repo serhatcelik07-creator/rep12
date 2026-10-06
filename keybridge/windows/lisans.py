@@ -1,4 +1,4 @@
-"""Microsoft Store lisansi: 15 gunluk deneme, sonra satin alma.
+"""Microsoft Store lisansi (PC->Mac Windows uygulamasi): 15 gunluk deneme, sonra satin alma.
 
 Deneme suresi ve fiyat Partner Center'da ayarlanir (Fiyatlandirma ve
 kullanilabilirlik > Ucretsiz deneme: 15 gun). Uygulama yalnizca Store'dan
@@ -10,6 +10,8 @@ import ctypes
 import datetime as dt
 import threading
 import webbrowser
+
+from cekirdek.metinler import T
 
 # Partner Center > Urun kimligi > "Store ID" (12 karakter, or. 9NBLGGH4R315).
 STORE_ID = "9XXXXXXXXXXX"
@@ -101,12 +103,12 @@ class Lisans:
 
     def metin(self):
         if self.tur == TAM:
-            return "Lisanslı"
+            return T("lisans_tam")
         if self.tur == DENEME:
-            return f"Deneme sürümü: {self.kalan_gun} gün kaldı" if self.kalan_gun else "Deneme sürümü"
+            return T("lisans_deneme", gun=self.kalan_gun) if self.kalan_gun else T("lisans_deneme_suresiz")
         if self.tur == BITTI:
-            return "Deneme süresi bitti. Kullanmaya devam etmek için lisans satın alın."
-        return "Geliştirici sürümü"
+            return T("lisans_bitti")
+        return T("lisans_gelistirici")
 
     @staticmethod
     def satin_al():

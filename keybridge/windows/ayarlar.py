@@ -1,7 +1,8 @@
-"""Windows uygulamasinin ayarlari: %APPDATA%\\KeyBridge\\ayarlar.json
+"""Windows uygulamalarinin ayarlari: %APPDATA%\\KeyBridge\\<urun>\\ayarlar.json
 
-Tum ayarlar Windows'ta tutulur; Mac'i ilgilendirenler (fare hizi, Ctrl/Cmd
-vb.) her baglantida ve her degisiklikte Mac'e gonderilir.
+Ayarlarin hepsi yoneten tarafta tutulur; karsi tarafi ilgilendirenler (fare
+hizi, Ctrl/Cmd vb.) her baglantida ve her degisiklikte oraya gonderilir.
+Yonetilen taraf yalnizca kimligini ve eslesmeleri saklar.
 Eslesme anahtarlari Windows DPAPI ile korunur (yalnizca bu kullanici acabilir).
 """
 
@@ -14,23 +15,35 @@ import threading
 import uuid
 from ctypes import wintypes
 
+from cekirdek import tuslar
+
 VARSAYILAN = {
-    "git_tusu": {"vk": 0x28, "degistiriciler": []},   # ↓
-    "don_tusu": {"vk": 0x26, "degistiriciler": []},   # ↑
+    "git_tusu": tuslar.VARSAYILAN_KISAYOL["windows"][0],   # ↓
+    "don_tusu": tuslar.VARSAYILAN_KISAYOL["windows"][1],   # ↑
     "fare_hizi": 1.0,
     "teker_hizi": 1.0,
     "teker_ters": False,
     "ctrl_cmd": False,
+    "pano": True,
+    "dosya": True,
     "ses": True,
-    "secili_mac": None,
+    "secili": None,
 }
-# Mac'e gonderilen ayarlar
-MAC_AYARLARI = ("fare_hizi", "teker_hizi", "teker_ters", "ctrl_cmd")
+# Karsi tarafa gonderilen ayarlar
+UZAK_AYARLAR = ("fare_hizi", "teker_hizi", "teker_ters", "ctrl_cmd")
 
 
-def _klasor():
+def klasor(urun, *alt):
     temel = os.environ.get("APPDATA") or os.path.expanduser("~")
-    yol = os.path.join(temel, "KeyBridge")
+    yol = os.path.join(temel, "KeyBridge", urun, *alt)
+    os.makedirs(yol, exist_ok=True)
+    return yol
+
+
+def onbellek(urun):
+    """Gelen dosyalarin yazildigi klasor (%LOCALAPPDATA%)."""
+    temel = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+    yol = os.path.join(temel, "KeyBridge", urun, "Pano")
     os.makedirs(yol, exist_ok=True)
     return yol
 
@@ -56,8 +69,8 @@ def _dpapi(veri, koru):
 
 
 class Ayarlar:
-    def __init__(self, yol=None):
-        self.yol = yol or os.path.join(_klasor(), "ayarlar.json")
+    def __init__(self, urun, yol=None):
+        self.yol = yol or os.path.join(klasor(urun), "ayarlar.json")
         self._kilit = threading.Lock()
         try:
             with open(self.yol, encoding="utf-8") as f:
@@ -95,14 +108,14 @@ class Ayarlar:
         ad = os.environ.get("COMPUTERNAME") or socket.gethostname()
         return {"id": self._veri["kimlik"], "ad": ad}
 
-    def mac_ayarlari(self):
+    def uzak_ayarlar(self):
         with self._kilit:
-            return {a: self._veri[a] for a in MAC_AYARLARI}
+            return {a: self._veri[a] for a in UZAK_AYARLAR}
 
     # ---- eslesmeler ----
-    def anahtar_bul(self, mac_id):
+    def anahtar_bul(self, kimlik):
         with self._kilit:
-            kayit = self._veri["eslesmeler"].get(mac_id)
+            kayit = self._veri["eslesmeler"].get(kimlik)
         if not kayit:
             return None
         try:
@@ -110,15 +123,20 @@ class Ayarlar:
         except (OSError, ValueError, KeyError):
             return None
 
-    def anahtar_kaydet(self, mac_id, mac_ad, anahtar):
+    def anahtar_kaydet(self, kimlik, ad, anahtar):
         korunmus = base64.b64encode(_dpapi(anahtar, koru=True)).decode("ascii")
         with self._kilit:
-            self._veri["eslesmeler"][mac_id] = {"ad": mac_ad, "anahtar": korunmus}
+            self._veri["eslesmeler"][kimlik] = {"ad": ad, "anahtar": korunmus}
             self._kaydet()
 
-    def eslesmeyi_sil(self, mac_id):
+    def eslesmeyi_sil(self, kimlik):
         with self._kilit:
-            self._veri["eslesmeler"].pop(mac_id, None)
+            self._veri["eslesmeler"].pop(kimlik, None)
+            self._kaydet()
+
+    def eslesmeleri_sifirla(self):
+        with self._kilit:
+            self._veri["eslesmeler"] = {}
             self._kaydet()
 
     def eslesmeler(self):
