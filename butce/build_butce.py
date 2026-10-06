@@ -47,13 +47,14 @@ vrows = [
     ("OG ring güzergahı – RFQ (m)", 7000, "Sıra 170 RFQ"),
     ("OG ring güzergahı – idare cevabı (m)", 7964, "İdare cevabı soru 21 (tüm kesitler)"),
     ("Galvanizli katener direği çeliği, imalat+galvaniz+dikim (EUR/kg)", 2.20, "Referans medyanı 1,80 €/kg (2013–2016 tramvay) + yerli üretim/montaj payı; Mitaş teklifi gelince güncelleyin"),
-    ("Risk/belirsizlik payı – Asansör", 0.05, "2 firma teklifi var, kapsam net"),
-    ("Risk/belirsizlik payı – Sinyalizasyon + AVLS", 0.15, "Ayrı sinyal projesi yok; miktarlar öngörü ağırlıklı; tek teklif (Point Link) aykırı"),
-    ("Risk/belirsizlik payı – Katener", 0.10, "Proje var; fiyatlar referans + tahmin"),
-    ("Risk/belirsizlik payı – Cer gücü / enerji temini", 0.10, "Proje var; teklif yok (Best Transformer, Alfanar bütçe bekleniyor)"),
-    ("Risk/belirsizlik payı – Mekanik", 0.10, "Kalem bazlı; referans + tahmin; Ekura/Protek teklifleri bekleniyor"),
-    ("Risk/belirsizlik payı – Elektrik AG / aydınlatma / yangın ihbar / topraklama", 0.10, "Kalem bazlı; referans kapsaması düşük"),
-    ("Risk/belirsizlik payı – Kontrol ve haberleşme (SCADA, CCTV, telsiz, YBS, turnike)", 0.10, "Kalem bazlı; turnike adedi mimariden sayılacak"),
+    ("Risk/belirsizlik payı – Asansör", 0.03, "2 firma teklifi var, kapsam net"),
+    ("Risk/belirsizlik payı – Sinyalizasyon + AVLS", 0.10, "Ayrı sinyal projesi yok; miktarlar öngörü ağırlıklı; tek teklif (Point Link) aykırı"),
+    ("Risk/belirsizlik payı – Katener", 0.05, "Proje var; fiyatlar referans + tahmin"),
+    ("Risk/belirsizlik payı – Cer gücü / enerji temini", 0.05, "Proje var; teklif yok (Best Transformer, Alfanar bütçe bekleniyor)"),
+    ("Risk/belirsizlik payı – Mekanik", 0.05, "Kalem bazlı; referans + tahmin; Ekura/Protek teklifleri bekleniyor"),
+    ("Risk/belirsizlik payı – Elektrik AG / aydınlatma / yangın ihbar / topraklama", 0.05, "Kalem bazlı; referans kapsaması düşük"),
+    ("Risk/belirsizlik payı – Kontrol ve haberleşme (SCADA, CCTV, telsiz, YBS, turnike)", 0.05, "Kalem bazlı; turnike adedi mimariden sayılacak"),
+    ("Metraj payları geri alınsın mı? (1 = evet, 0 = RFQ metrajı)", 1, "RFQ'da bilinçli şişirme: uzunluklara %10 fire; Mekanik+Elektrik set alt kalemlerinde dağıtık malzemeye %30 (devir notu bölüm 10). Bütçe net metrajla hesaplanır."),
     ("Fiyat esası", "EUR, Ekim 2026, KDV hariç, Şanlıurfa şantiye teslim, montaj+test+devreye alma dahil (taşeron fiyatı)", ""),
 ]
 for i, r in enumerate(vrows, start=3):
@@ -73,6 +74,7 @@ V.column_dimensions["C"].width = 95
 P_USD, P_TRY, P_HAT, P_ARAC_RFQ, P_ARAC, P_RING_RFQ, P_RING, P_KG = (
     "Varsayimlar!$B$4", "Varsayimlar!$B$5", "Varsayimlar!$B$8", "Varsayimlar!$B$9",
     "Varsayimlar!$B$10", "Varsayimlar!$B$11", "Varsayimlar!$B$12", "Varsayimlar!$B$13")
+P_PAY = "Varsayimlar!$B$21"
 RISK = {"MEKANIK": "Varsayimlar!$B$18", "ELK_AG": "Varsayimlar!$B$19", "HAB": "Varsayimlar!$B$20",
         "ASANSOR": "Varsayimlar!$B$14", "SINYAL": "Varsayimlar!$B$15",
         "KATENER": "Varsayimlar!$B$16", "CER": "Varsayimlar!$B$17"}
@@ -92,6 +94,9 @@ trows = [
     ("Asansör", "TK Elevator (Betül Okay)",
      "12 × (24.000 malzeme + 8.000 işçilik) + 1 × 30.200; anti-vandal CAT-2",
      414200, "EUR", "=D5", 32000, 30200, "Şartnameye uygun kabul; bütçede kullanıldı"),
+    ("Asansör", "Emlift (teklif no 2026/E025, 05.10.2026)",
+     "12 × 1.500.000 TL + 1 × 1.500.000 TL; montaj dahil; teknik föyde antivandal/dış ortam yok, kapı 900×2000; kuyu aydınlatma ve topraklama hariç",
+     19500000, "TRY", f"=D{{i}}/{P_TRY}", f"=1500000/{P_TRY}", f"=1500000/{P_TRY}", "Sapmalı (şartname dışı detaylar); medyana dahil"),
     ("Sinyalizasyon + AVLS", "Point Link / CASCO (Çin)",
      "Sıra 228–235; DAP şantiye; KDV ve gümrük hariç; AI asistan imzalı yanıt",
      7281784, "EUR", "=D6", None, None,
@@ -111,6 +116,9 @@ trows = [
     ("Cer gücü", "Referans – sistem bazlı (TM başı)",
      "İzmir Siemens, Bursa Haluk/MET, Kocaeli; ort. 672.038 €/TM × 5 (OG+trafo+redresör+DC; kablo hariç)",
      3360189, "EUR", "=D11", None, None, "EM_Butce_Tahmini Sistem sayfası"),
+    ("AVLS (sıra 233–235)", "Mukan Rail (bütçesel, 06.10.2026)",
+     "233: 15 araç × 21.300 = 319.500; 234 merkez 314.500; 235 tasarım 154.000; 180 gün geçerli; kabin/UPS/omurga, işletme SIM hariç",
+     788000, "EUR", "=D", None, None, "Bütçeye işlendi (233 araç başı × 14 araç)"),
     ("Haberleşme", "Referans – kalem bazlı (fiyatı bulunan 54/86 ana kalem) + sistem bazlı ort. 1.121.764",
      "İletim, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, turnike",
      1721471, "EUR", "=D13", None, None, "EM_Butce_Tahmini Ozet sayfası (kalem bazlı)"),
@@ -120,23 +128,59 @@ trows = [
 ]
 for i, r in enumerate(trows, start=4):
     for j, v in enumerate(r, 1):
-        if j == 6 and isinstance(v, str) and v.startswith("=D"):
-            v = f"=D{i}"
+        if j == 6:
+            v = f'=D{i}/IF(E{i}="USD",{P_USD},IF(E{i}="TRY",{P_TRY},1))'
         c = T.cell(row=i, column=j, value=v); c.border = BOX; c.alignment = WRAP
         if j in (4, 6, 7, 8): c.number_format = EUR
-T["A15"] = "Bekleyen / bütçe fiyatı istenen: Edoux, Adakon-Orona (asansör); Contirail/Mukan Rail (AVLS), Hanning & Kahl, Pintsch, INIT, Frauscher (sinyal); Mitaş, DeSA/Arthur Flury, Erbakır, Kambeton, La Farga, Galland, Revenga (katener); Best Transformer, Alfanar, Savronik, Alstom, Met-Eng, Tema (enerji)."
-T["A15"].alignment = WRAP
-T.merge_cells("A15:I15"); T.row_dimensions[15].height = 45
+T["A17"] = "Bekleyen / bütçe fiyatı istenen: Edoux, Adakon-Orona (asansör); Contirail/Mukan Rail (AVLS), Hanning & Kahl, Pintsch, INIT, Frauscher (sinyal); Mitaş, DeSA/Arthur Flury, Erbakır, Kambeton, La Farga, Galland, Revenga (katener); Best Transformer, Alfanar, Savronik, Alstom, Met-Eng, Tema (enerji)."
+T["A17"].alignment = WRAP
+T.merge_cells("A17:I17"); T.row_dimensions[17].height = 45
 for col, w in zip("ABCDEFGHI", (18, 34, 60, 15, 10, 15, 14, 14, 48)):
     T.column_dimensions[col].width = w
 
 # ---------------------------------------------------------------- Disiplin sayfaları
 HDR = ["Sıra", "Poz", "Kalem / Alt kalem", "Birim", "Miktar (RFQ)", "Miktar (idare cevabına göre)",
        "Birim fiyat EUR (montaj dahil)", "Tutar EUR", "Fiyat kaynağı", "Düzeltme / not"]
-WID = [7, 9, 70, 8, 13, 15, 15, 15, 34, 48]
+HDR = HDR + ["Metraj payı (RFQ şişirme)", "Net miktar (bütçe)"]
+WID = [7, 9, 70, 8, 13, 15, 15, 15, 34, 48, 14, 14]
+
+import unicodedata
+def _norm(t):
+    t = (t or "").lower().replace("ı", "i")
+    return "".join(c for c in unicodedata.normalize("NFKD", t) if not unicodedata.combining(c))
+DAGITIK = ["boru", "kablo", "tava", "merdiven", "kanal", "armatur", "projektor", "priz", "anahtar", "dedektor",
+           "buton", "kamera", "hoparlor", "ic unite", "suzgec", "menfez", "sprinkler", "sensor", "flasor", "siren",
+           "linye", "spot", "downlight", "acil aydinlatma", "yonlendirme", "kelepce", "iletken", "serit", "fiber",
+           "cat6", "patch", "difuzor", "izgara", "radyator", "vana", "nozul", "hortum", "kontak", "okuyucu", "ekran"]
+HARIC = ["tasarim", "test", "devreye", "proje", "pano", "santral", "pompa", "kompresor", "trafo", "ups", "sunucu",
+         "kazi", "dolgu", "beton", "kaplama", "egitim", "yazilim", "lisans"]
+NO_PAY_SIRA = {"170", "171", "319", "320", "222", "223", "224", "225", "226"}
 
 
-def sheet(name, title, groups):
+def pay_sinifi(kalem, birim, sira, mode):
+    """RFQ'daki metraj payı: (etiket, bölen)."""
+    if mode is None or sira in NO_PAY_SIRA:
+        return "-", 1
+    k, b = _norm(kalem), _norm(birim).strip()
+    if any(h in k for h in HARIC):
+        return ("fire %10", 1.10) if b == "m" and mode == "SK" else ("-", 1)
+    dag = mode == "MEP" and any(d in k for d in DAGITIK)
+    if b == "m":
+        return ("fire+%30", 1.43) if dag else ("fire %10", 1.10)
+    if dag and b in ("adet", "ad", "takim", "m2", "m²"):
+        return ("%30", 1.30)
+    return "-", 1
+
+
+import csv as _csv, os as _os
+REVIZE = {}
+_rp = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "veri", "revize.csv")
+if _os.path.exists(_rp):
+    for _r in _csv.DictReader(open(_rp, encoding="utf-8")):
+        REVIZE[(_r["sayfa"], _r["kalem"].strip())] = _r
+
+
+def sheet(name, title, groups, mode=None):
     """groups: list of (sira, poz, baslik, items); item = (kalem, birim, q_rfq, q_corr, bf, kaynak, not)"""
     ws = wb.create_sheet(name)
     ws["A1"] = title; ws["A1"].font = Font(bold=True, size=12)
@@ -144,7 +188,7 @@ def sheet(name, title, groups):
                 "Turuncu miktar: idare cevabı (05.10.2026) ile RFQ'dan farklılaşan kalem. "
                 "Kaynak kodları: REF = EM_Butce_Tahmini referans BF (geçmiş teklifler, HICP ile Ağu-2026); "
                 "TEKLİF = 2026 firma teklifi; TAHMİN = mühendislik tahmini (referans yok).")
-    ws["A2"].alignment = WRAP; ws.merge_cells("A2:J2"); ws.row_dimensions[2].height = 42
+    ws["A2"].alignment = WRAP; ws.merge_cells("A2:L2"); ws.row_dimensions[2].height = 42
     for j, h in enumerate(HDR, 1):
         c = ws.cell(row=4, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
     for j, w in enumerate(WID, 1):
@@ -157,12 +201,17 @@ def sheet(name, title, groups):
         mr = r
         for j, v in enumerate([sira, poz, baslik], 1):
             ws.cell(row=mr, column=j, value=v)
-        for j in range(1, 11):
+        for j in range(1, 13):
             ws.cell(row=mr, column=j).fill = FILL_MAIN; ws.cell(row=mr, column=j).font = BOLD
             ws.cell(row=mr, column=j).border = BOX
         r += 1
         first = r
         for kalem, birim, q_rfq, q_corr, bf, kaynak, notu in items:
+            rv = REVIZE.get((name, kalem.strip()))
+            if rv and rv["bf_yeni"] not in ("", None):
+                if abs(float(rv["bf_yeni"]) - float(rv["bf_eski"] or 0)) > 0.005:
+                    notu = (notu + " | " if notu else "") + f"Önceki BF {float(rv['bf_eski']):,.2f}"
+                bf = float(rv["bf_yeni"]); kaynak = rv["kaynak_yeni"] + (f" – {rv['emsal_ozet']}" if rv["emsal_ozet"] else "")
             ws.cell(row=r, column=2, value=poz)
             ws.cell(row=r, column=3, value=kalem).alignment = WRAP
             ws.cell(row=r, column=4, value=birim)
@@ -172,16 +221,19 @@ def sheet(name, title, groups):
             if q_corr is not None and q_corr != q_rfq:
                 c6.fill = FILL_CHG
             c7 = ws.cell(row=r, column=7, value=bf); c7.number_format = EUR2; c7.fill = FILL_IN
-            ws.cell(row=r, column=8, value=f"=F{r}*G{r}").number_format = EUR
+            etk, bol = pay_sinifi(kalem, birim, sira, mode)
+            ws.cell(row=r, column=11, value=etk)
+            ws.cell(row=r, column=12, value=f"=F{r}/IF({P_PAY}=1,{bol},1)" if bol != 1 else f"=F{r}").number_format = QTY
+            ws.cell(row=r, column=8, value=f"=L{r}*G{r}").number_format = EUR
             ws.cell(row=r, column=9, value=kaynak).alignment = WRAP
             ws.cell(row=r, column=10, value=notu).alignment = WRAP
-            for j in range(1, 11):
+            for j in range(1, 13):
                 ws.cell(row=r, column=j).border = BOX
             r += 1
         last = r - 1
         ws.cell(row=mr, column=8, value=f"=SUM(H{first}:H{last})").number_format = EUR
         ws.cell(row=mr, column=5, value="RFQ tutarı →")
-        ws.cell(row=mr, column=6, value=f"=SUMPRODUCT(E{first}:E{last},G{first}:G{last})").number_format = EUR
+        ws.cell(row=mr, column=6, value=f"=SUMPRODUCT(E{first}:E{last},G{first}:G{last})").number_format = EUR  # RFQ metrajı, düzeltmesiz
         main_cells.append(f"H{mr}")
         rfq_terms.append(f"F{mr}")
     r += 1
@@ -201,18 +253,18 @@ H = P_HAT          # hat boyu oranı
 NA = P_ARAC        # araç sayısı (idare)
 
 # ================================================================ ASANSÖR
-avg1000 = "=AVERAGE(Teklifler!$G$4,Teklifler!$G$5)"
-avg800 = "=AVERAGE(Teklifler!$H$4,Teklifler!$H$5)"
+avg1000 = "=MEDIAN(Teklifler!$G$4:$G$6)"
+avg800 = "=MEDIAN(Teklifler!$H$4:$H$6)"
 asansor = [
     ("364", "5010.A", "2 Duraklı 13 Kişilik Asansör (12 adet – 4 üst geçit × 3)", [
         ("Asansör 1000 kg, 2 durak, MRL dişlisiz, VVVF, 1 m/s, cam+paslanmaz kabin – S09 Hızmalı Köprüsü", "adet", 3, None, avg1000,
-         "TEKLİF ort. (Schindler, TK Elevator)", "Bakım hariç; yeşil etiket, eğitim dahil"),
-        ("Asansör 1000 kg – S10 Balıklıgöl", "adet", 3, None, avg1000, "TEKLİF ort.", ""),
-        ("Asansör 1000 kg – S11 Eyyüp Peygamber", "adet", 3, None, avg1000, "TEKLİF ort.", ""),
-        ("Asansör 1000 kg – S12 Rasathane", "adet", 3, None, avg1000, "TEKLİF ort.", ""),
+         "TEKLİF medyanı (Schindler, TK, Emlift)", "Bakım hariç; yeşil etiket, eğitim dahil"),
+        ("Asansör 1000 kg – S10 Balıklıgöl", "adet", 3, None, avg1000, "TEKLİF medyanı", ""),
+        ("Asansör 1000 kg – S11 Eyyüp Peygamber", "adet", 3, None, avg1000, "TEKLİF medyanı", ""),
+        ("Asansör 1000 kg – S12 Rasathane", "adet", 3, None, avg1000, "TEKLİF medyanı", ""),
     ]),
     ("365", "5010.B", "2 Duraklı 10 Kişilik 800 kg Asansör (D01 idari bina)", [
-        ("Asansör 800 kg, 2 durak (zemin/1. kat), MRL, VVVF, 1 m/s – D01", "adet", 1, None, avg800, "TEKLİF ort.", ""),
+        ("Asansör 800 kg, 2 durak (zemin/1. kat), MRL, VVVF, 1 m/s – D01", "adet", 1, None, avg800, "TEKLİF medyanı", ""),
     ]),
 ]
 ws_as, AS_TOT, AS_RFQ, AS_MAIN = sheet("Asansor", "3 ASANSÖR – Sıra 364–365 (13 asansör)", asansor)
@@ -267,7 +319,7 @@ sinyal = [
         ("Test, devreye alma, entegre test, 15 gün test işletmesi – hat boyu", "set", 1, None, 40669, "REF (5 ref)", ""),
     ]),
     ("230", "3001.B", "Depo Sahası ve Tesisleri Sinyalizasyon Sistemi", [
-        ("Elektrikli makas motoru – depo (IP67, el kranklı, uç konum dedektörlü)", "takım", 20, 40, 15000,
+        ("Elektrikli makas motoru – depo (IP67, el kranklı, uç konum dedektörlü)", "takım", 20, 40, 12000,
          "REF (H&K HWE 14.713, CONTEC 15.090)", "İdare soru 4: depo makaslarının tamamı motorlu (+20)"),
         ("Makas motoru tahrik/dedeksiyon çubuk seti + dil kilidi – depo", "takım", 20, 40, 2969, "REF", "Motor adedine bağlı"),
         ("Manuel makas hareket mekanizması – depo", "takım", 20, 0, 5541, "REF (2 ref)", "İdare soru 4: manuel yok"),
@@ -313,25 +365,18 @@ sinyal = [
         ("Mevcut depo kontrol merkezi entegrasyonu – uyarlama ve lisans", "set", 1, 0, 60000, "TAHMİN", "İdare soru 17: mevcut sistem yok"),
     ]),
     ("233", "3002", "Araç Takip Sistemi (AVLS) – araç üstü ve saha", [
-        ("Araç üstü AVLS bilgisayarı (EN 50155, 48 kanal GPS, LTE, odometri)", "adet", 15, f"={NA}", 3500, "TAHMİN", "14 araç"),
-        ("Entegre GSM/GPS çatı anteni + kablosu", "adet", 15, f"={NA}", 400, "TAHMİN", "14 araç"),
-        ("Sürücü HMI terminali – her kabine 1", "adet", 30, f"=2*{NA}", 1500, "TAHMİN", "14 araç"),
-        ("Araç içi arayüz (odometri, PIS/anons, sinyal paneli), kablaj, montaj", "set", 15, f"={NA}", 1500, "TAHMİN", "14 araç"),
-        ("M2M data SIM / APN aktivasyonu", "adet", 15, f"={NA}", 100, "TAHMİN", "14 araç"),
-        ("Depo veri indirme kablosuz erişim noktası", "adet", 2, None, 2500, "TAHMİN", ""),
-        ("Hat boyu lup konum verisinin AVLS'ye aktarımı", "set", 1, None, 10000, "TAHMİN", ""),
-        ("Kurulum, araç bazlı test ve devreye alma", "set", 1, None, 25000, "TAHMİN", ""),
+        ("AVLS araç üstü + saha (araç bilgisayarı, anten, 2 sürücü HMI, araç arayüzü, SIM, depo AP, lup aktarımı, kurulum/test) – araç başı",
+         "araç", 15, f"={NA}", 21300, "TEKLİF (Mukan Rail, bütçesel 06.10.2026: 15 × 21.300)", "İdare soru 2: 14 araç"),
     ]),
     ("234", "3003", "Tramvay Araç Takip Sistemi Merkezi Donanımı ve Yazılımı", [
-        ("AVLS merkez paketi: yedekli sunucu, NAS, operatör PC, 65\" duvar monitörü, VPN router/firewall, LAN, merkezi yazılım+lisans, belediye AVLS entegrasyonu, kurulum/test/eğitim",
-         "set", 1, None, 136568, "REF (H&K İzmir 136.568; Kocaeli 212.046)", "Mevcut belediye AVLS entegrasyonu dahil"),
+        ("AVLS merkez: yedekli sunucu, NAS, operatör PC, duvar monitörü, router/firewall, LAN, merkezi yazılım + lisans (172.500), belediye AVLS arayüzü, kurulum/test/eğitim",
+         "set", 1, None, 314500, "TEKLİF (Mukan Rail)", "Ref. H&K İzmir 136.568; 19\" kabin/UPS/omurga hariç"),
     ]),
     ("235", "3004", "Araç Takip Sistemi Tasarımı", [
-        ("AVLS tasarımı: mimari, konumlandırma (GPS+odometri+lup), merkez ekranları, siber güvenlik, uygulama projeleri",
-         "set", 1, None, 60000, "TAHMİN", ""),
+        ("AVLS tasarımı: mimari, konumlandırma, merkez ekranları, siber güvenlik, uygulama projeleri", "set", 1, None, 154000, "TEKLİF (Mukan Rail)", ""),
     ]),
 ]
-ws_sn, SN_TOT, SN_RFQ, SN_MAIN = sheet("Sinyal", "4 SİNYALİZASYON VE ARAÇ TAKİP (AVLS) – Sıra 228–235", sinyal)
+ws_sn, SN_TOT, SN_RFQ, SN_MAIN = sheet("Sinyal", "4 SİNYALİZASYON VE ARAÇ TAKİP (AVLS) – Sıra 228–235", sinyal, "SK")
 
 # ================================================================ KATENER
 direk = lambda kod, ad, n, kg, bulon: (kod, ad, [
@@ -423,19 +468,19 @@ katener = [
 ]
 # direk() returns (sira, title, items) – add poz
 katener = katener[:2] + [(s, p, t, it) for (s, t, it), p in zip(katener[2:], ("2012.C", "2012.D", "2012.E", "2012.G", "2012.F"))]
-ws_kt, KT_TOT, KT_RFQ, KT_MAIN = sheet("Katener", "5 ELEKTRİFİKASYON (B) – KATENER – Sıra 220–226", katener)
+ws_kt, KT_TOT, KT_RFQ, KT_MAIN = sheet("Katener", "5 ELEKTRİFİKASYON (B) – KATENER – Sıra 220–226", katener, "SK")
 
 # ================================================================ CER GÜCÜ / ENERJİ TEMİNİ
 RING = f"{P_RING}/{P_RING_RFQ}"
 def tm(n, cab_ac, cab_dc, cab_bag, cab_vld, pabuc):
     return [
-        ("Cer trafosu 2750 kVA 34,5/0,6-0,6 kV Dy5-Dd0, dökme reçine, EN 50329", "adet", n, None, 100000,
+        ("Cer trafosu 2750 kVA 34,5/0,6-0,6 kV Dy5-Dd0, dökme reçine, EN 50329", "adet", n, None, 85000,
          "REF (3300 kVA: Aktif 97.981, ABB Al 93.263, ABB Cu/Cu 151.850)", "Best Transformer teklifi bekleniyor"),
         ("Trafo sıcaklık rölesi + sekonder toprak kaçağı koruması + izole kaide", "takım", n, None, 3000, "TAHMİN", ""),
         ("Doğrultucu 12 darbeli 2500 kW 750 V DC, Class VI", "adet", n, None, 48000, "REF (ABB 37.927–49.610; Haluk 1,2 MW 35.975)", ""),
         ("Trafo–doğrultucu AC kabloları 1×300 Cu 1,8/3 kV", "m", cab_ac, None, 45, "TAHMİN", ""),
         ("DC giriş (incoming) hücresi 6300 A", "adet", n, None, 36500, "REF (Aktif 36.216–36.824)", ""),
-        ("DC fider hücresi HSCB 3600 A", "adet", 4 * n, None, 40000, "REF (Haluk 44.641, MET 43.769, ABB 38.797, Aktif 37.456)", ""),
+        ("DC fider hücresi HSCB 3600 A", "adet", 4 * n, None, 36000, "REF (Haluk 44.641, MET 43.769, ABB 38.797, Aktif 37.456)", ""),
         ("Negatif hücre (negatif bara, şönt, ayırıcı)", "adet", n, None, 25000, "REF (Aktif 18.852–27.906, ABB 33.751)", ""),
         ("Ray–toprak gerilim sınırlayıcı VLD panosu", "adet", n, None, 20000, "REF (Haluk 13.818, Aktif 16.824–20.961)", ""),
         ("Hat ayırıcı panosu (4 fider + 2 by-pass ayırıcı 4000 A)", "adet", n, None, 45000, "TAHMİN (Aktif ayırıcı hücresi 36.123)", ""),
@@ -456,7 +501,7 @@ cer = [
         ("DEDAŞ/TEİAŞ bağlantı projesi onayı ve kurum masrafları", "set", 1, None, 40000, "TAHMİN", ""),
     ]),
     ("170", "2002.A", "OG Ring Şebekesi 3×1×240/25 mm² 20,3/35 kV Al XLPE", [
-        ("YAXC7V-R (NA2XSY) 1×240/25 Al XLPE LSHF tek damar kablo – çekme dahil", "m", 21000, f"=3*{P_RING}", 14,
+        ("YAXC7V-R (NA2XSY) 1×240/25 Al XLPE LSHF tek damar kablo – çekme dahil", "m", 21000, f"=3*{P_RING}", 11,
          "REF (Prysmian 1×400 15 €/m; Haluk 1×150 11 €/m)", "İdare soru 21: güzergah 7.964 m"),
         ("36 kV 1×240 kablo başlığı", "adet", 24, None, 450, "TAHMİN", ""),
         ("36 kV 1×240 ek mufu", "adet", 33, f"=ROUND(33*{RING},0)", 400, "TAHMİN", "Güzergah oranında"),
@@ -466,7 +511,7 @@ cer = [
         ("OG kablo saha testleri (VLF, kılıf)", "set", 4, None, 3000, "TAHMİN", ""),
     ]),
     ("171", "2002.B", "TEİAŞ Bağlantısı 2×4×(1×400+35) mm² 20,3/35 kV – transe dahil", [
-        ("YAXC7V-R 1×400/35 Al XLPE zırhlı LSHF – çekme dahil", "m", 35424, None, 20, "REF (Prysmian 15 €/m malzeme) + çekme", "İdare: 8.856 m × 4 kablo – uyumlu"),
+        ("YAXC7V-R 1×400/35 Al XLPE zırhlı LSHF – çekme dahil", "m", 35424, None, 16, "REF (Prysmian 15 €/m malzeme) + çekme", "İdare: 8.856 m × 4 kablo – uyumlu"),
         ("36 kV 1×400 kablo başlığı", "adet", 16, None, 600, "TAHMİN", ""),
         ("36 kV 1×400 ek mufu", "adet", 68, None, 550, "TAHMİN", ""),
         ("Kablo kanalı kazısı 0,80×1,40 m", "m³", 9919, None, 8, "TAHMİN", ""),
@@ -495,16 +540,16 @@ cer = [
         ("Haberleşme kabloları, harmonik ölçümleri, devreye alma, DEDAŞ raporu", "set", 1, None, 11500, "TAHMİN", ""),
     ]),
     ("173", "2004.A", "Ring Giriş/Çıkış 34,5 kV Şalt Panosu (12 hücre)", [
-        ("36 kV 1250 A 25 kA SF6 kesicili hücre + AT + sayısal röle + ölçü + kilitleme + FAT/SAT", "adet", 12, None, 32000,
+        ("36 kV 1250 A 25 kA SF6 kesicili hücre + AT + sayısal röle + ölçü + kilitleme + FAT/SAT", "adet", 12, None, 26000,
          "REF (Haluk LSC2B ring hücresi 30.518) + röle/test", ""),
     ]),
     ("174", "2004.B", "Cer Trafo Besleme 34,5 kV Şalt Panosu (5 hücre)", [
-        ("36 kV kesicili trafo koruma hücresi + röle + analizör + DC kilitleme", "adet", 5, None, 29000, "REF (Haluk 26.130) + pay", ""),
+        ("36 kV kesicili trafo koruma hücresi + röle + analizör + DC kilitleme", "adet", 5, None, 24000, "REF (Haluk 26.130) + pay", ""),
         ("OG bağlantı kablosu 3(1×95/16) Al – hücre/cer trafosu", "m", 108, None, 25, "TAHMİN", ""),
         ("36 kV 1×95 kablo başlığı (büzüşmeli + geçmeli)", "adet", 30, None, 350, "TAHMİN", ""),
     ]),
     ("175", "2004.C", "İç İhtiyaç Trafo Besleme 34,5 kV Şalt Panosu (6 hücre)", [
-        ("36 kV kesicili iç ihtiyaç trafo fider hücresi + röle", "adet", 6, None, 27000, "REF (Haluk 26.130) + pay", ""),
+        ("36 kV kesicili iç ihtiyaç trafo fider hücresi + röle", "adet", 6, None, 23000, "REF (Haluk 26.130) + pay", ""),
         ("OG bağlantı kablosu 3(1×95/16) Al", "m", 129, None, 25, "TAHMİN", ""),
         ("36 kV 1×95 kablo başlığı", "adet", 36, None, 350, "TAHMİN", ""),
     ]),
@@ -563,7 +608,7 @@ cer = [
         ("N2XH 1×240 Cu + pabuç + bara/mesnet + merdiven + kelepçe + test", "set", 1, None, 44000, "TAHMİN (ref. busbar 15.151–55.516)", ""),
     ]),
 ]
-ws_cg, CG_TOT, CG_RFQ, CG_MAIN = sheet("Cer_Guc", "5 ELEKTRİFİKASYON (A) – GÜÇ TEMİNİ / CER GÜCÜ / ENERJİ TEMİNİ (5 TM, OG ring, TEİAŞ bağlantısı)", cer)
+ws_cg, CG_TOT, CG_RFQ, CG_MAIN = sheet("Cer_Guc", "5 ELEKTRİFİKASYON (A) – GÜÇ TEMİNİ / CER GÜCÜ / ENERJİ TEMİNİ (5 TM, OG ring, TEİAŞ bağlantısı)", cer, "MEP")
 
 
 # ================================================================ MEKANİK / ELEKTRİK AG / HABERLEŞME (CSV'den)
@@ -604,11 +649,43 @@ def groups_from_csv(key):
 
 
 mekanik = groups_from_csv("mekanik")
-ws_mk, MK_TOT, MK_RFQ, MK_MAIN = sheet("Mekanik", "2 MEKANİK – Sıra 159–168, 343–363 (HVAC, yangın, drenaj, sıhhi, basınçlı hava)", mekanik)
+ws_mk, MK_TOT, MK_RFQ, MK_MAIN = sheet("Mekanik", "2 MEKANİK – Sıra 159–168, 343–363 (HVAC, yangın, drenaj, sıhhi, basınçlı hava)", mekanik, "MEP")
 elk_ag = groups_from_csv("elektrik")
-ws_ea, EA_TOT, EA_RFQ, EA_MAIN = sheet("Elektrik_AG", "1 ELEKTRİK (A) – AG dağıtım, topraklama, AG kablolar, AG tesisat-aydınlatma, yangın ihbar", elk_ag)
+ws_ea, EA_TOT, EA_RFQ, EA_MAIN = sheet("Elektrik_AG", "1 ELEKTRİK (A) – AG dağıtım, topraklama, AG kablolar, AG tesisat-aydınlatma, yangın ihbar", elk_ag, "MEP")
 hab = groups_from_csv("haberlesme")
-ws_hb, HB_TOT, HB_RFQ, HB_MAIN = sheet("Haberlesme", "1 ELEKTRİK (B) – Kontrol ve haberleşme (iletim, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, ücret toplama)", hab)
+ws_hb, HB_TOT, HB_RFQ, HB_MAIN = sheet("Haberlesme", "1 ELEKTRİK (B) – Kontrol ve haberleşme (iletim, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, ücret toplama)", hab, "MEP")
+
+# ---------------------------------------------------------------- Teklif durumu (Gmail)
+G = wb.create_sheet("Teklif_Durumu")
+G["A1"] = "TEDARİKÇİ DÖNÜŞLERİ – serhat@mepcenter.com.tr Gmail taraması (29.09–06.10.2026) ve okunan teklif ekleri"
+G["A1"].font = Font(bold=True, size=12)
+_gp = os.path.join(MEP_DIR, "gmail_teklif_durumu.csv")
+_cols = ["tarih", "firma", "disiplin", "durum", "kapsam_kalemler", "ekler", "not"]
+for j, h in enumerate(["Tarih", "Firma", "Disiplin", "Durum", "Kapsam", "Ekler", "Not"], 1):
+    c = G.cell(row=3, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX
+_i = 4
+for _r in sorted(csv.DictReader(open(_gp, encoding="utf-8-sig")), key=lambda x: (x["disiplin"], x["durum"])):
+    for j, k in enumerate(_cols, 1):
+        c = G.cell(row=_i, column=j, value=_r[k]); c.alignment = WRAP; c.border = BOX
+    _i += 1
+_i += 2
+G.cell(row=_i, column=1, value="EKLERDEN OKUNAN TEKLİF KALEMLERİ").font = Font(bold=True, size=12)
+_i += 1
+_kc = ["firma", "tarih", "disiplin", "sira", "poz", "kalem", "birim", "miktar", "malzeme_bf", "iscilik_bf", "para_birimi", "toplam", "not"]
+for j, h in enumerate(_kc, 1):
+    c = G.cell(row=_i, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX
+_i += 1
+for _r in csv.DictReader(open(os.path.join(MEP_DIR, "gelen_teklif_kalemleri.csv"), encoding="utf-8-sig")):
+    for j, k in enumerate(_kc, 1):
+        v = _r.get(k, "")
+        try:
+            v = float(v) if k in ("miktar", "malzeme_bf", "iscilik_bf", "toplam") and v not in ("", None) else v
+        except ValueError:
+            pass
+        c = G.cell(row=_i, column=j, value=v); c.alignment = WRAP; c.border = BOX
+    _i += 1
+for col, w in zip("ABCDEFGHIJKLM", (11, 30, 12, 14, 40, 40, 50, 9, 12, 12, 9, 14, 40)):
+    G.column_dimensions[col].width = w
 
 # ---------------------------------------------------------------- İdare düzeltmeleri
 D = wb.create_sheet("Idare_Duzeltme")
@@ -663,17 +740,17 @@ sub = [  # (disiplin, alt kalem, sıralar, tutar, risk, rfq, kıyas, kıyas kayn
     ("1 ELEKTRİK", "AG dağıtım, AG kablolar, iç tesisat-aydınlatma, UPS, yangın ihbar, topraklama", "180–186, 190–196, 198–199, 211–218, 322–342",
      EA_TOT, RISK['ELK_AG'], EA_RFQ, None, "", "İstasyon/depo ADP, AG besleme kabloları, aydınlatma, UPS'ler, yangın ihbar"),
     ("1 ELEKTRİK", "Kontrol ve haberleşme (fiber, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, turnike)", "236–321",
-     HB_TOT, RISK['HAB'], HB_RFQ, "=Teklifler!F12", "Referans kalem bazlı", "ON Elektronik (saat+YBS) ve Teknomaks (CCTV) teklifleri ekte/bekleniyor"),
+     HB_TOT, RISK['HAB'], HB_RFQ, "=Teklifler!F14", "Referans kalem bazlı", "ON Elektronik (saat+YBS) ve Teknomaks (CCTV) teklifleri ekte/bekleniyor"),
     ("2 MEKANİK", "Isıtma-soğutma, havalandırma, yangın söndürme, drenaj, sıhhi tesisat, basınçlı hava", "159–168, 343–363",
      MK_TOT, RISK['MEKANIK'], MK_RFQ, None, "", "Asansör hariç (ayrı disiplin)"),
     ("3 ASANSÖR", "13 asansör (12 üst geçit 1000 kg + 1 idari bina 800 kg)", "364–365",
-     AS_TOT, RISK['ASANSOR'], AS_RFQ, "=Teklifler!F5", "En düşük teklif (TK Elevator)", "Schindler + TK ortalaması; Emlift teklifi ekte (okunamadı)"),
+     AS_TOT, RISK['ASANSOR'], AS_RFQ, "=MIN(Teklifler!F4:F6)", "En düşük teklif (Emlift, sapmalı)", "3 teklifin medyanı (Schindler 480.000 USD, TK 414.200 EUR, Emlift 19,5 M TL); bakım hariç"),
     ("4 SİNYALİZASYON", "Hat boyu + depo sinyalizasyon, araç üstü, merkez, araç takip (AVLS)", "228–235",
-     SN_TOT, RISK['SINYAL'], SN_RFQ, "=Teklifler!F7", "Sistem bazlı ref. (makas başı)", "Point Link 7,28 M€ kıyas dışı; Mukan AVLS teklifi ekte"),
+     SN_TOT, RISK['SINYAL'], SN_RFQ, "=Teklifler!F8", "Sistem bazlı ref. (makas başı)", "AVLS 233–235 Mukan Rail teklifiyle; Point Link 7,28 M€ kıyas dışı (Gmail'de bulunamadı)"),
     ("5 ELEKTRİFİKASYON", "Güç temini ve cer gücü (OG ring, TEİAŞ bağlantısı, 34,5 kV hücreler, 5 cer TM, kaçak akım)", "169–179, 187–189, 197, 200–210, 219, 227",
-     CG_TOT, RISK['CER'], CG_RFQ, "=Teklifler!F11", "Sistem bazlı ref. (5 TM; yalnız OG+trafo+DC)", ""),
+     CG_TOT, RISK['CER'], CG_RFQ, "=Teklifler!F12", "Sistem bazlı ref. (5 TM; yalnız OG+trafo+DC)", ""),
     ("5 ELEKTRİFİKASYON", "Katener (hat boyu, depo, direkler)", "220–226",
-     KT_TOT, RISK['KATENER'], KT_RFQ, "=Teklifler!F9", "Sistem bazlı ref. (km başı)", "Direk temelleri inşaatta; ana hatta lente yok"),
+     KT_TOT, RISK['KATENER'], KT_RFQ, "=Teklifler!F10", "Sistem bazlı ref. (km başı)", "Direk temelleri inşaatta; ana hatta lente yok"),
 ]
 DIS = ["1 ELEKTRİK", "2 MEKANİK", "3 ASANSÖR", "4 SİNYALİZASYON", "5 ELEKTRİFİKASYON"]
 oh = ["Disiplin", "Kapsam", "Kalem bazlı bütçe EUR", "Risk payı EUR", "Önerilen bütçe EUR",
