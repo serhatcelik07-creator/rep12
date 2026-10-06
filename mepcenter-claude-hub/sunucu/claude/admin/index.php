@@ -94,7 +94,11 @@ if (empty($_SESSION['admin'])) {
       <label>Kullanıcı adı <input name="user" autocomplete="username" required autofocus></label>
       <label>Şifre <input name="pass" type="password" autocomplete="current-password" required></label>
       <button>Giriş</button>
-    </form></main></body></html><?php
+    </form>
+    <p class="meta">Kullanıcı adı: <b>claude</b>. Şifrenizi unuttuysanız: cPanel Dosya Yöneticisi'nde
+      <b>public_html/claude/data/install.lock</b> dosyasını silin, sonra <a href="../install.php">bu sayfadan</a> yeni şifre belirleyin
+      (kayıtlar silinmez, giriş kilidi de kalkar).</p>
+    </main></body></html><?php
     exit;
 }
 
