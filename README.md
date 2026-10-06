@@ -24,7 +24,7 @@ Oyunda dikenler, çukurlar, içinden zıplanabilen platformlar ve kontrol noktal
 | P2 klavye | ← / → | ↑ |
 | P1-P4 gamepad (Xbox kontrolcüsü) | Sol analog / D-Pad | A |
 
-Matematik Savaşı'nda cevap yönle seçilir: P1 W/A/S/D, P2 ok tuşları, P3 I/J/K/L, P4 numpad 8/4/5/6, gamepad'de D-Pad veya sol analog. Oyuncu sayısı menüde sol/sağ ile seçilir.
+Matematik Savaşı'nda cevap yönle seçilir: P1 W/A/S/D, P2 ok tuşları, P3 I/J/K/L, P4 numpad 8/4/5/6, gamepad'de D-Pad veya sol analog. Oyuncu sayısı menüde sol/sağ ile seçilir. Savaş sırasında rakibe hareketli emoji atılır: P1 Q/E/R, P2 , . /, P3 U/O/Y, P4 numpad 7/9/1, gamepad X/Y/B. Ayrıntılar: [docs/matwar.md](docs/matwar.md).
 
 Duraklatmak için Esc veya Start, ana menüye dönmek için (duraklatılmışken) Q, Back veya B.
 

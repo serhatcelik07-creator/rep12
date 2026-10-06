@@ -4,8 +4,12 @@ extends Control
 ## The first correct answer hits every other player for one heart. A wrong answer
 ## costs your own heart and locks you out until the next question.
 ## The last player with hearts left wins.
+## Players can also throw emojis from their equipped pack at their rival.
 
 signal finished(winner: int, hearts: Array)
+signal taunted(from: int, to: int, emoji: String)
+
+const EmojiPacks := preload("res://scripts/emoji_packs.gd")
 
 enum Phase { ASKING, REVEAL, OVER }
 
@@ -26,6 +30,19 @@ const KEY_HINTS := ["W A S D", "Ok tuşları", "I J K L", "Num 8 4 5 6"]
 const PAD_BUTTONS := [JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT]
 const CHOICE_OFFSETS: Array[Vector2] = [Vector2(0, -150), Vector2(330, 0), Vector2(0, 150), Vector2(-330, 0)]
 const CHOICE_SIZE := Vector2(200, 80)
+# Emoji taunt keys per player, one per pack slot.
+const TAUNT_KEYS := [
+	[KEY_Q, KEY_E, KEY_R],
+	[KEY_COMMA, KEY_PERIOD, KEY_SLASH],
+	[KEY_U, KEY_O, KEY_Y],
+	[KEY_KP_7, KEY_KP_9, KEY_KP_1],
+]
+const TAUNT_HINTS := [["Q", "E", "R"], [",", ".", "/"], ["U", "O", "Y"], ["N7", "N9", "N1"]]
+const TAUNT_PAD_BUTTONS := [JOY_BUTTON_X, JOY_BUTTON_Y, JOY_BUTTON_B]
+const TAUNT_COOLDOWN := 2.0
+const TAUNT_TIME := 1.6
+# Share of TAUNT_TIME spent flying; the rest is the hit animation on the rival.
+const TAUNT_FLIGHT_SHARE := 0.7
 
 var player_count := 2
 var colors: Array[Color] = []
@@ -39,19 +56,33 @@ var picks: Array[int] = []
 # Player who answered the current question correctly first, -1 = nobody.
 var hitter := -1
 var rng := RandomNumberGenerator.new()
+# Equipped emojis per player (EmojiPacks.TAUNT_SLOTS each).
+var loadouts: Array = []
+# Thrown emojis: {from, to, emoji, t} with t going 0 -> 1 (flight, then a pop on the rival).
+var taunts: Array = []
 
 var _pads: Array[int] = []
 # Joypad device -> last left stick direction (-1 = centered), so a held stick answers once.
 var _stick_dir := {}
 var _reveal_left := 0.0
+var _taunt_cooldown: Array[float] = []
+# Seconds since start, drives idle animations.
+var _anim_time := 0.0
 
 
-func setup(count: int, player_colors: Array[Color], seed_value: int = 0) -> void:
+## `emoji_packs` holds the equipped pack id per player; missing entries use the free pack.
+func setup(count: int, player_colors: Array[Color], seed_value: int = 0, emoji_packs: Array = []) -> void:
 	player_count = count
 	colors = player_colors
 	hearts.clear()
+	loadouts.clear()
+	_taunt_cooldown.clear()
+	taunts.clear()
 	for i in count:
 		hearts.append(START_HEARTS)
+		var pack_id: String = emoji_packs[i] if i < emoji_packs.size() else EmojiPacks.FREE_PACK
+		loadouts.append(EmojiPacks.loadout(pack_id))
+		_taunt_cooldown.append(0.0)
 	if seed_value != 0:
 		rng.seed = seed_value
 	else:
@@ -168,6 +199,30 @@ func _waiting_count() -> int:
 	return n
 
 
+## Player `player` throws the emoji in `slot` at their rival. Returns false while on cooldown.
+func taunt(player: int, slot: int) -> bool:
+	if phase == Phase.OVER or player < 0 or player >= player_count:
+		return false
+	if slot < 0 or slot >= EmojiPacks.TAUNT_SLOTS or _taunt_cooldown[player] > 0.0:
+		return false
+	var target := taunt_target(player)
+	var emoji: String = loadouts[player][slot]
+	taunts.append({"from": player, "to": target, "emoji": emoji, "t": 0.0})
+	_taunt_cooldown[player] = TAUNT_COOLDOWN
+	taunted.emit(player, target, emoji)
+	queue_redraw()
+	return true
+
+
+## The rival a player's emojis fly at: the other player with the most hearts.
+func taunt_target(player: int) -> int:
+	var target := -1
+	for i in player_count:
+		if i != player and (target == -1 or hearts[i] > hearts[target]):
+			target = i
+	return target
+
+
 func _reveal() -> void:
 	phase = Phase.REVEAL
 	_reveal_left = REVEAL_TIME
@@ -190,6 +245,12 @@ func _finish() -> void:
 
 
 func _process(delta: float) -> void:
+	for i in player_count:
+		_taunt_cooldown[i] = maxf(0.0, _taunt_cooldown[i] - delta)
+	_anim_time += delta
+	for t in taunts:
+		t["t"] += delta / TAUNT_TIME
+	taunts = taunts.filter(func(t: Dictionary) -> bool: return t["t"] < 1.0)
 	match phase:
 		Phase.ASKING:
 			time_left -= delta
@@ -212,10 +273,16 @@ func _input(event: InputEvent) -> void:
 			var dir: int = KEYMAPS[p].find(event.physical_keycode)
 			if dir != -1:
 				answer(p, dir)
+			var slot: int = TAUNT_KEYS[p].find(event.physical_keycode)
+			if slot != -1:
+				taunt(p, slot)
 	elif event is InputEventJoypadButton and event.pressed:
 		var dir: int = PAD_BUTTONS.find(event.button_index)
 		if dir != -1:
 			answer(_pads.find(event.device), dir)
+		var slot: int = TAUNT_PAD_BUTTONS.find(event.button_index)
+		if slot != -1:
+			taunt(_pads.find(event.device), slot)
 	elif event is InputEventJoypadMotion:
 		if event.axis == JOY_AXIS_LEFT_X or event.axis == JOY_AXIS_LEFT_Y:
 			_on_stick(event.device)
@@ -283,7 +350,7 @@ func _draw() -> void:
 
 	var panel_w := w / player_count
 	for p in player_count:
-		var x := panel_w * p
+		var x := panel_w * p + _hit_shake(p)
 		var y := h - 115.0
 		var status: String = KEY_HINTS[p]
 		if p < _pads.size():
@@ -301,3 +368,48 @@ func _draw() -> void:
 			else:
 				draw_arc(pos, 9.0, 0.0, TAU, 20, Color(1, 1, 1, 0.3), 2.0)
 		draw_string(font, Vector2(x, y + 70), status, HORIZONTAL_ALIGNMENT_CENTER, panel_w, 18, dim)
+		# Equipped emojis bob gently; one on cooldown sits still and dimmed.
+		var can_taunt := _taunt_cooldown[p] <= 0.0
+		for slot in EmojiPacks.TAUNT_SLOTS:
+			var slot_x := x + panel_w * 0.5 + (slot - 1) * 70.0
+			var bob := sin(_anim_time * 4.0 + slot * 1.3 + p) * 3.0 if can_taunt else 0.0
+			var tint := Color.WHITE if can_taunt else Color(1, 1, 1, 0.35)
+			draw_string(font, Vector2(slot_x - 35, y + 96), TAUNT_HINTS[p][slot], HORIZONTAL_ALIGNMENT_LEFT, 30, 14, dim)
+			draw_string(font, Vector2(slot_x - 18, y + 98 + bob), loadouts[p][slot], HORIZONTAL_ALIGNMENT_LEFT, 40, 22, tint)
+
+	# Thrown emojis spin along an arc to the rival's panel, then pop on impact.
+	for t in taunts:
+		var progress: float = t["t"]
+		var from := Vector2(panel_w * (t["from"] + 0.5), h - 150.0)
+		var to := Vector2(panel_w * (t["to"] + 0.5), h - 150.0)
+		var pos := to
+		var angle := 0.0
+		var emoji_scale := 1.0
+		var alpha := 1.0
+		if progress < TAUNT_FLIGHT_SHARE:
+			var f := progress / TAUNT_FLIGHT_SHARE
+			var eased := f * f * (3.0 - 2.0 * f)
+			pos = from.lerp(to, eased) + Vector2(0, -sin(f * PI) * 240.0)
+			angle = sin(f * TAU * 2.0) * 0.5
+			emoji_scale = lerpf(0.7, 1.4, f)
+		else:
+			var g := (progress - TAUNT_FLIGHT_SHARE) / (1.0 - TAUNT_FLIGHT_SHARE)
+			# Squash on impact, bounce up big, then fade out.
+			emoji_scale = 1.4 + sin(g * PI) * 0.9
+			pos = to + Vector2(0, -absf(sin(g * PI * 2.0)) * 30.0)
+			alpha = 1.0 - g * g
+			for k in 6:
+				var dir := Vector2.from_angle(k * TAU / 6.0)
+				draw_circle(to + dir * g * 90.0, 6.0 * (1.0 - g), Color(colors[t["from"]], 1.0 - g))
+		draw_set_transform(pos, angle, Vector2(emoji_scale, emoji_scale))
+		draw_string(font, Vector2(-30, 16), t["emoji"], HORIZONTAL_ALIGNMENT_CENTER, 60, 44, Color(1, 1, 1, alpha))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## Sideways shake for a player panel that was just hit by an emoji.
+func _hit_shake(player: int) -> float:
+	for t in taunts:
+		if t["to"] == player and t["t"] >= TAUNT_FLIGHT_SHARE:
+			var g: float = (t["t"] - TAUNT_FLIGHT_SHARE) / (1.0 - TAUNT_FLIGHT_SHARE)
+			return sin(g * 40.0) * 8.0 * (1.0 - g)
+	return 0.0
