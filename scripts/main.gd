@@ -108,7 +108,7 @@ func _refresh_menu() -> void:
 	for i in MENU_ITEMS.size():
 		var item: String = MENU_ITEMS[i]
 		if i == MATH_WAR_ITEM:
-			item += "  [ %d oyuncu ]" % math_war_players
+			item += "  (%d oyuncu)" % math_war_players
 		if i == menu_index:
 			text += "[color=#ffcc33]> %s <[/color]\n" % item
 		else:
