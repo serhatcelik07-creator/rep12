@@ -693,6 +693,50 @@ hab = groups_from_csv("haberlesme")
 ws_hb, HB_TOT, HB_RFQ, HB_MAIN = sheet("Haberlesme", "1 ELEKTRİK (B) – Kontrol ve haberleşme (iletim, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, ücret toplama)", hab, "MEP")
 
 
+
+# ---------------------------------------------------------------- İhale geneli (MEP dışı) – bilgi
+B = wb.create_sheet("Ihale_Geneli_Bilgi")
+B["A1"] = "İHALE GENELİ – MEP DIŞI GELEN TEKLİFLER (bilgi amaçlı; MEP bütçesine dahil değildir)"
+B["A1"].font = Font(bold=True, size=13)
+B["A2"] = ("Tutarlar EUR, KDV hariç. Rayba: demiryolu işleri teklifi beton ve donatı hariç; işlerin bölünmesi halinde birim fiyatlar "
+           "değişebilir; 31.12.2026'ya kadar geçerli. S-LINE: malzeme teklifi, en az 15.000 hat-metre için geçerli, teslim Şanlıurfa, "
+           "%25 avans/%75 teslimde. Not: 'S-LINE kauçuk kapsül' kalemi, demiryolu teklifindeki hat döşeme fiyatının içinde olabilir – "
+           "çift sayım için ayrı alt toplam verilmiştir.")
+B["A2"].alignment = WRAP; B.merge_cells("A2:K2"); B.row_dimensions[2].height = 48
+bh = ["Firma", "Teklif", "Tarih", "No", "Kalem", "Birim", "Miktar", "Malzeme BF €", "İşçilik BF €", "Toplam €", "Not"]
+for j, h in enumerate(bh, 1):
+    c = B.cell(row=4, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+_b = 5; _grp = {}
+for _r in csv.DictReader(open(os.path.join(MEP_DIR, "ihale_geneli_teklifler.csv"), encoding="utf-8")):
+    for j, k in enumerate(["firma", "teklif", "tarih", "no", "kalem", "birim", "miktar", "malzeme_bf", "iscilik_bf", "toplam", "not"], 1):
+        v = _r[k]
+        if k in ("miktar", "malzeme_bf", "iscilik_bf") and v != "":
+            v = float(v)
+        if k == "toplam":
+            v = f"=G{_b}*(H{_b}+N(I{_b}))"
+        c = B.cell(row=_b, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (8, 9, 10): c.number_format = EUR2 if j < 10 else EUR
+    _grp.setdefault(_r["teklif"], []).append(_b)
+    _b += 1
+_b += 1
+B.cell(row=_b, column=5, value="ALT TOPLAMLAR").font = BOLD
+IHALE_GENEL = []
+for t, rows_ in _grp.items():
+    _b += 1
+    B.cell(row=_b, column=5, value=t).font = BOLD
+    c = B.cell(row=_b, column=10, value=f"=SUM(J{rows_[0]}:J{rows_[-1]})"); c.number_format = EUR; c.font = BOLD
+    IHALE_GENEL.append((t, f"'Ihale_Geneli_Bilgi'!$J${_b}"))
+_b += 1
+B.cell(row=_b, column=5, value="TOPLAM (iki teklif birlikte – çift sayım kontrol edilmeli)").font = BOLD
+c = B.cell(row=_b, column=10, value="=" + "+".join(x[1] for x in IHALE_GENEL)); c.number_format = EUR; c.font = BOLD
+for j in (5, 10):
+    B.cell(row=_b, column=j).fill = FILL_TOT
+_b += 2
+B.cell(row=_b, column=1, value="Diğer bilgi: Point Link / CASCO sinyalizasyon teklifi 7.281.784 € (DAP, KDV ve gümrük hariç, dökümsüz) – MEP sinyal bütçesinde kullanılmadı; Teklif_Degerlendirme sayfasında.").alignment = WRAP
+B.merge_cells(start_row=_b, start_column=1, end_row=_b, end_column=11); B.row_dimensions[_b].height = 30
+for col, w in zip("ABCDEFGHIJK", (14, 34, 16, 5, 52, 9, 10, 12, 12, 14, 30)):
+    B.column_dimensions[col].width = w
+
 # ---------------------------------------------------------------- Gelen tekliflerin değerlendirmesi
 E = wb.create_sheet("Teklif_Degerlendirme", 1)
 E["A1"] = "GELEN TEKLİFLERİN DEĞERLENDİRMESİ (06.10.2026 itibarıyla okunabilen teklifler)"
@@ -916,7 +960,17 @@ for col in "KLM":
     c = O[f"{col}{rT}"]; c.value = f"=SUMPRODUCT(C{r0}:C{rT-1},{col}{r0}:{col}{rT-1})/C{rT}"; c.number_format = "0%"; c.font = BOLD
 for j in range(1, 14):
     O.cell(row=rT, column=j).fill = FILL_TOT; O.cell(row=rT, column=j).border = BOX
-rT = rS2 + 1   # aşağıdaki döküm için
+_ib = rS2 + 2
+O.cell(row=_ib, column=1, value="İHALE GENELİ – MEP DIŞI TEKLİFLER (bilgi; MEP toplamına dahil değil)").font = Font(bold=True, size=12)
+for k, (t, ref) in enumerate(IHALE_GENEL):
+    O.cell(row=_ib + 1 + k, column=1, value="Rayba Yapı")
+    O.cell(row=_ib + 1 + k, column=2, value=t)
+    c = O.cell(row=_ib + 1 + k, column=5, value=f"={ref}"); c.number_format = EUR
+    c = O.cell(row=_ib + 1 + k, column=6, value=f"=E{_ib + 1 + k}*{P_USD}"); c.number_format = EUR
+    c = O.cell(row=_ib + 1 + k, column=7, value=f"=E{_ib + 1 + k}*{P_TRY}"); c.number_format = EUR
+    for j in range(1, 8): O.cell(row=_ib + 1 + k, column=j).border = BOX
+O.cell(row=_ib + 1 + len(IHALE_GENEL), column=2, value="Ayrıntı: Ihale_Geneli_Bilgi sayfası (S-LINE kapsülleri hat döşeme fiyatında olabilir – çift sayım kontrolü)")
+rT = _ib + 2 + len(IHALE_GENEL)   # aşağıdaki döküm için
 
 # Ana kalem dökümü
 rB = rT + 3
@@ -958,7 +1012,7 @@ for col, w in zip("ABCDEFGHIJKLM", (24, 48, 18, 16, 18, 16, 18, 10, 18, 18, 30, 
     O.column_dimensions[col].width = w
 O.freeze_panes = "A5"
 
-_order = ["Ozet", "Teklif_Degerlendirme", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
+_order = ["Ozet", "Teklif_Degerlendirme", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
           "Teklifler", "Teklif_Durumu", "Idare_Duzeltme", "Varsayimlar"]
 wb._sheets = [wb[n] for n in _order] + [w for w in wb.worksheets if w.title not in _order]
 _tabs = {"Ozet": "1F4E78", "Teklif_Degerlendirme": "70AD47", "Elektrik_AG": "FFC000", "Haberlesme": "FFC000", "Mekanik": "5B9BD5",
