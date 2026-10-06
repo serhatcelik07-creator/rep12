@@ -70,7 +70,7 @@ def api(r, data=None, params=None, cwd=None, cfg=None, timeout=15, raw=False):
     """Hub API çağrısı. data verilirse POST (JSON), yoksa GET."""
     cfg = cfg or load_config()
     if not cfg.get("token"):
-        raise HubError("Token tanımlı değil. kur.py ile kurulum yapın ya da MEPCENTER_TOKEN ayarlayın.")
+        raise HubError("Bu bilgisayar hub'a kayıtlı değil. kur.py ile kurulum yapın.")
     cwd = project_dir(cwd)
     query = {"r": r}
     query.update({k: v for k, v in (params or {}).items() if v is not None})
@@ -122,3 +122,28 @@ def _ascii_header(value):
         return value
     except UnicodeEncodeError:
         return urllib.parse.quote(value, safe="/\\:|._- ")
+
+
+def register(cfg, user, password, machine, timeout=20):
+    """Panel kullanıcı adı/şifresiyle bu bilgisayarı kaydeder; bağlantı anahtarını döndürür."""
+    url = cfg["url"] + "api/?r=register"
+    body = json.dumps({"user": user, "pass": password, "machine": machine}).encode("utf-8")
+    req = urllib.request.Request(url, data=body, method="POST", headers={
+        "Content-Type": "application/json; charset=utf-8", "Accept": "application/json",
+        "User-Agent": "mepcenter-claude-hub/1.1"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:
+            msg = json.loads(e.read().decode("utf-8")).get("error", str(e))
+        except Exception:
+            msg = str(e)
+        raise HubError(msg)
+    except ssl.SSLError as e:
+        raise HubError(f"SSL hatası: {e}. macOS'ta 'Install Certificates.command' çalıştırın veya 'pip install certifi'.")
+    except (urllib.error.URLError, socket.timeout, OSError, ValueError) as e:
+        raise HubError(f"Hub'a ulaşılamadı ({cfg['url']}): {e}")
+    if not res.get("ok"):
+        raise HubError(res.get("error", "bilinmeyen hata"))
+    return res

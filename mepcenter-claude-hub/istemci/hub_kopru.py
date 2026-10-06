@@ -196,8 +196,7 @@ class Kopru:
             body = "⛔ İş durduruldu ya da zaman aşımına uğradı.\n\n" + body
         elif code != 0 or res.get("is_error"):
             body = "⚠️ Claude hata verdi:\n" + body
-        cost = f", maliyet ${res['total_cost_usd']:.3f}" if isinstance(res.get("total_cost_usd"), (int, float)) else ""
-        self.reply(f"{body[:60000]}\n\n— {self.cfg['machine']} · {took} sn{cost}", to)
+        self.reply(f"{body[:60000]}\n\n— {self.cfg['machine']} · {took} sn", to)
         self.job_text = ""
 
     def _exec(self, cmd):
@@ -206,8 +205,12 @@ class Kopru:
         if os.name == "nt":
             kw["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
         try:
+            # Claude her zaman bu bilgisayarda giriş yapılmış Claude hesabıyla (aboneliğinizle) çalışsın:
+            # ortamda bir API anahtarı tanımlı olsa bile kullanılmaz.
+            env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}
             self.proc = subprocess.Popen(cmd, cwd=self.state["workdir"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                         stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace", **kw)
+                                         stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace",
+                                         env=env, **kw)
             out, err = self.proc.communicate(timeout=int(self.k["timeout_min"]) * 60)
             code = self.proc.returncode
             if code is not None and code < 0:

@@ -1,0 +1,17 @@
+MEPCENTER CLAUDE HUB - BİLGİSAYAR KURULUMU
+
+Mac:      kur.command dosyasına çift tıklayın.
+          (İlk seferde "açılamıyor" derse: dosyaya sağ tıklayın > Aç > Aç)
+Windows:  kur.bat dosyasına çift tıklayın.
+
+Program sırayla şunları sorar (çoğunda Enter'a basmanız yeterli):
+  1. Hub adresi                -> Enter (https://mepcenter.com.tr/claude/)
+  2. Bu bilgisayarın adı       -> Enter ya da istediğiniz bir ad (örn. Mac-Ofis)
+  3. Panel kullanıcı adı       -> Enter (claude)
+  4. Panel şifresi             -> panele girdiğiniz şifre (yazarken görünmez, normal)
+  5. Claude Desktop'a eklensin mi?  -> E
+  6. Köprü ajanı kurulsun mu?       -> E  (panelden bu bilgisayara iş verebilmek için)
+
+Bitince açık Claude Code pencerelerini kapatıp yeniden açın.
+Claude kullanımı her zaman kendi Claude aboneliğinizden düşer; ek ücret veya API anahtarı yoktur.
+Kaldırmak için: terminalde  python3 kur.py --kaldir   (Windows: py kur.py --kaldir)

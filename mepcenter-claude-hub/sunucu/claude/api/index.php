@@ -23,14 +23,22 @@ try {
     if (!ip_allowed()) {
         throw new HubFail('Bu IP adresine izin verilmiyor', 403);
     }
-    $agent = authenticate();
-    $session = touch_session($agent);
-
     $raw = (string)file_get_contents('php://input');
     $body = $raw !== '' ? json_decode($raw, true) : [];
     $args = (is_array($body) ? $body : []) + $_GET;
     unset($args['r'], $args['k']);
     $r = (string)($_GET['r'] ?? 'ping');
+
+    if ($r === 'register') { // Kurulum programı: panel kullanıcı adı/şifresiyle bu bilgisayarı kaydet
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            throw new HubFail('POST gerekli', 405);
+        }
+        out(['ok' => true] + register_machine((string)($args['user'] ?? ''), (string)($args['pass'] ?? ''),
+                                             (string)($args['machine'] ?? '')));
+    }
+
+    $agent = authenticate();
+    $session = touch_session($agent);
 
     if ($r === 'tools') { // Yerel MCP köprüsü araç listesini buradan alır
         out(['ok' => true, 'tools' => hub_tools_list(), 'instructions' => agent_instructions()]);

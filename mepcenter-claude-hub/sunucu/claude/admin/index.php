@@ -69,21 +69,15 @@ if ($p === 'logout') {
 if (empty($_SESSION['admin'])) {
     $err = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        q('DELETE FROM hub_login_attempts WHERE attempted_at < NOW() - INTERVAL 1 DAY');
-        $fails = (int)q('SELECT COUNT(*) FROM hub_login_attempts WHERE ip = ? AND attempted_at > NOW() - INTERVAL 15 MINUTE',
-                        [client_ip()])->fetchColumn();
-        if ($fails >= 5) {
-            $err = 'Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin.';
-        } elseif (hash_equals((string)setting_get('admin_user', 'claude'), (string)($_POST['user'] ?? ''))
-                  && password_verify((string)($_POST['pass'] ?? ''), (string)setting_get('admin_pass_hash', ''))) {
-            session_regenerate_id(true);
-            $_SESSION['admin'] = true;
-            q('DELETE FROM hub_login_attempts WHERE ip = ?', [client_ip()]);
-            redirect('');
-        } else {
-            q('INSERT INTO hub_login_attempts (ip) VALUES (?)', [client_ip()]);
-            usleep(500000);
+        try {
+            if (check_admin_login((string)($_POST['user'] ?? ''), (string)($_POST['pass'] ?? ''))) {
+                session_regenerate_id(true);
+                $_SESSION['admin'] = true;
+                redirect('');
+            }
             $err = 'Kullanıcı adı veya şifre hatalı.';
+        } catch (HubFail $e) {
+            $err = $e->getMessage();
         }
     }
     ?><!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -122,6 +116,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (PDOException $e) {
                 flash('Bu isimde bir ajan zaten var.');
             }
+            redirect('p=agents');
+        case 'web_link': // claude.ai / Cowork bağlayıcısı için hazır adres
+            $tok = new_token();
+            $id = q("SELECT id FROM hub_agents WHERE name = 'claude-web'")->fetchColumn();
+            if ($id) {
+                q('UPDATE hub_agents SET token_hash = ?, token_hint = ?, active = 1 WHERE id = ?', [token_hash($tok), substr($tok, -6), $id]);
+            } else {
+                q("INSERT INTO hub_agents (name, type, token_hash, token_hint, note) VALUES ('claude-web', 'claude', ?, ?, 'claude.ai / Cowork bağlayıcısı')",
+                  [token_hash($tok), substr($tok, -6)]);
+            }
+            $base = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '')
+                  . rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/';
+            $_SESSION['web_link'] = $base . 'mcp/?k=' . $tok;
             redirect('p=agents');
         case 'agent_toggle':
             q('UPDATE hub_agents SET active = 1 - active WHERE id = ?', [(int)$_POST['id']]);
@@ -261,7 +268,7 @@ if ($p === 'download') {
 // ---- Sayfalar --------------------------------------------------------------
 $nav = ['dash' => 'Oturumlar', 'chat' => 'Sohbet', 'projects' => 'Görevler', 'messages' => 'Tüm mesajlar',
         'topics' => 'Kayıtlar', 'files' => 'Dosyalar',
-        'kv' => 'Ortak veri', 'agents' => 'Ajanlar / Token', 'settings' => 'Ayarlar'];
+        'kv' => 'Ortak veri', 'agents' => 'Bilgisayarlar', 'settings' => 'Ayarlar'];
 $flash = flash();
 ?><!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -464,32 +471,56 @@ $flash = flash();
     <button>Kaydet</button></form>
 
 <?php elseif ($p === 'agents'):
-    $agents = q('SELECT a.*, (SELECT COUNT(*) FROM hub_sessions s WHERE s.agent_id = a.id) AS sess FROM hub_agents a ORDER BY a.id')->fetchAll();
+    $agents = q('SELECT a.*, (SELECT COUNT(*) FROM hub_sessions s WHERE s.agent_id = a.id) AS sess FROM hub_agents a ORDER BY a.last_seen_at DESC, a.id')->fetchAll();
     $nt = $_SESSION['new_token'] ?? null;
-    unset($_SESSION['new_token']); ?>
-  <?php if ($nt): ?>
-    <div class="card warn"><b><?= h($nt[0]) ?></b> için yeni token. <b>Yalnızca şimdi gösterilir</b>, kopyalayın:
-      <pre class="token"><?= h($nt[1]) ?></pre></div>
-  <?php endif; ?>
-  <h2>Ajanlar</h2>
-  <p class="meta">Hub'a yalnızca burada token'ı oluşturulan ajanlar bağlanabilir. Her makineye ayrı token verin; bir makine kaybolursa sadece onu iptal edin.</p>
-  <div class="scroll"><table><tr><th>#</th><th>Ad</th><th>Tür</th><th>Token</th><th>Durum</th><th>Son görülme</th><th>Oturum</th><th></th></tr>
+    $wl = $_SESSION['web_link'] ?? null;
+    unset($_SESSION['new_token'], $_SESSION['web_link']); ?>
+  <h2>Bilgisayar nasıl eklenir?</h2>
+  <div class="card">
+    <p>O bilgisayarda <b>kur.py</b> programını çalıştırın. Program sizden yalnızca bu panelin kullanıcı adını (<b>claude</b>) ve şifresini ister;
+      bilgisayar kendini otomatik olarak aşağıdaki listeye ekler. Burada ayrıca bir şey yapmanız gerekmez.</p>
+    <p class="meta">Claude'un kullanımı her zaman sizin Claude aboneliğinizden düşer; bu sistem ek ücret veya API anahtarı kullanmaz.</p>
+  </div>
+
+  <h2>Bağlı bilgisayarlar</h2>
+  <div class="scroll"><table><tr><th>Ad</th><th>Durum</th><th>Son görülme</th><th>Oturum</th><th></th></tr>
   <?php foreach ($agents as $ag): ?>
-    <tr class="<?= $ag['active'] ? '' : 'dim' ?>"><td><?= $ag['id'] ?></td><td><?= h($ag['name']) ?><?= $ag['note'] ? '<br><small>' . h($ag['note']) . '</small>' : '' ?></td>
-      <td><?= h($ag['type']) ?></td><td><code>…<?= h($ag['token_hint']) ?></code></td><td><?= $ag['active'] ? 'aktif' : 'iptal' ?></td>
+    <tr class="<?= $ag['active'] ? '' : 'dim' ?>"><td><b><?= h($ag['name']) ?></b><?= $ag['note'] ? '<br><small>' . h($ag['note']) . '</small>' : '' ?></td>
+      <td><?= $ag['active'] ? 'bağlanabilir' : 'engellendi' ?></td>
       <td><?= h($ag['last_seen_at'] ?? '-') ?></td><td><?= $ag['sess'] ?></td>
       <td>
-        <form method="post" class="inline"><?= csrf() ?><input type="hidden" name="a" value="agent_toggle"><input type="hidden" name="id" value="<?= $ag['id'] ?>"><button class="link"><?= $ag['active'] ? 'iptal et' : 'etkinleştir' ?></button></form>
-        <form method="post" class="inline"><?= csrf() ?><input type="hidden" name="a" value="agent_rotate"><input type="hidden" name="id" value="<?= $ag['id'] ?>"><button class="link" onclick="return confirm('Eski token geçersiz olacak. Devam?')">yeni token</button></form>
-        <form method="post" class="inline"><?= csrf() ?><input type="hidden" name="a" value="agent_delete"><input type="hidden" name="id" value="<?= $ag['id'] ?>"><button class="link danger" onclick="return confirm('Ajan ve tüm oturumları silinsin mi?')">sil</button></form>
+        <form method="post" class="inline"><?= csrf() ?><input type="hidden" name="a" value="agent_toggle"><input type="hidden" name="id" value="<?= $ag['id'] ?>"><button class="link"><?= $ag['active'] ? 'engelle' : 'izin ver' ?></button></form>
+        <form method="post" class="inline"><?= csrf() ?><input type="hidden" name="a" value="agent_delete"><input type="hidden" name="id" value="<?= $ag['id'] ?>"><button class="link danger" onclick="return confirm('Bu bilgisayar ve oturum kayıtları silinsin mi? (Konuşma kayıtları kalır)')">sil</button></form>
       </td></tr>
-  <?php endforeach; ?></table></div>
-  <h2>Yeni ajan ekle</h2>
-  <form method="post" class="card"><?= csrf() ?><input type="hidden" name="a" value="agent_create">
-    <label>Ad (örn. mac-claude, windows-claude) <input name="name" required></label>
-    <label>Tür <select name="type"><option value="claude">claude</option><option value="other">diğer ajan (ileride)</option></select></label>
-    <label>Not <input name="note" placeholder="örn. ofisteki MacBook"></label>
-    <button>Oluştur ve token üret</button></form>
+  <?php endforeach; ?>
+  <?php if (!$agents): ?><tr><td colspan="5" class="meta">Henüz bilgisayar yok. Bir bilgisayarda kur.py çalıştırın.</td></tr><?php endif; ?>
+  </table></div>
+  <p class="meta">Bir bilgisayar kaybolur ya da çalınırsa "engelle" deyin; o bilgisayar artık bağlanamaz.</p>
+
+  <h2>claude.ai (web / mobil) ve Cowork</h2>
+  <div class="card">
+    <?php if ($wl): ?>
+      <p><b>Bağlantı adresiniz</b> (yalnızca şimdi gösterilir, kopyalayın):</p>
+      <pre class="token"><?= h($wl) ?></pre>
+      <p class="meta">claude.ai → Ayarlar → Connectors → <b>Add custom connector</b> → Ad: <i>MepCenter Hub</i>, URL: yukarıdaki adres.
+        Bu adresi kimseyle paylaşmayın; yeni adres oluşturursanız eskisi çalışmaz.</p>
+    <?php else: ?>
+      <p>claude.ai sitesinde, telefonda veya Cowork'te de "kod matwar" diyebilmek için bir kez bağlantı adresi oluşturup claude.ai ayarlarına ekleyin.</p>
+    <?php endif; ?>
+    <form method="post"><?= csrf() ?><input type="hidden" name="a" value="web_link">
+      <button onclick="return <?= $wl ? 'true' : "confirm('Daha önce oluşturduysanız eski adres çalışmayı bırakır. Devam?')" ?>">Bağlantı adresi oluştur</button></form>
+  </div>
+
+  <details<?= $nt ? ' open' : '' ?>><summary class="meta">Gelişmiş: elle anahtar oluştur (normalde gerekmez)</summary>
+    <?php if ($nt): ?>
+      <div class="card warn"><b><?= h($nt[0]) ?></b> için anahtar (yalnızca şimdi gösterilir):<pre class="token"><?= h($nt[1]) ?></pre></div>
+    <?php endif; ?>
+    <form method="post" class="card"><?= csrf() ?><input type="hidden" name="a" value="agent_create">
+      <label>Ad <input name="name" required></label>
+      <label>Tür <select name="type"><option value="claude">claude</option><option value="other">diğer ajan</option></select></label>
+      <label>Not <input name="note"></label>
+      <button>Oluştur</button></form>
+  </details>
 
 <?php elseif ($p === 'settings'): ?>
   <h2>Panel şifresini değiştir</h2>

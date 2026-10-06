@@ -2,7 +2,8 @@
 """MepCenter Claude Hub - bilgisayar kurulumu (macOS / Windows / Linux).
 
 Ne yapar:
-  1. Dosyaları ~/.mepcenter/ klasörüne kopyalar, ayarları (adres, token, makine adı) kaydeder
+  1. Dosyaları ~/.mepcenter/ klasörüne kopyalar; panel kullanıcı adı/şifresiyle bilgisayarı hub'a kaydeder
+     (Claude kullanımı her zaman sizin Claude aboneliğinizden düşer; API anahtarı gerekmez)
   2. Sunucuya bağlanmayı dener
   3. Claude Code'a hook'ları ekler (~/.claude/settings.json, yedek alınarak)
   4. Claude Code'a "mepcenter" MCP sunucusunu ekler (claude mcp add --scope user)
@@ -340,22 +341,36 @@ def main():
     cfg["url"] = ask("Hub adresi", cfg.get("url", "https://mepcenter.com.tr/claude/"))
     default_machine = cfg.get("machine") or f"{platform.system().replace('Darwin', 'Mac')}-{socket.gethostname().split('.')[0]}"
     cfg["machine"] = ask("Bu bilgisayarın adı (panelde böyle görünür)", default_machine)
-    tok = getpass.getpass("Ajan token'ı (panel > Ajanlar'dan; boş = mevcut kalsın): ").strip()
-    if tok:
-        cfg["token"] = tok
-    if not cfg.get("token"):
-        sys.exit("Token gerekli. Panelde Ajanlar sayfasından bu bilgisayar için bir token oluşturun.")
+    save_json(cfg_path, cfg)
+
+    sys.path.insert(0, DEST)
+    from hub_client import HubError, api, register
+
+    if cfg.get("token") and not yes("Bu bilgisayar daha önce bağlanmış. Bağlantı yenilensin mi?", False):
+        pass
+    else:
+        print("\nPanele girdiğiniz kullanıcı adı ve şifreyi yazın (bilgisayar kendini otomatik kaydeder).")
+        while True:
+            user = ask("Panel kullanıcı adı", "claude")
+            pw = getpass.getpass("Panel şifresi (yazarken görünmez): ")
+            try:
+                res = register(cfg, user, pw, cfg["machine"])
+                cfg["token"] = res["token"]
+                print(f"  ✓ Bilgisayar kaydedildi: '{res['agent']}'")
+                break
+            except HubError as e:
+                print(f"  ! {e}")
+                if not yes("Tekrar denensin mi?", True):
+                    sys.exit(1)
     save_json(cfg_path, cfg)
     try:
         os.chmod(cfg_path, 0o600)
     except OSError:
         pass
 
-    sys.path.insert(0, DEST)
-    from hub_client import HubError, api
     try:
         res = api("ping", cwd=HOME)
-        print(f"  ✓ Sunucuya bağlanıldı: ajan '{res['agent']}', sürüm {res['version']}")
+        print(f"  ✓ Sunucuya bağlanıldı ({res['agent']}, sürüm {res['version']})")
     except HubError as e:
         print(f"  ! Sunucuya bağlanılamadı: {e}")
         if not yes("Yine de kuruluma devam edilsin mi?", False):

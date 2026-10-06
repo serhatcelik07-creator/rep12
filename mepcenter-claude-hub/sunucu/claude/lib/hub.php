@@ -50,6 +50,47 @@ function authenticate(): array
     return $agent;
 }
 
+/** Panel kullanıcı adı/şifresini doğrular (15 dakikada 5 hatalı denemeden sonra kilitlenir). */
+function check_admin_login(string $user, string $pass): bool
+{
+    q('DELETE FROM hub_login_attempts WHERE attempted_at < NOW() - INTERVAL 1 DAY');
+    $fails = (int)q('SELECT COUNT(*) FROM hub_login_attempts WHERE ip = ? AND attempted_at > NOW() - INTERVAL 15 MINUTE',
+                    [client_ip()])->fetchColumn();
+    if ($fails >= 5) {
+        throw new HubFail('Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin.', 429);
+    }
+    if (hash_equals((string)setting_get('admin_user', 'claude'), $user)
+        && password_verify($pass, (string)setting_get('admin_pass_hash', ''))) {
+        q('DELETE FROM hub_login_attempts WHERE ip = ?', [client_ip()]);
+        return true;
+    }
+    q('INSERT INTO hub_login_attempts (ip) VALUES (?)', [client_ip()]);
+    usleep(500000);
+    return false;
+}
+
+/**
+ * Bir bilgisayarı panel kullanıcı adı + şifresiyle kaydeder ve ona özel bağlantı anahtarı döndürür.
+ * Aynı adla tekrar kaydolursa eski anahtar geçersiz olur (yeniden kurulum).
+ */
+function register_machine(string $user, string $pass, string $machine, string $type = 'claude'): array
+{
+    if (!check_admin_login($user, $pass)) {
+        throw new HubFail('Kullanıcı adı veya şifre hatalı (panele girdiğiniz bilgiler).', 401);
+    }
+    $name = strtolower(trim(preg_replace('/[^A-Za-z0-9._-]+/', '-', $machine), '-')) ?: 'bilgisayar';
+    $name = str_cut($name, 90);
+    $tok = new_token();
+    $exists = q('SELECT id FROM hub_agents WHERE name = ?', [$name])->fetchColumn();
+    if ($exists) {
+        q('UPDATE hub_agents SET token_hash = ?, token_hint = ?, active = 1 WHERE id = ?', [token_hash($tok), substr($tok, -6), $exists]);
+    } else {
+        q('INSERT INTO hub_agents (name, type, token_hash, token_hint, note) VALUES (?, ?, ?, ?, ?)',
+          [$name, $type, token_hash($tok), substr($tok, -6), 'kurulumla otomatik eklendi']);
+    }
+    return ['agent' => $name, 'token' => $tok];
+}
+
 /** Oturumu bul/oluştur. Başlık yoksa (claude.ai web) makine adı "web" olur. */
 function touch_session(array $agent, string $defaultMachine = 'bilinmeyen'): array
 {

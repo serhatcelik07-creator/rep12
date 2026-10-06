@@ -9,12 +9,12 @@ Adresi: **https://mepcenter.com.tr/claude**
 - **Tam kayıt:** Claude Code oturumlarında her istek, cevap, araç çağrısı, yazılan/düzenlenen her kod ve
   komut çıktısı otomatik olarak hub'a yazılır. Değişen dosyalar da yüklenir. Gizli anahtarlar maskelenir,
   `.env` gibi dosyalar yüklenmez.
-- **Yönetim paneli:** Oturumlar, canlı sohbet, görevler, kayıtlar, dosyalar, ortak veri, ajan/token
+- **Yönetim paneli:** Oturumlar, canlı sohbet, görevler, kayıtlar, dosyalar, ortak veri, bilgisayar
   yönetimi ve Claude talimatı tek yerde.
 - **Köprü ajanı (7/24):** Bilgisayar açılınca başlar. Panelden o bilgisayara yazdığın işi oradaki
   Claude Code'a yaptırır ve cevabı panele yazar.
-- **Güvenlik:** Hub'a sadece senin oluşturduğun token'larla bağlanılır. Her bilgisayara ayrı token
-  verilir, panelden tek tıkla iptal edilir. Panelin kendi şifresi ve deneme sınırı vardır.
+- **Güvenlik:** Hub'a sadece panel şifresiyle kaydedilmiş bilgisayarlar bağlanabilir. Her bilgisayar ayrı bir
+  gizli anahtar alır; bir cihaz kaybolursa panelden tek tıkla engellenir. Panelin deneme sınırı vardır.
 
 ```
 sunucu/claude/   → sitene yüklenecek klasör (public_html/claude)
@@ -32,17 +32,18 @@ istemci/         → her bilgisayara kurulacak küçük Python programı (kur.py
 3. Tarayıcıda **https://mepcenter.com.tr/claude/install.php** adresini aç:
    - Veritabanı: `localhost`, `mepcente_claude`, `mepcente_claude`, şifre
    - Panel girişi: kullanıcı adı `claude` ve **yeni, güçlü bir şifre**. Sohbette yazdığın şifreyi kullanma.
-   - İlk ajan: örn. `mac-claude`. Gösterilen token'ı kopyala, yalnızca bir kez görünür.
 4. Kurulum bitince `install.php` kendini kilitler. Panel: **https://mepcenter.com.tr/claude/admin/**
 
 Gereksinimler: PHP 7.4+ (8.x önerilir), MySQL 5.7+ / MariaDB 10.3+, HTTPS.
 Yükleme sınırı varsayılan 20 MB. Büyük dosyalar için PHP `post_max_size` / `upload_max_filesize`
 ayarlarını cPanel'den yükselt.
 
-## 2. Her bilgisayar için token
+## 2. Bilgisayarlar nasıl bağlanır?
 
-Panel → **Ajanlar / Token** → `mac-claude`, `windows-claude`, `laptop-claude`, `web-claude` gibi ayrı ajanlar
-oluştur. Bir cihaz kaybolursa sadece onun token'ını iptal et.
+Ayrıca anahtar/token oluşturman gerekmez. Her bilgisayarda kurulum programı panel kullanıcı adını (`claude`)
+ve panel şifreni sorar; bilgisayar kendini otomatik kaydeder ve panelde **Bilgisayarlar** sayfasında görünür.
+Bir cihaz kaybolursa orada **engelle** demen yeterli. Claude kullanımı her zaman senin Claude aboneliğinden düşer;
+bu sistem API anahtarı veya ek ücret kullanmaz.
 
 ## 3. Bilgisayara kurulum (Mac / Windows)
 
@@ -51,16 +52,12 @@ oluştur. Bir cihaz kaybolursa sadece onun token'ını iptal et.
   (ya da python.org'dan indir).
 - **Windows:** python.org'dan Python 3 kur. Kurulumda **"Add python.exe to PATH"** kutusunu işaretle.
 
-Sonra `istemci` klasöründe:
-
-```bash
-python3 kur.py        # Windows: py kur.py
-```
+Sonra **Mac'te `kur.command`, Windows'ta `kur.bat` dosyasına çift tıkla** (ya da terminalde `python3 kur.py`).
 
 Kurulum sırasıyla şunları sorar:
 1. Hub adresi (`https://mepcenter.com.tr/claude/`)
 2. Bilgisayar adı
-3. Token
+3. Panel kullanıcı adı (`claude`) ve panel şifresi
 4. Claude Desktop'a da eklensin mi?
 5. Köprü ajanı kurulsun mu?
 
@@ -81,17 +78,17 @@ Diğer komutlar:
 
 Bu ortamlar bilgisayarda betik çalıştıramaz. Bunun yerine hub'ı **bağlayıcı (connector)** olarak eklersin:
 
-1. Panelde `web-claude` adında bir ajan oluştur ve token'ını al.
+1. Panelde **Bilgisayarlar** sayfasında **"Bağlantı adresi oluştur"** düğmesine bas ve çıkan adresi kopyala.
 2. claude.ai → **Ayarlar → Connectors (Bağlayıcılar) → Add custom connector**
    - Ad: `MepCenter Hub`
-   - URL: `https://mepcenter.com.tr/claude/mcp/?k=WEB_CLAUDE_TOKENI`
+   - URL: kopyaladığın adres
 3. Sohbette bağlayıcıyı açıp şunu yaz: *"matwar görevine bak, devam edelim"*.
 
 claude.ai → Ayarlar → Profil → "Kişisel tercihler" alanına şunu eklemen önerilir:
 > Bir görev kodu söylediğimde (örn. "kod matwar") MepCenter Hub bağlayıcısındaki hub_set_project aracını çağır,
 > özeti oku ve kaldığımız yerden devam et. Önemli kararları hub_log ile, ilerlemeyi hub_project_update ile kaydet.
 
-> Not: Bu URL token içerir; kimseyle paylaşma. Sızarsa panelden o token'ı yenile.
+> Not: Bu adres gizli bir anahtar içerir; kimseyle paylaşma. Sızarsa panelden yeni adres oluştur, eskisi çalışmaz.
 > Web/mobilde hook olmadığı için konuşmalar otomatik kaydedilmez. Claude, talimat gereği kararları ve
 > "son durum" notunu kendisi yazar.
 
