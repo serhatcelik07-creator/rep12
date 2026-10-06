@@ -1,0 +1,46 @@
+sayfa,poz,kalem,bf,kaynak
+Haberlesme,4011,"Uygulama projeleri, sistem mimarisi/blok şemaları, hesaplar (NTP hiyerarşisi, arayüzler)",5000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 0 + işç. 5000 EUR)
+Haberlesme,4011,"Dokümantasyon: malzeme onayı, test prosedürleri, as-built, işletme-bakım el kitapları, eğitim dokümanı",5000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 0 + işç. 5000 EUR)
+Haberlesme,4012.A,"Dijital IP (NTP, PoE) çift yüzlü peron saati, dış ortam",3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.A,Saat montaj konsolu/askı,0,"TEKLİF (ON Elektronik/RayON MSS 06.10.2026: birim fiyata dahil – ""Saat tavan veya duvar askı aparatı saat fiyatına dahildir."")"
+Haberlesme,4012.B,"Dijital IP (NTP, PoE) çift yüzlü peron saati, dış ortam",3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.C,"Dijital IP (NTP, PoE) çift yüzlü peron saati, dış ortam",3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.D,"Dijital IP (NTP, PoE) çift yüzlü peron saati, dış ortam",3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.E,"Dijital IP (NTP, PoE) çift yüzlü peron saati, dış ortam",3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.F,"Dijital IP (NTP, PoE) çift yüzlü peron saati, dış ortam",3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.G,IP (NTP/PoE) duvar saati — D01 (set 1),850,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 750 + işç. 100 EUR)
+Haberlesme,4012.G,"IP (NTP/PoE) duvar saati — D03, D05, D07 (set 2-4)",1500,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 1250 + işç. 250 EUR)
+Haberlesme,4012.G,Dış ortam çift yüzlü dijital saat (atölye girişi/depo sahası),3000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 2500 + işç. 500 EUR)
+Haberlesme,4012.G,"Saat alt dağıtım/NTP bağlantısı (bina switch portu, montaj)",1300,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 1000 + işç. 300 EUR)
+Haberlesme,4012.H,"GPS bazlı merkezi saat / NTP sunucusu (profesyonel, yedekli, GPS anteni + kablo)",4500,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 4000 + işç. 500 EUR)
+Haberlesme,4012.H,"Saat yönetim yazılımı + alt sistem arayüzleri (erişim kontrol, KDTV, SCADA)",1000,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. 500 + işç. 500 EUR)
+Haberlesme,4012.H,Mevcut depo kontrol merkezi entegrasyonu: saat/NTP uyarlama + lisans,2500,TEKLİF (ON Elektronik/RayON MSS 06.10.2026: malz. None + işç. 2500 EUR)
+Haberlesme,4017,"Uygulama projeleri, sistem mimarisi/blok şemaları, hesaplar (ekran yerleşimi, AVLS/sinyalizasyon arayüzleri)",16000,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 1000 + işç. 15000 EUR)
+Haberlesme,4017,"Dokümantasyon: malzeme onayı, test prosedürleri, as-built, işletme-bakım el kitapları, eğitim dokümanı",10000,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 0 + işç. 10000 EUR)
+Haberlesme,4018.A,"Yolcu bilgilendirme ekranı (IP, LED TV profesyonel 7/24, dış ortam muhafazalı, 43-55'')",3500,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 3000 + işç. 500 EUR)
+Haberlesme,4018.A,"YBE tavan askı/dirsek montaj konstrüksiyonu (alt kenar ≥2,20 m)",1250,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 750 + işç. 500 EUR)
+Haberlesme,4018.A,"IP oynatıcı/medya kontrol ünitesi (ekran başına, ekran dahili değilse)",0,"TEKLİF (ON Elektronik/RayON YBS 06.10.2026: birim fiyata dahil – ""Media Player monitör üzerinde olacaktır."")"
+Haberlesme,4018.B,"Yolcu bilgilendirme ekranı (IP, LED TV profesyonel 7/24, dış ortam muhafazalı, 43-55'')",3500,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 3000 + işç. 500 EUR)
+Haberlesme,4018.B,"YBE tavan askı/dirsek montaj konstrüksiyonu (alt kenar ≥2,20 m)",1250,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 750 + işç. 500 EUR)
+Haberlesme,4018.C,"Yolcu bilgilendirme ekranı (IP, LED TV profesyonel 7/24, dış ortam muhafazalı, 43-55'')",3500,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 3000 + işç. 500 EUR)
+Haberlesme,4018.C,"YBE tavan askı/dirsek montaj konstrüksiyonu (alt kenar ≥2,20 m)",1250,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 750 + işç. 500 EUR)
+Haberlesme,4018.D,"Yolcu bilgilendirme ekranı (IP, LED TV profesyonel 7/24, dış ortam muhafazalı, 43-55'')",3500,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 3000 + işç. 500 EUR)
+Haberlesme,4018.D,"YBE tavan askı/dirsek montaj konstrüksiyonu (alt kenar ≥2,20 m)",1250,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 750 + işç. 500 EUR)
+Haberlesme,4018.E,"Yolcu bilgilendirme ekranı (IP, LED TV profesyonel 7/24, dış ortam muhafazalı, 43-55'')",3500,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 3000 + işç. 500 EUR)
+Haberlesme,4018.E,"YBE tavan askı/dirsek montaj konstrüksiyonu (alt kenar ≥2,20 m)",1250,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 750 + işç. 500 EUR)
+Haberlesme,4018.F,"Yolcu bilgilendirme ekranı (IP, LED TV profesyonel 7/24, dış ortam muhafazalı, 43-55'')",3500,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 3000 + işç. 500 EUR)
+Haberlesme,4018.F,"YBE tavan askı/dirsek montaj konstrüksiyonu (alt kenar ≥2,20 m)",1250,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 750 + işç. 500 EUR)
+Haberlesme,4018.G,YBS sunucusu/bilgisayarı + monitör (sistem kontrol/yedek pozisyonu),6000,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 5000 + işç. 1000 EUR)
+Haberlesme,4018.G,"YBS yazılımı + lisanslar (varış süresi hesabı, kayar yazı, internet yayını, AVLS/sinyalizasyon arayüzü)",25000,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 0 + işç. 25000 EUR)
+Haberlesme,4018.G,Yedek YBE ekranı,2000,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 2000 + işç. 0 EUR)
+Haberlesme,4018.G,Mevcut depo kontrol merkezi entegrasyonu: YBS yazılım uyarlama + lisans,11000,TEKLİF (ON Elektronik/RayON YBS 06.10.2026: malz. 1000 + işç. 10000 EUR)
+Haberlesme,4012.B,Saat montaj konsolu/askı,0,"TEKLİF (ON Elektronik/RayON MSS 06.10.2026: birim fiyata dahil – ""Saat tavan veya duvar askı aparatı saat fiyatına dahildir."")"
+Haberlesme,4012.C,Saat montaj konsolu/askı,0,"TEKLİF (ON Elektronik/RayON MSS 06.10.2026: birim fiyata dahil – ""Saat tavan veya duvar askı aparatı saat fiyatına dahildir."")"
+Haberlesme,4012.D,Saat montaj konsolu/askı,0,"TEKLİF (ON Elektronik/RayON MSS 06.10.2026: birim fiyata dahil – ""Saat tavan veya duvar askı aparatı saat fiyatına dahildir."")"
+Haberlesme,4012.E,Saat montaj konsolu/askı,0,"TEKLİF (ON Elektronik/RayON MSS 06.10.2026: birim fiyata dahil – ""Saat tavan veya duvar askı aparatı saat fiyatına dahildir."")"
+Haberlesme,4012.F,Saat montaj konsolu/askı,0,"TEKLİF (ON Elektronik/RayON MSS 06.10.2026: birim fiyata dahil – ""Saat tavan veya duvar askı aparatı saat fiyatına dahildir."")"
+Haberlesme,4018.B,"IP oynatıcı/medya kontrol ünitesi (ekran başına, ekran dahili değilse)",0,"TEKLİF (ON Elektronik/RayON YBS 06.10.2026: birim fiyata dahil – ""Media Player monitör üzerinde olacaktır."")"
+Haberlesme,4018.C,"IP oynatıcı/medya kontrol ünitesi (ekran başına, ekran dahili değilse)",0,"TEKLİF (ON Elektronik/RayON YBS 06.10.2026: birim fiyata dahil – ""Media Player monitör üzerinde olacaktır."")"
+Haberlesme,4018.D,"IP oynatıcı/medya kontrol ünitesi (ekran başına, ekran dahili değilse)",0,"TEKLİF (ON Elektronik/RayON YBS 06.10.2026: birim fiyata dahil – ""Media Player monitör üzerinde olacaktır."")"
+Haberlesme,4018.E,"IP oynatıcı/medya kontrol ünitesi (ekran başına, ekran dahili değilse)",0,"TEKLİF (ON Elektronik/RayON YBS 06.10.2026: birim fiyata dahil – ""Media Player monitör üzerinde olacaktır."")"
+Haberlesme,4018.F,"IP oynatıcı/medya kontrol ünitesi (ekran başına, ekran dahili değilse)",0,"TEKLİF (ON Elektronik/RayON YBS 06.10.2026: birim fiyata dahil – ""Media Player monitör üzerinde olacaktır."")"

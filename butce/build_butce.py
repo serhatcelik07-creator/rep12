@@ -197,6 +197,13 @@ if _os.path.exists(_rp):
         REVIZE[(_r["sayfa"], _r["kalem"].strip())] = _r
 
 
+TEKLIF_OVR = {}
+_tp = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "veri", "teklif_override.csv")
+if _os.path.exists(_tp):
+    for _r in _csv.DictReader(open(_tp, encoding="utf-8")):
+        TEKLIF_OVR[(_r["sayfa"], _r["poz"], _r["kalem"].strip())] = _r
+
+
 def sheet(name, title, groups, mode=None):
     """groups: list of (sira, poz, baslik, items); item = (kalem, birim, q_rfq, q_corr, bf, kaynak, not)"""
     ws = wb.create_sheet(name)
@@ -226,7 +233,12 @@ def sheet(name, title, groups, mode=None):
         r += 1
         first = r
         for kalem, birim, q_rfq, q_corr, bf, kaynak, notu in items:
-            rv = REVIZE.get((name, kalem.strip()))
+            tv = TEKLIF_OVR.get((name, poz, kalem.strip()))
+            rv = None if tv else REVIZE.get((name, kalem.strip()))
+            if tv:
+                if abs(float(tv["bf"]) - float(bf or 0)) > 0.005:
+                    notu = (notu + " | " if notu else "") + f"Teklif öncesi BF {float(bf or 0):,.2f}"
+                bf = float(tv["bf"]); kaynak = tv["kaynak"]
             if rv and rv["bf_yeni"] not in ("", None):
                 if abs(float(rv["bf_yeni"]) - float(rv["bf_eski"] or 0)) > 0.005:
                     notu = (notu + " | " if notu else "") + f"İlk tahmin BF {float(rv['bf_eski']):,.2f}"
@@ -696,6 +708,8 @@ for j, h in enumerate(eh, 1):
 E.row_dimensions[4].height = 32
 as12 = f"'Asansor'!{AS_MAIN['364']}"; as1 = f"'Asansor'!{AS_MAIN['365']}"
 avls = "+".join(f"'Sinyal'!{SN_MAIN[k]}" for k in ("233", "234", "235"))
+MSS_BUT = "+".join(f"'Haberlesme'!{HB_MAIN[k]}" for k in ("281", "282", "283", "284", "285", "286", "287", "288", "289"))
+YBS_BUT = "+".join(f"'Haberlesme'!{HB_MAIN[k]}" for k in ("310", "311", "312", "313", "314", "315", "316", "317"))
 erows = [
     ("Asansör", "Schindler Türkeli", "01.10.2026", "364–365 (13 asansör)", 480000, "USD", f"=E5/{P_USD}", f"={AS_TOT}",
      "1000 kg: 37.000 USD; 800 kg: 36.000 USD", "Şartnameye uygun beyan; bakım hariç",
@@ -713,7 +727,15 @@ erows = [
      "11 soruya verilen varsayımlar esas; 2 sunucu + NAS; konum güncelleme ≤3 sn",
      "Bütçesel; 180 gün; %20 avans/%70 hakediş/%10 kabul; kabin, UPS, omurga, işletme SIM, yedek parça hariç",
      "Bütçeye işlendi (233: 14 araç)", "Tek teklif; H&K İzmir referansının ~2 katı – pazarlık payı var"),
-    ("Sinyalizasyon (tümü)", "Point Link / CASCO (Çin)", "devir notu", "228–235", 7281784, "EUR", "=E9", f"={SN_TOT}",
+    ("Elektrik – saat sistemi", "ON Elektronik (RayON)", "06.10.2026", "281–289 (MSS)", 81600, "EUR", "=E10", f"={MSS_BUT}",
+     "Peron saati 3.000; master saat (Mobatime) 4.500; duvar saati 850–1.500", "Üretici; şartnameye uygun beyan",
+     "Kablolar ana yüklenicide (bütçede ayrıca var); geçerlilik belirtilmemiş", "Kalem kalem bütçeye işlendi",
+     "Mevcut depo entegrasyonu (2.500) idare cevabıyla düşüldü"),
+    ("Elektrik – yolcu bilgilendirme", "ON Elektronik (RayON)", "06.10.2026", "310–317 (YBS)", 171000, "EUR", "=E11", f"={YBS_BUT}",
+     "55\" dış ortam ekran 3.500; askı 1.250; yazılım 25.000; tasarım+doküman 26.000", "Medya oynatıcı ekrana dahil",
+     "Kablolar ana yüklenicide; geçerlilik belirtilmemiş", "Kalem kalem bütçeye işlendi",
+     "Mevcut depo entegrasyonu (11.000) idare cevabıyla düşüldü"),
+    ("Sinyalizasyon (tümü)", "Point Link / CASCO (Çin)", "devir notu", "228–235", 7281784, "EUR", "=E12", f"={SN_TOT}",
      "Kalem dökümü yok", "Yanıt 'AI asistan Eva' imzalı; mail Gmail'de bulunamadı",
      "DAP şantiye; KDV ve gümrük hariç", "Kullanılmadı", "Bütçenin ~1,8 katı; dökümsüz – yalnız üst sınır göstergesi"),
 ]
@@ -724,9 +746,9 @@ for i, row in enumerate(erows, start=5):
         if j in (5, 7, 8): c.number_format = EUR
         if j == 9: c.number_format = "+0%;-0%"
     E.row_dimensions[i].height = 60
-E["A11"] = "TEKLİF DURUMU ÖZETİ (Gmail, 29.09–06.10.2026)"; E["A11"].font = BOLD
+E["A14"] = "TEKLİF DURUMU ÖZETİ (Gmail, 29.09–06.10.2026)"; E["A14"].font = BOLD
 ozet_txt = [
-    "Elektrik: Fiyatlı teklif yok. ON Elektronik saat+YBS keşfi ekte (8,2 MB, indirilemedi). Teknomaks (CCTV) ve Lev Müh. (yangın ihbar) çalışıyor; Best Transformer (trafo) dönmedi. Alfanar, Tema, EVA, DC Group vermiyor (Alfanar'dan RMU bütçesi istendi).",
+    "Elektrik: ON Elektronik saat (81.600 €) ve YBS (171.000 €) teklifleri işlendi. Teknomaks (CCTV) ve Lev Müh. (yangın ihbar) çalışıyor; Best Transformer (trafo) dönmedi. Alfanar, Tema, EVA, DC Group vermiyor (Alfanar'dan RMU bütçesi istendi).",
     "Mekanik: Fiyatlı teklif yok. Ekura en geç 09.10 verecek; Protek (FM200) soru sordu. MET, Demta, Birleşim, Genç Müh. vermiyor.",
     "Asansör: 3 teklif (Schindler, TK, Emlift). Edoux verecek; Adakon (Orona) ithal ürünle bütçe verecek; KONE dönmedi.",
     "Sinyalizasyon: Mukan (AVLS) teklifi geldi. Hugotek ve İntetra dönecek; Alstom ve Savronik vermiyor (bütçe istendi); Hanning & Kahl dönmedi.",
@@ -734,8 +756,8 @@ ozet_txt = [
     "Ulaşmayan adres: 26 (mailer-daemon). Ayrıntı: Teklif_Durumu sayfası.",
 ]
 for k, t in enumerate(ozet_txt):
-    c = E.cell(row=12 + k, column=1, value=t); c.alignment = WRAP
-    E.merge_cells(start_row=12 + k, start_column=1, end_row=12 + k, end_column=14); E.row_dimensions[12 + k].height = 30
+    c = E.cell(row=15 + k, column=1, value=t); c.alignment = WRAP
+    E.merge_cells(start_row=15 + k, start_column=1, end_row=15 + k, end_column=14); E.row_dimensions[15 + k].height = 30
 for col, w in zip("ABCDEFGHIJKLMN", (18, 22, 11, 18, 13, 6, 13, 14, 8, 26, 38, 38, 22, 34)):
     E.column_dimensions[col].width = w
 
