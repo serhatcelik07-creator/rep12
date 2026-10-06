@@ -2,14 +2,17 @@ extends Node
 ## Game flow: main menu -> levels -> results.
 ## Single player: collect coins and reach the flag as fast as possible.
 ## 2-4 players: shared-screen race, first to the flag wins the level.
+## Matematik Savaşı: 2-4 players answer math questions, last one with hearts wins.
 
 const Level := preload("res://scripts/level.gd")
 const Player := preload("res://scripts/player.gd")
+const MathWar := preload("res://scripts/math_war.gd")
 
-enum State { MENU, PLAYING, PAUSED, LEVEL_DONE, RESULTS }
+enum State { MENU, PLAYING, PAUSED, LEVEL_DONE, RESULTS, MATH_WAR }
 
 const PLAYER_COLORS: Array[Color] = [Color("#ff5a5f"), Color("#3fa7ff"), Color("#5ad16b"), Color("#ffc93c")]
-const MENU_ITEMS := ["Tek Oyunculu", "2 Oyuncu (Yarış)", "3 Oyuncu (Yarış)", "4 Oyuncu (Yarış)", "Çıkış"]
+const MENU_ITEMS := ["Tek Oyunculu", "2 Oyuncu (Yarış)", "3 Oyuncu (Yarış)", "4 Oyuncu (Yarış)", "Matematik Savaşı", "Çıkış"]
+const MATH_WAR_ITEM := 4
 const LEVEL_END_DELAY := 2.5
 const CAMERA_MIN_ZOOM := 0.45
 
@@ -24,10 +27,15 @@ var total_time := 0.0
 var total_coins := 0
 var total_deaths := 0
 var menu_index := 0
+var math_war_players := 2
+var math_war: MathWar
+# State to go back to when the pause menu closes.
+var _resume_state := State.PLAYING
 # Bumped on every level load so stale "next level" timers do nothing.
 var _round := 0
 
 var _world: Node2D
+var _math_layer: CanvasLayer
 var _camera: Camera2D
 var _menu_label: RichTextLabel
 var _hud_label: RichTextLabel
@@ -49,6 +57,9 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
+	# Added first so the pause message draws on top of the math war screen.
+	_math_layer = CanvasLayer.new()
+	add_child(_math_layer)
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	_menu_label = _make_rich_label(layer, 32)
@@ -95,11 +106,14 @@ func _refresh_menu() -> void:
 	var pads := Input.get_connected_joypads().size()
 	var text := "\n\n[center][font_size=72][color=#ffcc33]ZIPZIP[/color][/font_size]\n\n"
 	for i in MENU_ITEMS.size():
+		var item: String = MENU_ITEMS[i]
+		if i == MATH_WAR_ITEM:
+			item += "  [ %d oyuncu ]" % math_war_players
 		if i == menu_index:
-			text += "[color=#ffcc33]> %s <[/color]\n" % MENU_ITEMS[i]
+			text += "[color=#ffcc33]> %s <[/color]\n" % item
 		else:
-			text += "%s\n" % MENU_ITEMS[i]
-	text += "\n[font_size=18][color=#9aa3c0]Bağlı gamepad: %d    •    Seç: Yön tuşları / D-Pad    •    Onay: Enter / A[/color]\n" % pads
+			text += "%s\n" % item
+	text += "\n[font_size=18][color=#9aa3c0]Bağlı gamepad: %d    •    Seç: Yön tuşları / D-Pad    •    Onay: Enter / A    •    Oyuncu sayısı: Sol / Sağ[/color]\n" % pads
 	text += "[color=#9aa3c0]P1: WASD + Boşluk    P2: Ok tuşları    P1-P4: Gamepad 1-4[/color][/font_size][/center]"
 	_menu_label.text = text
 
@@ -113,12 +127,18 @@ func _input(event: InputEvent) -> void:
 			elif event.is_action_pressed("ui_up"):
 				menu_index = (menu_index - 1 + MENU_ITEMS.size()) % MENU_ITEMS.size()
 				_refresh_menu()
+			elif menu_index == MATH_WAR_ITEM and (event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right")):
+				var step := 1 if event.is_action_pressed("ui_right") else -1
+				math_war_players = wrapi(math_war_players - 2 + step, 0, 3) + 2
+				_refresh_menu()
 			elif event.is_action_pressed("ui_accept"):
 				if menu_index == MENU_ITEMS.size() - 1:
 					get_tree().quit()
+				elif menu_index == MATH_WAR_ITEM:
+					start_math_war(math_war_players)
 				else:
 					start_game(menu_index + 1)
-		State.PLAYING:
+		State.PLAYING, State.MATH_WAR:
 			if _is_pause_event(event):
 				_set_paused(true)
 		State.PAUSED:
@@ -150,10 +170,11 @@ func _is_back_event(event: InputEvent) -> bool:
 func _set_paused(paused: bool) -> void:
 	get_tree().paused = paused
 	if paused:
+		_resume_state = state
 		state = State.PAUSED
 		_message_label.text = "DURAKLATILDI\n\nDevam: Esc / Start / A\nAna menü: Q / Back / B"
 	else:
-		state = State.PLAYING
+		state = _resume_state
 		_message_label.text = ""
 
 
@@ -213,6 +234,9 @@ func load_level() -> void:
 
 
 func _clear_level() -> void:
+	if math_war:
+		math_war.queue_free()
+		math_war = null
 	for player in players:
 		player.queue_free()
 	players.clear()
@@ -268,6 +292,36 @@ func _show_results() -> void:
 		for i in player_count:
 			text += "[color=#%s]P%d: %d bölüm[/color]\n" % [PLAYER_COLORS[i].to_html(false), i + 1, scores[i]]
 		text += "\n[color=#%s]Kazanan: P%d![/color]\n" % [PLAYER_COLORS[best].to_html(false), best + 1]
+	text += "\n[font_size=20][color=#9aa3c0]Ana menü için Enter / A[/color][/font_size][/center]"
+	_menu_label.text = text
+
+
+# --- Matematik Savaşı -------------------------------------------------------
+
+func start_math_war(count: int, seed_value: int = 0) -> void:
+	_clear_level()
+	player_count = count
+	_menu_label.text = ""
+	_hud_label.text = ""
+	_message_label.text = ""
+	math_war = MathWar.new()
+	math_war.process_mode = Node.PROCESS_MODE_PAUSABLE
+	_math_layer.add_child(math_war)
+	math_war.setup(count, PLAYER_COLORS, seed_value)
+	math_war.finished.connect(_on_math_war_finished)
+	state = State.MATH_WAR
+
+
+func _on_math_war_finished(winner: int, hearts: Array) -> void:
+	_clear_level()
+	state = State.RESULTS
+	var text := "\n\n\n[center][font_size=56][color=#ffcc33]SAVAŞ BİTTİ[/color][/font_size]\n\n"
+	for i in hearts.size():
+		text += "[color=#%s]P%d: %d can[/color]\n" % [PLAYER_COLORS[i].to_html(false), i + 1, hearts[i]]
+	if winner == -1:
+		text += "\nBerabere!\n"
+	else:
+		text += "\n[color=#%s]Kazanan: P%d![/color]\n" % [PLAYER_COLORS[winner].to_html(false), winner + 1]
 	text += "\n[font_size=20][color=#9aa3c0]Ana menü için Enter / A[/color][/font_size][/center]"
 	_menu_label.text = text
 

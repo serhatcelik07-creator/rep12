@@ -91,6 +91,46 @@ func _run() -> void:
 	await frames(10)
 	check(main.scores[2] == 1, "P3 wins the round")
 
+	# Matematik Savaşı
+	var gen := RandomNumberGenerator.new()
+	gen.seed = 7
+	var questions_ok := true
+	for level in 40:
+		var q: Dictionary = main.MathWar.make_question(level, gen)
+		var choices: Array = q["choices"]
+		var unique := {}
+		for c in choices:
+			unique[c] = true
+		if choices.size() != 4 or unique.size() != 4 or choices[q["correct"]] != q["answer"]:
+			questions_ok = false
+			print("      bad question: %s" % q)
+	check(questions_ok, "math questions have 4 distinct choices incl. the answer")
+
+	main.show_menu()
+	await frames(5)
+	main.start_math_war(3, 42)
+	await frames(2)
+	var mw = main.math_war
+	check(main.state == main.State.MATH_WAR and str(mw.hearts) == "[5, 5, 5]", "math war starts with 3 players, 5 hearts each")
+	var right: int = mw.question["correct"]
+	mw.answer(1, (right + 1) % 4)
+	check(mw.hearts[1] == 4 and mw.phase == mw.Phase.ASKING, "wrong answer costs a heart, question stays open")
+	mw.answer(1, right)
+	check(mw.hitter == -1, "locked-out player can't answer again")
+	mw.answer(0, right)
+	check(mw.hitter == 0 and str(mw.hearts) == "[5, 3, 4]", "first correct answer hits the others")
+	await create_timer(mw.REVEAL_TIME + 0.3).timeout
+	check(mw.question_number == 2 and mw.phase == mw.Phase.ASKING, "next question after reveal")
+	key(KEY_I, true)
+	key(KEY_I, false)
+	check(mw.picks[2] == 0, "P3 answers with IJKL keys")
+	mw.hearts[1] = 0
+	mw.hearts[2] = 0
+	mw.answer(0, mw.question["correct"])
+	await create_timer(mw.REVEAL_TIME + 0.3).timeout
+	await frames(2)
+	check(main.state == main.State.RESULTS, "math war ends when one player is left")
+
 	print("\n%s (%d failures)" % ["ALL PASSED" if failures == 0 else "FAILED", failures])
 	quit(1 if failures else 0)
 

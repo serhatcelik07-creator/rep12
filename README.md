@@ -12,6 +12,7 @@ Godot 4 ile yazıldı. Hiç görsel veya ses dosyası kullanmıyor; her şey kod
 |---|---|
 | Tek oyunculu | Altınları topla ve bayrağa en kısa sürede ulaş. Süre, altın ve ölüm sayısı tutuluyor. |
 | 2-4 oyuncu yarış | Bayrağa ilk varan bölümü kazanır. 3 bölümün sonunda en çok bölüm kazanan oyunu alır. |
+| Matematik Savaşı (2-4 oyuncu) | Herkes aynı soruyu görür, 4 cevap 4 yöne dizilir. İlk doğru cevap diğer herkesten 1 can götürür, yanlış cevap kendi canından 1 götürür ve o soruda kilitler. Canı kalan son oyuncu kazanır. Sorular giderek zorlaşır (toplama, çıkarma, çarpma, bölme). |
 
 Oyunda dikenler, çukurlar, içinden zıplanabilen platformlar ve kontrol noktaları (yeşil bayraklar) var. Oyuncular birbirinin üstüne basabiliyor. Çok geride kalan oyuncu otomatik olarak lidere ışınlanıyor.
 
@@ -22,6 +23,8 @@ Oyunda dikenler, çukurlar, içinden zıplanabilen platformlar ve kontrol noktal
 | P1 klavye | A / D | W / Boşluk |
 | P2 klavye | ← / → | ↑ |
 | P1-P4 gamepad (Xbox kontrolcüsü) | Sol analog / D-Pad | A |
+
+Matematik Savaşı'nda cevap yönle seçilir: P1 W/A/S/D, P2 ok tuşları, P3 I/J/K/L, P4 numpad 8/4/5/6, gamepad'de D-Pad veya sol analog. Oyuncu sayısı menüde sol/sağ ile seçilir.
 
 Duraklatmak için Esc veya Start, ana menüye dönmek için (duraklatılmışken) Q, Back veya B.
 
