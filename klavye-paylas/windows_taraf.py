@@ -215,20 +215,27 @@ class Paylasim:
             sock.settimeout(5)
             okuyucu = threading.Thread(target=self._okuyucu, args=(kanal,), daemon=True)
             okuyucu.start()
+            sebep = "Mac cevap vermiyor"
             try:
+                # Fare surekli hareket etse bile her saniye ping at; Mac'in cevaplari
+                # okuyucuyu canli tutar.
+                son_ping = 0.0
                 while okuyucu.is_alive():
                     try:
-                        mesaj = self.kuyruk.get(timeout=1)
+                        mesaj = self.kuyruk.get(timeout=0.5)
+                        kanal.gonder(*mesaj)
                     except queue.Empty:
-                        mesaj = (ortak.MSG_PING, 0, 0, 0)
-                    kanal.gonder(*mesaj)
-            except Exception:
-                pass
+                        pass
+                    if time.monotonic() - son_ping >= 1:
+                        kanal.gonder(ortak.MSG_PING)
+                        son_ping = time.monotonic()
+            except Exception as e:
+                sebep = str(e) or type(e).__name__
             # Baglanti koptu: klavye Windows'ta kalsin ki kullanici kilitlenmesin.
             self.bagli = False
             self.windowsa_don()
             sock.close()
-            print("[-] Mac baglantisi koptu, yeniden deneniyor...")
+            print(f"[-] Mac baglantisi koptu ({sebep}), yeniden deneniyor...")
             time.sleep(1)
 
     @staticmethod

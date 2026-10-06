@@ -213,27 +213,38 @@ def baglantiyi_isle(sock, adres, anahtar, uyg):
     print(f"[+] Windows baglandi: {adres[0]}")
     # Windows her saniye ping atar; 5 sn ses yoksa baglantiyi olu say.
     sock.settimeout(5)
+    hatalar = set()
     try:
         while True:
             tip, a, b, c = kanal.al()
-            if tip == ortak.MSG_TUS:
-                uyg.tus(a, b, c)
-            elif tip == ortak.MSG_HAREKET:
-                uyg.hareket(a, b)
-            elif tip == ortak.MSG_DUGME:
-                uyg.dugme(a, b)
-            elif tip == ortak.MSG_TEKER:
-                uyg.teker(a, b)
-            elif tip == ortak.MSG_PING:
-                kanal.gonder(ortak.MSG_PING)
-            elif tip == ortak.MSG_BIRAK:
-                uyg.hepsini_birak()
-            elif tip == ortak.MSG_AKTIF:
-                print(">>> Klavye/fare simdi MAC'te" if a else "<<< Klavye/fare Windows'a dondu")
+            try:
+                olayi_uygula(kanal, uyg, tip, a, b, c)
+            except Exception as e:
+                # Tek bir olaydaki hata baglantiyi dusurmesin; her hatayi bir kez yaz.
+                if (tip, type(e)) not in hatalar:
+                    hatalar.add((tip, type(e)))
+                    print(f"[!] Olay {tip} uygulanamadi: {e!r}")
     except Exception as e:
-        print(f"[-] Baglanti koptu: {e}")
+        print(f"[-] Baglanti koptu: {e!r}")
     finally:
         uyg.hepsini_birak()
+
+
+def olayi_uygula(kanal, uyg, tip, a, b, c):
+    if tip == ortak.MSG_TUS:
+        uyg.tus(a, b, c)
+    elif tip == ortak.MSG_HAREKET:
+        uyg.hareket(a, b)
+    elif tip == ortak.MSG_DUGME:
+        uyg.dugme(a, b)
+    elif tip == ortak.MSG_TEKER:
+        uyg.teker(a, b)
+    elif tip == ortak.MSG_PING:
+        kanal.gonder(ortak.MSG_PING)
+    elif tip == ortak.MSG_BIRAK:
+        uyg.hepsini_birak()
+    elif tip == ortak.MSG_AKTIF:
+        print(">>> Klavye/fare simdi MAC'te" if a else "<<< Klavye/fare Windows'a dondu")
 
 
 def main():
