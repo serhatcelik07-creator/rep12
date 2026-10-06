@@ -32,7 +32,8 @@ DEST = os.path.join(HOME, ".mepcenter")
 CLAUDE_DIR = os.path.join(HOME, ".claude")
 SETTINGS = os.path.join(CLAUDE_DIR, "settings.json")
 CLAUDE_MD = os.path.join(CLAUDE_DIR, "CLAUDE.md")
-FILES = ["hub_client.py", "mepcenter_mcp.py", "mepcenter_hook.py", "hub_dinle.py", "hub_kopru.py", "hub_senkron.py"]
+FILES = ["hub_client.py", "mepcenter_mcp.py", "mepcenter_hook.py", "hub_dinle.py", "hub_kopru.py", "hub_senkron.py",
+         "hub_paslas.py"]
 LAUNCH_AGENT = os.path.join(HOME, "Library", "LaunchAgents", "com.mepcenter.kopru.plist")
 WIN_STARTUP = os.path.join(os.environ.get("APPDATA", HOME), "Microsoft", "Windows", "Start Menu", "Programs",
                            "Startup", "mepcenter-kopru.vbs")
