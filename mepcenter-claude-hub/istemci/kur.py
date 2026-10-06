@@ -81,6 +81,24 @@ def backup(path):
     return None
 
 
+def find_claude():
+    """claude komutunu PATH'te ve bilinen kurulum klasörlerinde arar."""
+    found = shutil.which("claude")
+    if found:
+        return found
+    cands = [os.path.join(HOME, ".local", "bin", "claude"), os.path.join(HOME, ".claude", "local", "claude"),
+             "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
+    if os.name == "nt":
+        appdata = os.environ.get("APPDATA", "")
+        local = os.environ.get("LOCALAPPDATA", "")
+        cands = [os.path.join(HOME, ".local", "bin", "claude.exe"), os.path.join(appdata, "npm", "claude.cmd"),
+                 os.path.join(local, "Programs", "claude", "claude.exe"), os.path.join(local, "AnthropicClaude", "claude.exe")]
+    for c in cands:
+        if c and os.path.isfile(c):
+            return c
+    return ""
+
+
 def load_json(path):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -136,7 +154,7 @@ def install_hooks():
 
 
 def install_mcp_claude_code():
-    claude = shutil.which("claude")
+    claude = find_claude()
     cmd_add = ["mcp", "add", "--scope", "user", "mepcenter", "--", sys.executable, os.path.join(DEST, "mepcenter_mcp.py")]
     if not claude:
         print("  ! 'claude' komutu bulunamadı. Claude Code kurulduktan sonra şunu çalıştırın:")
@@ -194,9 +212,11 @@ def install_kopru(cfg, cfg_path):
     if not yes("Köprü ajanı kurulsun mu?"):
         return
     k = cfg.setdefault("kopru", {})
-    claude = shutil.which("claude") or k.get("claude_path", "")
+    claude = find_claude() or k.get("claude_path", "")
     if not claude:
-        claude = ask("'claude' komutu bulunamadı. Tam yolunu yazın (boş = sonra ayarlarım)", "")
+        print("  ! Bu bilgisayarda Claude Code (claude komutu) bulunamadı. Claude Code'u kurduktan sonra bu kurulumu")
+        print("    tekrar çalıştırın; köprü o zaman çalışır. (Şimdilik Enter'a basabilirsiniz.)")
+        claude = ask("claude komutunun tam yolu (bilmiyorsanız Enter)", "")
     k["claude_path"] = claude
     k["workdir"] = ask("Claude hangi klasörde çalışsın", k.get("workdir") or os.path.join(HOME))
     print("İzin modu: 1) Dosya okur/düzenler, komut çalıştırmaz (önerilen)  2) Sadece okur  3) Her şeye izinli (riskli)")
@@ -297,8 +317,8 @@ def uninstall():
         strip_our_hooks(settings)
         save_json(SETTINGS, settings)
         print("  ✓ Hook'lar kaldırıldı")
-    if shutil.which("claude"):
-        subprocess.run(["claude", "mcp", "remove", "--scope", "user", "mepcenter"], capture_output=True)
+    if find_claude():
+        subprocess.run([find_claude(), "mcp", "remove", "--scope", "user", "mepcenter"], capture_output=True)
         print("  ✓ MCP sunucusu kaldırıldı")
     path = desktop_config_path()
     cfg = load_json(path)
