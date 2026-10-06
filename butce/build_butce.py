@@ -746,6 +746,15 @@ for i, row in enumerate(erows, start=5):
         if j in (5, 7, 8): c.number_format = EUR
         if j == 9: c.number_format = "+0%;-0%"
     E.row_dimensions[i].height = 60
+_rr = 5 + len(erows)
+E.cell(row=_rr, column=1, value="Bilgi – MEP dışı").border = BOX
+for j, v in enumerate(["Rayba Yapı (demiryolu üstyapı)", "02.10 / 05.10.2026", "Ray, makas, kruvazman; S-LINE bağlantı",
+                       17348355 + 1759956, "EUR", "", "", "", "42×R50 + 2×R100 makas + 3 kruvazman (= 56 makas, sinyal kabulüyle uyumlu); 17.231 m oluklu ray",
+                       "Beton/donatı hariç; 31.12.2026'ya kadar geçerli", "", "MEP bütçesine dahil değil",
+                       "Makas adedi sinyalizasyon/katener metrajını teyit ediyor"], start=2):
+    c = E.cell(row=_rr, column=j, value=v); c.border = BOX; c.alignment = WRAP
+    if j == 5: c.number_format = EUR
+E.row_dimensions[_rr].height = 45
 E["A14"] = "TEKLİF DURUMU ÖZETİ (Gmail, 29.09–06.10.2026)"; E["A14"].font = BOLD
 ozet_txt = [
     "Elektrik: ON Elektronik saat (81.600 €) ve YBS (171.000 €) teklifleri işlendi. Teknomaks (CCTV) ve Lev Müh. (yangın ihbar) çalışıyor; Best Transformer (trafo) dönmedi. Alfanar, Tema, EVA, DC Group vermiyor (Alfanar'dan RMU bütçesi istendi).",
