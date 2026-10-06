@@ -404,6 +404,7 @@ def main():
 
     try:
         res = api("ping", cwd=HOME)
+        api("end", {}, cwd=HOME)  # bağlantı testi panelde açık oturum gibi görünmesin
         print(f"  ✓ Sunucuya bağlanıldı ({res['agent']}, sürüm {res['version']})")
     except HubError as e:
         print(f"  ! Sunucuya bağlanılamadı: {e}")
