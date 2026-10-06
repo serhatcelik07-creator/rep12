@@ -48,7 +48,11 @@ Emojiler sistem fontundan çiziliyor (Android, iOS ve Windows renkli emoji fontu
 
 ## Android / iOS
 
-Mağazaya gönderilen asıl MatWar uygulamasının kodu bu depoda değil. O depoya Claude'un erişimi açılınca yapılacaklar:
+Asıl uygulama (Math Warriors, Flutter + PHP) bu depoda değil; MepCenter hub'ında `matwar` görevinde duruyor
+(https://mepcenter.com.tr/claude). 6 Ekim 2026'da bu oturum aşağıdakileri orada yaptı ve hub'a yükledi
+(dosya id 163–181, tek yama id 182 `guncellemeler/2026-10-06-emoji-android.patch`):
+mağazada yalnızca karakter + emoji paketi, düelloda hareketli emoji, Android gezinme çubuğu düzeltmesi.
+Ayrıntılar görevin "son durum" notunda. İlk plan:
 
 1. Mağaza: item ürünlerini kaldır, emoji paketlerini ekle (App Store Connect ve Google Play Console'da uygulama içi ürünleri de güncelle).
 2. Daha önce item satın almış kullanıcılara karşılık olarak emoji paketi veya coin ver.
