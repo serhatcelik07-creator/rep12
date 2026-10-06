@@ -139,7 +139,7 @@ def register(cfg, user, password, machine, timeout=20):
             msg = json.loads(e.read().decode("utf-8")).get("error", str(e))
         except Exception:
             msg = str(e)
-        raise HubError(msg)
+        raise HubError(_old_server_hint(msg))
     except ssl.SSLError as e:
         raise HubError(f"SSL hatası: {e}. macOS'ta 'Install Certificates.command' çalıştırın veya 'pip install certifi'.")
     except (urllib.error.URLError, socket.timeout, OSError, ValueError) as e:
@@ -147,3 +147,11 @@ def register(cfg, user, password, machine, timeout=20):
     if not res.get("ok"):
         raise HubError(res.get("error", "bilinmeyen hata"))
     return res
+
+
+def _old_server_hint(msg):
+    if "Token gerekli" in msg:
+        return ("Sunucudaki dosyalar ESKİ sürüm. Son gönderilen claude.zip'i cPanel'de public_html içinde açıp "
+                "eskilerin üzerine yazın, sonra kurulumu tekrar çalıştırın. (Kontrol: tarayıcıda "
+                "mepcenter.com.tr/claude/api/?r=register adresi 'POST gerekli' demeli.)")
+    return msg
