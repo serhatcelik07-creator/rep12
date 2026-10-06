@@ -90,7 +90,35 @@ def find_claude(configured=""):
     else:
         cands = [os.path.join(home, ".local", "bin", "claude"), os.path.join(home, ".claude", "local", "claude"),
                  "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
-    return next((c for c in cands if c and os.path.isfile(c)), "")
+    found = next((c for c in cands if c and os.path.isfile(c)), "")
+    if not found and os.name != "nt":
+        found = _shell_lookup()
+    return found
+
+def _shell_lookup():
+    """macOS/Linux: kullanıcının kendi kabuğunun PATH'inde claude'u ara (nvm, npm-global vb. dahil)."""
+    import glob
+    home = os.path.expanduser("~")
+    pats = [os.path.join(home, ".nvm", "versions", "node", "*", "bin", "claude"),
+            os.path.join(home, ".npm-global", "bin", "claude"), os.path.join(home, ".volta", "bin", "claude"),
+            os.path.join(home, ".bun", "bin", "claude"), "/opt/homebrew/lib/node_modules/.bin/claude"]
+    for p in pats:
+        hits = sorted(glob.glob(p))
+        if hits:
+            return hits[-1]
+    for shell in filter(None, [os.environ.get("SHELL"), "/bin/zsh", "/bin/bash"]):
+        if not os.path.exists(shell):
+            continue
+        try:
+            out = subprocess.run([shell, "-ilc", "command -v claude"], capture_output=True, text=True,
+                                 timeout=15, stdin=subprocess.DEVNULL).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        for line in reversed(out.strip().splitlines()):
+            line = line.strip()
+            if line.startswith("/") and os.path.isfile(line):
+                return line
+    return ""
 
 
 def keep_awake():
@@ -228,6 +256,9 @@ class Kopru:
             # Claude her zaman bu bilgisayarda giriş yapılmış Claude hesabıyla (aboneliğinizle) çalışsın:
             # ortamda bir API anahtarı tanımlı olsa bile kullanılmaz.
             env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}
+            # npm/nvm ile kurulan claude, yanındaki "node" programına ihtiyaç duyar
+            env["PATH"] = os.path.dirname(os.path.realpath(cmd[0])) + os.pathsep + os.path.dirname(cmd[0]) \
+                + os.pathsep + env.get("PATH", "")
             self.proc = subprocess.Popen(cmd, cwd=self.state["workdir"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                          stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace",
                                          env=env, **kw)

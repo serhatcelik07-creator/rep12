@@ -96,6 +96,31 @@ def find_claude():
     for c in cands:
         if c and os.path.isfile(c):
             return c
+    return _shell_lookup() if os.name != "nt" else ""
+
+def _shell_lookup():
+    """macOS/Linux: kullanıcının kendi kabuğunun PATH'inde claude'u ara (nvm, npm-global vb. dahil)."""
+    import glob
+    home = os.path.expanduser("~")
+    pats = [os.path.join(home, ".nvm", "versions", "node", "*", "bin", "claude"),
+            os.path.join(home, ".npm-global", "bin", "claude"), os.path.join(home, ".volta", "bin", "claude"),
+            os.path.join(home, ".bun", "bin", "claude"), "/opt/homebrew/lib/node_modules/.bin/claude"]
+    for p in pats:
+        hits = sorted(glob.glob(p))
+        if hits:
+            return hits[-1]
+    for shell in filter(None, [os.environ.get("SHELL"), "/bin/zsh", "/bin/bash"]):
+        if not os.path.exists(shell):
+            continue
+        try:
+            out = subprocess.run([shell, "-ilc", "command -v claude"], capture_output=True, text=True,
+                                 timeout=15, stdin=subprocess.DEVNULL).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        for line in reversed(out.strip().splitlines()):
+            line = line.strip()
+            if line.startswith("/") and os.path.isfile(line):
+                return line
     return ""
 
 
