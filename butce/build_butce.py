@@ -165,10 +165,9 @@ import unicodedata
 def _norm(t):
     t = (t or "").lower().replace("ı", "i")
     return "".join(c for c in unicodedata.normalize("NFKD", t) if not unicodedata.combining(c))
-DAGITIK = ["boru", "kablo", "tava", "merdiven", "kanal", "armatur", "projektor", "priz", "anahtar", "dedektor",
-           "buton", "kamera", "hoparlor", "ic unite", "suzgec", "menfez", "sprinkler", "sensor", "flasor", "siren",
-           "linye", "spot", "downlight", "acil aydinlatma", "yonlendirme", "kelepce", "iletken", "serit", "fiber",
-           "cat6", "patch", "difuzor", "izgara", "radyator", "vana", "nozul", "hortum", "kontak", "okuyucu", "ekran"]
+DAGITIK = ["boru", "sprinkler", "kablo", "tava", "merdiven", "kanal", "linye", "iletken",   # devir notu bölüm 10
+           "armatur", "projektor", "downlight", "acil aydinlatma", "priz", "dedektor", "kamera", "hoparlor",
+           "ic unite", "suzgec", "menfez"]
 HARIC = ["tasarim", "test", "devreye", "proje", "pano", "santral", "pompa", "kompresor", "trafo", "ups", "sunucu",
          "kazi", "dolgu", "beton", "kaplama", "egitim", "yazilim", "lisans"]
 NO_PAY_SIRA = {"170", "171", "319", "320", "222", "223", "224", "225", "226"}
@@ -194,7 +193,7 @@ REVIZE = {}
 _rp = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "veri", "revize.csv")
 if _os.path.exists(_rp):
     for _r in _csv.DictReader(open(_rp, encoding="utf-8")):
-        REVIZE[(_r["sayfa"], _r["kalem"].strip())] = _r
+        REVIZE[(_r["sayfa"], str(_r["sira"]), _r["kalem"].strip())] = _r
 
 
 TEKLIF_OVR = {}
@@ -234,7 +233,7 @@ def sheet(name, title, groups, mode=None):
         first = r
         for kalem, birim, q_rfq, q_corr, bf, kaynak, notu in items:
             tv = TEKLIF_OVR.get((name, poz, kalem.strip()))
-            rv = None if tv else REVIZE.get((name, kalem.strip()))
+            rv = None if tv else REVIZE.get((name, str(sira), kalem.strip()))
             if tv:
                 if abs(float(tv["bf"]) - float(bf or 0)) > 0.005:
                     notu = (notu + " | " if notu else "") + f"Teklif öncesi BF {float(bf or 0):,.2f}"
@@ -740,7 +739,9 @@ erows = [
      "DAP şantiye; KDV ve gümrük hariç", "Kullanılmadı", "Bütçenin ~1,8 katı; dökümsüz – yalnız üst sınır göstergesi"),
 ]
 for i, row in enumerate(erows, start=5):
-    vals = list(row[:8]) + [f"=IF(H{i}=0,\"\",G{i}/H{i}-1)"] + list(row[8:])
+    row = list(row)
+    row[6] = f'=E{i}/IF(F{i}="USD",{P_USD},IF(F{i}="TRY",{P_TRY},1))'
+    vals = row[:8] + [f"=IF(H{i}=0,\"\",G{i}/H{i}-1)"] + row[8:]
     for j, v in enumerate(vals, 1):
         c = E.cell(row=i, column=j, value=v); c.border = BOX; c.alignment = WRAP
         if j in (5, 7, 8): c.number_format = EUR
