@@ -225,6 +225,7 @@ def install_kopru(cfg, cfg_path):
     k["prevent_sleep"] = yes("Köprü çalışırken bilgisayar uykuya geçmesin mi? (7/24 erişim için önerilir)", True)
     save_json(cfg_path, cfg)
 
+    stop_running_kopru()  # eski sürüm çalışıyorsa durdur; yenisi aşağıda başlatılır
     py = sys.executable
     script = os.path.join(DEST, "hub_kopru.py")
     logf = os.path.join(DEST, "kopru.log")
@@ -287,15 +288,24 @@ WantedBy=default.target
         print("  ✓ Köprü kuruldu (systemd --user). Durum: systemctl --user status mepcenter-kopru")
 
 
-def uninstall_kopru():
+def stop_running_kopru():
     pid_file = os.path.join(DEST, "kopru.pid")
     try:
         with open(pid_file) as f:
-            os.kill(int(f.read().strip()), 15)
+            pid = int(f.read().strip())
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/PID", str(pid)], capture_output=True)
+        else:
+            os.kill(pid, 15)
         os.remove(pid_file)
-        print("  ✓ Çalışan köprü durduruldu")
+        time.sleep(1)
+        print("  ✓ Çalışan eski köprü durduruldu")
     except (OSError, ValueError):
         pass
+
+
+def uninstall_kopru():
+    stop_running_kopru()
     if os.path.exists(LAUNCH_AGENT):
         subprocess.run(["launchctl", "unload", LAUNCH_AGENT], capture_output=True)
         os.remove(LAUNCH_AGENT)

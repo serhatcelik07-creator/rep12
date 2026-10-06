@@ -75,6 +75,24 @@ def save_state(st):
         json.dump(st, f, ensure_ascii=False)
 
 
+def find_claude(configured=""):
+    """claude komutunu ayarda, PATH'te ve bilinen kurulum klasörlerinde arar."""
+    home = os.path.expanduser("~")
+    if configured and os.path.isfile(configured):
+        return configured
+    found = shutil.which("claude")
+    if found:
+        return found
+    if os.name == "nt":
+        appdata, local = os.environ.get("APPDATA", ""), os.environ.get("LOCALAPPDATA", "")
+        cands = [os.path.join(home, ".local", "bin", "claude.exe"), os.path.join(appdata, "npm", "claude.cmd"),
+                 os.path.join(local, "Programs", "claude", "claude.exe"), os.path.join(local, "AnthropicClaude", "claude.exe")]
+    else:
+        cands = [os.path.join(home, ".local", "bin", "claude"), os.path.join(home, ".claude", "local", "claude"),
+                 "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
+    return next((c for c in cands if c and os.path.isfile(c)), "")
+
+
 def keep_awake():
     """Bilgisayarın boşta uykuya geçmesini engelle (ekran kapanabilir)."""
     try:
@@ -94,7 +112,7 @@ class Kopru:
         self.k.update(self.cfg.get("kopru") or {})
         self.state = load_state()
         self.state.setdefault("workdir", os.path.expanduser(self.k["workdir"]))
-        self.claude = self.k["claude_path"] or shutil.which("claude") or ""
+        self.claude = find_claude(self.k["claude_path"])
         self.proc = None
         self.job_text = ""
         self.job_started = 0.0
@@ -158,6 +176,8 @@ class Kopru:
 
     # --- Claude çalıştırma ----------------------------------------------------
     def run_claude(self, text, to):
+        if not self.claude or not os.path.exists(self.claude) and not shutil.which(self.claude):
+            self.claude = find_claude(self.k["claude_path"])  # Claude Code sonradan kurulmuş olabilir
         if not self.claude:
             self.reply("Bu bilgisayarda 'claude' komutu bulunamadı. Claude Code'u kurun veya config.json > "
                        "kopru.claude_path ayarlayın.", to)
