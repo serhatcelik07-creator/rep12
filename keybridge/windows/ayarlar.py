@@ -1,47 +1,19 @@
-"""Windows uygulamalarinin ayarlari: %APPDATA%\\KeyBridge\\<urun>\\ayarlar.json
+"""Windows'ta ayar dosyasinin yeri ve eslesme anahtarlarinin korunmasi.
 
-Ayarlarin hepsi yoneten tarafta tutulur; karsi tarafi ilgilendirenler (fare
-hizi, Ctrl/Cmd vb.) her baglantida ve her degisiklikte oraya gonderilir.
-Yonetilen taraf yalnizca kimligini ve eslesmeleri saklar.
+Ayarlar: %APPDATA%\\KeyBridge\\<urun>\\ayarlar.json
+Gelen dosyalar: %LOCALAPPDATA%\\KeyBridge\\<urun>\\Pano
 Eslesme anahtarlari Windows DPAPI ile korunur (yalnizca bu kullanici acabilir).
 """
 
-import base64
 import ctypes
-import json
 import os
 import socket
-import threading
-import uuid
 from ctypes import wintypes
 
-from cekirdek import tuslar
-
-VARSAYILAN = {
-    "git_tusu": tuslar.VARSAYILAN_KISAYOL["windows"][0],   # ↓
-    "don_tusu": tuslar.VARSAYILAN_KISAYOL["windows"][1],   # ↑
-    "fare_hizi": 1.0,
-    "teker_hizi": 1.0,
-    "teker_ters": False,
-    "ctrl_cmd": False,
-    "pano": True,
-    "dosya": True,
-    "ses": True,
-    "secili": None,
-}
-# Karsi tarafa gonderilen ayarlar
-UZAK_AYARLAR = ("fare_hizi", "teker_hizi", "teker_ters", "ctrl_cmd")
-
-
-def klasor(urun, *alt):
-    temel = os.environ.get("APPDATA") or os.path.expanduser("~")
-    yol = os.path.join(temel, "KeyBridge", urun, *alt)
-    os.makedirs(yol, exist_ok=True)
-    return yol
+from cekirdek.depo import Depo, varsayilanlar
 
 
 def onbellek(urun):
-    """Gelen dosyalarin yazildigi klasor (%LOCALAPPDATA%)."""
     temel = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
     yol = os.path.join(temel, "KeyBridge", urun, "Pano")
     os.makedirs(yol, exist_ok=True)
@@ -55,9 +27,10 @@ class _BLOB(ctypes.Structure):
 def _dpapi(veri, koru):
     try:
         crypt32, kernel32 = ctypes.windll.crypt32, ctypes.windll.kernel32
-    except AttributeError:  # Windows disi (testler): korumasiz sakla
+    except AttributeError:  # Windows disi (testler): korumasiz
         return veri
-    giris = _BLOB(len(veri), ctypes.cast(ctypes.create_string_buffer(veri, len(veri)), ctypes.POINTER(ctypes.c_char)))
+    tampon = ctypes.create_string_buffer(veri, len(veri))
+    giris = _BLOB(len(veri), ctypes.cast(tampon, ctypes.POINTER(ctypes.c_char)))
     cikis = _BLOB()
     islev = crypt32.CryptProtectData if koru else crypt32.CryptUnprotectData
     if not islev(ctypes.byref(giris), None, None, None, None, 0, ctypes.byref(cikis)):
@@ -68,77 +41,12 @@ def _dpapi(veri, koru):
         kernel32.LocalFree(cikis.pbData)
 
 
-class Ayarlar:
-    def __init__(self, urun, yol=None):
-        self.yol = yol or os.path.join(klasor(urun), "ayarlar.json")
-        self._kilit = threading.Lock()
-        try:
-            with open(self.yol, encoding="utf-8") as f:
-                self._veri = json.load(f)
-        except (OSError, ValueError):
-            self._veri = {}
-        degisti = False
-        for anahtar, deger in VARSAYILAN.items():
-            if anahtar not in self._veri:
-                self._veri[anahtar] = json.loads(json.dumps(deger))
-                degisti = True
-        if "kimlik" not in self._veri:
-            self._veri["kimlik"] = str(uuid.uuid4())
-            degisti = True
-        self._veri.setdefault("eslesmeler", {})
-        if degisti:
-            self._kaydet()
+def _ad():
+    return os.environ.get("COMPUTERNAME") or socket.gethostname()
 
-    def _kaydet(self):
-        gecici = self.yol + ".tmp"
-        with open(gecici, "w", encoding="utf-8") as f:
-            json.dump(self._veri, f, ensure_ascii=False, indent=2)
-        os.replace(gecici, self.yol)
 
-    def get(self, anahtar, varsayilan=None):
-        with self._kilit:
-            return self._veri.get(anahtar, varsayilan)
-
-    def set(self, anahtar, deger):
-        with self._kilit:
-            self._veri[anahtar] = deger
-            self._kaydet()
-
-    def ben(self):
-        ad = os.environ.get("COMPUTERNAME") or socket.gethostname()
-        return {"id": self._veri["kimlik"], "ad": ad}
-
-    def uzak_ayarlar(self):
-        with self._kilit:
-            return {a: self._veri[a] for a in UZAK_AYARLAR}
-
-    # ---- eslesmeler ----
-    def anahtar_bul(self, kimlik):
-        with self._kilit:
-            kayit = self._veri["eslesmeler"].get(kimlik)
-        if not kayit:
-            return None
-        try:
-            return _dpapi(base64.b64decode(kayit["anahtar"]), koru=False)
-        except (OSError, ValueError, KeyError):
-            return None
-
-    def anahtar_kaydet(self, kimlik, ad, anahtar):
-        korunmus = base64.b64encode(_dpapi(anahtar, koru=True)).decode("ascii")
-        with self._kilit:
-            self._veri["eslesmeler"][kimlik] = {"ad": ad, "anahtar": korunmus}
-            self._kaydet()
-
-    def eslesmeyi_sil(self, kimlik):
-        with self._kilit:
-            self._veri["eslesmeler"].pop(kimlik, None)
-            self._kaydet()
-
-    def eslesmeleri_sifirla(self):
-        with self._kilit:
-            self._veri["eslesmeler"] = {}
-            self._kaydet()
-
-    def eslesmeler(self):
-        with self._kilit:
-            return {k: v["ad"] for k, v in self._veri["eslesmeler"].items()}
+def ayarlar(urun, yol=None):
+    temel = os.environ.get("APPDATA") or os.path.expanduser("~")
+    yol = yol or os.path.join(temel, "KeyBridge", urun, "ayarlar.json")
+    return Depo(yol, varsayilanlar("windows"), _ad,
+                koru=lambda b: _dpapi(b, True), coz=lambda b: _dpapi(b, False))
