@@ -27,8 +27,13 @@ Kod yoksa ve kullanıcı yeni bir göreve başlıyorsa, kısa bir kod önermeyi 
 - **Geçmiş:** Önceki konuşmalarda arama için `hub_topics`, tam metin için `hub_topic`.
 - **Ortak veri:** Yapılandırılmış veriyi (liste, tablo, ayar) `hub_kv_set` / `hub_kv_get` ile sakla;
   alan adı (ns) olarak görev kodunu kullan.
-- **Dosyalar:** `hub_files` ile listele. Claude Code'da `hub_upload` / `hub_download` kullanılabilir;
-  web'de küçük metin dosyalarını `hub_file_read` ile oku.
+- **Dosyalar:** Kullanıcının bilgisayarlarından gelen dosyalar hub'dadır; `hub_files` ile listele (code ile göreve göre).
+  - Bilgisayardaki Claude Code: `hub_upload` / `hub_download`.
+  - Metin/kod dosyası okumak için her yerde: `hub_file_read`.
+  - Bulut oturumu (claude.ai/code) ve ikili dosyalar (PDF, Excel, resim…): ortamda `MEPCENTER_TOKEN` varsa
+    `curl -sf -H "X-Hub-Token: $MEPCENTER_TOKEN" "https://mepcenter.com.tr/claude/api/?r=download&id=ID" -o DOSYA`
+    ile indir. Bulutta ürettiğin bir dosyayı hub'a geri yüklemek için:
+    `python3 -c "import base64,json,sys;print(json.dumps({'name':sys.argv[1].split('/')[-1],'rel_path':sys.argv[1],'content_b64':base64.b64encode(open(sys.argv[1],'rb').read()).decode()}))" DOSYA | curl -sf -H "X-Hub-Token: $MEPCENTER_TOKEN" -H "Content-Type: application/json" --data-binary @- "https://mepcenter.com.tr/claude/api/?r=upload"`
 
 ## Güvenlik
 - Şifre, token, API anahtarı, kişisel/gizli bilgi ASLA hub'a yazılmaz.

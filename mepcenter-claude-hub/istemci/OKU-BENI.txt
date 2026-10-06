@@ -15,3 +15,8 @@ Program sırayla şunları sorar (çoğunda Enter'a basmanız yeterli):
 Bitince açık Claude Code pencerelerini kapatıp yeniden açın.
 Claude kullanımı her zaman kendi Claude aboneliğinizden düşer; ek ücret veya API anahtarı yoktur.
 Kaldırmak için: terminalde  python3 kur.py --kaldir   (Windows: py kur.py --kaldir)
+
+KLASÖR GÖNDERME (ör. G: sürücüsü):
+  Kurulumdan sonra klasor-gonder.bat (Mac: klasor-gonder.command) dosyasına çift tıklayın,
+  klasörü (ör. G:\Projeler\Matwar) ve görev kodunu (ör. matwar) yazın. Yalnızca değişen dosyalar gider;
+  sürücünün şifresi bilgisayarınızda kalır.

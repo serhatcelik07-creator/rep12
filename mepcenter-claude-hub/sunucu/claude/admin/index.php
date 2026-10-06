@@ -161,6 +161,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'topic_delete':
             q('DELETE FROM hub_topics WHERE id = ?', [(int)$_POST['id']]);
             redirect('p=topics');
+        case 'file_upload': // Panelden dosya yükleme (birden fazla)
+            $code = trim((string)($_POST['code'] ?? ''));
+            if ($code !== '' && !valid_project_code($code)) {
+                flash('Geçersiz görev kodu.');
+                redirect('p=files');
+            }
+            $n = 0;
+            $errs = [];
+            $files = $_FILES['files'] ?? null;
+            if ($files && is_array($files['name'])) {
+                foreach ($files['name'] as $i => $fname) {
+                    if ($files['error'][$i] !== UPLOAD_ERR_OK) {
+                        $errs[] = $fname . ($files['error'][$i] === UPLOAD_ERR_INI_SIZE ? ' (sunucu boyut sınırını aşıyor)' : ' (yüklenemedi)');
+                        continue;
+                    }
+                    try {
+                        store_file((string)file_get_contents($files['tmp_name'][$i]), $fname, $fname, $code, null, 'panelden yüklendi');
+                        $n++;
+                    } catch (HubFail $e) {
+                        $errs[] = $fname . ' (' . $e->getMessage() . ')';
+                    }
+                }
+            }
+            flash("$n dosya yüklendi." . ($errs ? ' Yüklenemeyenler: ' . implode(', ', $errs) : ''));
+            redirect('p=files' . ($code !== '' ? '&code=' . urlencode($code) : ''));
         case 'file_delete':
             $f = q('SELECT stored_name FROM hub_files WHERE id = ?', [(int)$_POST['id']])->fetch();
             if ($f) {
@@ -441,8 +466,26 @@ $flash = flash();
     endif; ?>
 
 <?php elseif ($p === 'files'):
-    $rows = q('SELECT f.*, s.machine, s.project, a.name AS agent FROM hub_files f LEFT JOIN hub_sessions s ON s.id = f.session_id LEFT JOIN hub_agents a ON a.id = s.agent_id ORDER BY f.id DESC LIMIT 300')->fetchAll(); ?>
-  <h2>Yüklenen dosyalar</h2>
+    $fcode = trim((string)($_GET['code'] ?? ''));
+    $rows = q('SELECT f.*, s.machine, s.project, a.name AS agent FROM hub_files f LEFT JOIN hub_sessions s ON s.id = f.session_id LEFT JOIN hub_agents a ON a.id = s.agent_id'
+              . ($fcode !== '' ? ' WHERE f.project_code = ?' : '') . ' ORDER BY f.id DESC LIMIT 300', $fcode !== '' ? [$fcode] : [])->fetchAll(); ?>
+  <h2>Dosya yükle</h2>
+  <form method="post" enctype="multipart/form-data" class="card" id="upform"><?= csrf() ?><input type="hidden" name="a" value="file_upload">
+    <label>Görev kodu (Claude'lar dosyayı bu görevle birlikte görür) <input name="code" value="<?= h($fcode) ?>" placeholder="örn. matwar"></label>
+    <label id="drop" class="drop">Dosyaları buraya sürükleyin ya da tıklayıp seçin
+      <input type="file" name="files[]" multiple required></label>
+    <button>Yükle</button>
+    <p class="meta">Dosya başına sınır: <?= (int)hub_config()['max_upload_mb'] ?> MB (sunucu PHP sınırı: <?= h(ini_get('upload_max_filesize')) ?>).
+      Bütün bir klasörü göndermek için bilgisayarda <b>hub_senkron.py</b> programını kullanın.</p>
+  </form>
+  <script>
+  (function(){const d=document.getElementById('drop'),i=d.querySelector('input');
+    ['dragover','dragenter'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.add('on');}));
+    ['dragleave','drop'].forEach(e=>d.addEventListener(e,()=>d.classList.remove('on')));
+    d.addEventListener('drop',ev=>{ev.preventDefault();i.files=ev.dataTransfer.files;d.firstChild.textContent=i.files.length+' dosya seçildi ';});
+    i.addEventListener('change',()=>{d.firstChild.textContent=i.files.length+' dosya seçildi ';});})();
+  </script>
+  <h2>Yüklenen dosyalar<?= $fcode !== '' ? ' — görev ' . h($fcode) . ' <a class="chip" href="?p=files">tümü</a>' : '' ?></h2>
   <div class="scroll"><table><tr><th>#</th><th>Dosya</th><th>Görev · klasör / yol</th><th>Kaynak</th><th>Boyut</th><th>Tarih</th><th></th></tr>
   <?php foreach ($rows as $f): ?>
     <tr><td><?= $f['id'] ?></td><td><a href="?p=download&id=<?= $f['id'] ?>"><?= h($f['orig_name']) ?></a><?= $f['note'] ? '<br><small>' . h($f['note']) . '</small>' : '' ?></td>

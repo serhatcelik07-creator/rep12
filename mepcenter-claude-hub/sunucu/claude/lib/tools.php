@@ -48,7 +48,9 @@ function hub_tool_defs(): array
             $o(['q' => $s, 'code' => $s, 'machine' => $s, 'kind' => $s, 'session' => $i, 'limit' => $i, 'offset' => $i])],
         'hub_topic' => ['topic', 'Bir kaydın tam içeriğini getirir. Çok uzunsa offset ile devamını oku (next_offset).',
             $o(['id' => $i, 'offset' => $i], ['id'])],
-        'hub_files' => ['files', 'Hub\'a yüklenmiş dosyaları listeler (q: ad/yol, code: görev).', $o(['q' => $s, 'code' => $s, 'limit' => $i])],
+        'hub_files' => ['files', 'Hub\'a yüklenmiş dosyaları listeler (q: ad/yol, code: görev). Kullanıcının bilgisayarlarından ve panelden '
+            . 'yüklenen dosyalar buradadır. İçerik için: metinse hub_file_read; Claude Code\'da hub_download; bulut oturumunda '
+            . 'MEPCENTER_TOKEN ile curl (talimata bak).', $o(['q' => $s, 'code' => $s, 'limit' => $i])],
         'hub_file_read' => ['file_get', 'Hub\'daki bir metin/kod dosyasının içeriğini okur.', $o(['id' => $i], ['id']), ['format' => 'text']],
         'hub_kv_set' => ['kv_set', 'Ortak veriye yazar (ns varsayılan: görev kodu). value metin veya JSON metni.',
             $o(['key' => $s, 'value' => $s, 'ns' => $s], ['key', 'value'])],

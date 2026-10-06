@@ -207,7 +207,7 @@ function project_brief_md(string $code, ?int $mySessionId = null, int $convLimit
     if ($files) {
         $L[] = "\n## Dosyalar (her yolun son sürümü)";
         foreach ($files as $f) {
-            $L[] = "- #{$f['id']} `{$f['rel_path']}` (" . round($f['size'] / 1024, 1) . " KB, {$f['machine']}, " . substr($f['created_at'], 0, 16) . ')';
+            $L[] = "- #{$f['id']} `{$f['rel_path']}` (" . round($f['size'] / 1024, 1) . ' KB, ' . ($f['machine'] ?: 'panel') . ', ' . substr($f['created_at'], 0, 16) . ')';
         }
     }
 
@@ -219,6 +219,33 @@ function project_brief_md(string $code, ?int $mySessionId = null, int $convLimit
         }
     }
     return implode("\n", $L);
+}
+
+/** Dosyayı diske yazar ve kaydını açar. Aynı kaynaktan aynı yol + aynı içerik tekrar gelirse yeni kayıt açmaz. */
+function store_file(string $data, string $name, string $relPath, string $code, ?int $sessionId, string $note = ''): array
+{
+    if (strlen($data) > (int)hub_config()['max_upload_mb'] * 1048576) {
+        throw new HubFail('Dosya çok büyük (sınır ' . hub_config()['max_upload_mb'] . ' MB)', 413);
+    }
+    $name = basename(str_replace('\\', '/', $name));
+    $sha = hash('sha256', $data);
+    $rel = str_cut(str_replace('\\', '/', $relPath ?: $name), 490);
+    $dup = q('SELECT id FROM hub_files WHERE rel_path = ? AND sha256 = ? AND session_id <=> ? AND project_code <=> ? LIMIT 1',
+             [$rel, $sha, $sessionId, $code === '' ? null : $code])->fetchColumn();
+    if ($dup) {
+        return ['id' => (int)$dup, 'duplicate' => true];
+    }
+    $dir = hub_config()['upload_dir'];
+    if (!is_dir($dir) && !mkdir($dir, 0750, true)) {
+        throw new HubFail('Yükleme klasörü oluşturulamadı', 500);
+    }
+    $stored = bin2hex(random_bytes(20));
+    if (file_put_contents("$dir/$stored", $data) === false) {
+        throw new HubFail('Dosya kaydedilemedi', 500);
+    }
+    q('INSERT INTO hub_files (session_id, project_code, orig_name, rel_path, stored_name, size, sha256, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [$sessionId, $code === '' ? null : $code, str_cut($name, 250), $rel, $stored, strlen($data), $sha, str_cut($note, 250)]);
+    return ['id' => (int)db()->lastInsertId()];
 }
 
 function arg_str(array $a, string $k, string $default = ''): string
@@ -423,25 +450,8 @@ function hub_action(string $r, array $agent, array &$session, array $a): array
             if (strlen($data) > (int)hub_config()['max_upload_mb'] * 1048576) {
                 throw new HubFail('Dosya çok büyük (sınır ' . hub_config()['max_upload_mb'] . ' MB)', 413);
             }
-            $sha = hash('sha256', $data);
-            $rel = str_cut(str_replace('\\', '/', arg_str($a, 'rel_path', $name)), 490);
             $c = arg_str($a, 'code') ?: $code;
-            $dup = q('SELECT id FROM hub_files WHERE rel_path = ? AND sha256 = ? AND session_id = ? LIMIT 1',
-                     [$rel, $sha, $session['id']])->fetchColumn();
-            if ($dup) {
-                return ['id' => (int)$dup, 'duplicate' => true];
-            }
-            $dir = hub_config()['upload_dir'];
-            if (!is_dir($dir) && !mkdir($dir, 0750, true)) {
-                throw new HubFail('Yükleme klasörü oluşturulamadı', 500);
-            }
-            $stored = bin2hex(random_bytes(20));
-            if (file_put_contents("$dir/$stored", $data) === false) {
-                throw new HubFail('Dosya kaydedilemedi', 500);
-            }
-            q('INSERT INTO hub_files (session_id, project_code, orig_name, rel_path, stored_name, size, sha256, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-              [$session['id'], $c === '' ? null : $c, str_cut($name, 250), $rel, $stored, strlen($data), $sha, str_cut(arg_str($a, 'note'), 250)]);
-            return ['id' => (int)db()->lastInsertId()];
+            return store_file($data, $name, arg_str($a, 'rel_path', $name), $c, (int)$session['id'], arg_str($a, 'note'));
 
         case 'files':
             $where = ['1=1'];

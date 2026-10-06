@@ -24,3 +24,5 @@ code{font-size:13px}
 .thread{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
 .bubble{max-width:80%;padding:8px 12px;border-radius:12px;background:var(--bg);word-wrap:break-word}.bubble.me{align-self:flex-end;background:var(--acc);color:#fff}.bubble.me .meta{color:#ffe}
 .chatform{display:flex;gap:8px;align-items:flex-end;margin-top:8px}.chatform textarea{margin:0}.chatform button{margin:0}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:24px;text-align:center;color:var(--mut);cursor:pointer}.drop.on{border-color:var(--acc);color:var(--acc)}
+.drop input{margin-top:10px}

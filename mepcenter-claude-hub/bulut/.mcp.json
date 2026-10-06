@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mepcenter": {
+      "type": "http",
+      "url": "https://mepcenter.com.tr/claude/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${MEPCENTER_TOKEN}"
+      }
+    }
+  }
+}
