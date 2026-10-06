@@ -215,7 +215,7 @@ asansor = [
         ("Asansör 800 kg, 2 durak (zemin/1. kat), MRL, VVVF, 1 m/s – D01", "adet", 1, None, avg800, "TEKLİF ort.", ""),
     ]),
 ]
-ws_as, AS_TOT, AS_RFQ, AS_MAIN = sheet("Asansor", "ASANSÖR – Sıra 364–365 (13 asansör)", asansor)
+ws_as, AS_TOT, AS_RFQ, AS_MAIN = sheet("Asansor", "3 ASANSÖR – Sıra 364–365 (13 asansör)", asansor)
 
 # ================================================================ SİNYALİZASYON + AVLS
 sinyal = [
@@ -331,7 +331,7 @@ sinyal = [
          "set", 1, None, 60000, "TAHMİN", ""),
     ]),
 ]
-ws_sn, SN_TOT, SN_RFQ, SN_MAIN = sheet("Sinyal", "SİNYALİZASYON VE ARAÇ TAKİP (AVLS) – Sıra 228–235", sinyal)
+ws_sn, SN_TOT, SN_RFQ, SN_MAIN = sheet("Sinyal", "4 SİNYALİZASYON VE ARAÇ TAKİP (AVLS) – Sıra 228–235", sinyal)
 
 # ================================================================ KATENER
 direk = lambda kod, ad, n, kg, bulon: (kod, ad, [
@@ -423,7 +423,7 @@ katener = [
 ]
 # direk() returns (sira, title, items) – add poz
 katener = katener[:2] + [(s, p, t, it) for (s, t, it), p in zip(katener[2:], ("2012.C", "2012.D", "2012.E", "2012.G", "2012.F"))]
-ws_kt, KT_TOT, KT_RFQ, KT_MAIN = sheet("Katener", "ELEKTRİFİKASYON (1) – KATENER – Sıra 220–226", katener)
+ws_kt, KT_TOT, KT_RFQ, KT_MAIN = sheet("Katener", "5 ELEKTRİFİKASYON (B) – KATENER – Sıra 220–226", katener)
 
 # ================================================================ CER GÜCÜ / ENERJİ TEMİNİ
 RING = f"{P_RING}/{P_RING_RFQ}"
@@ -563,12 +563,16 @@ cer = [
         ("N2XH 1×240 Cu + pabuç + bara/mesnet + merdiven + kelepçe + test", "set", 1, None, 44000, "TAHMİN (ref. busbar 15.151–55.516)", ""),
     ]),
 ]
-ws_cg, CG_TOT, CG_RFQ, CG_MAIN = sheet("Cer_Guc", "ELEKTRİFİKASYON (2) – CER GÜCÜ / ENERJİ TEMİNİ (5 TM, OG ring, TEİAŞ bağlantısı)", cer)
+ws_cg, CG_TOT, CG_RFQ, CG_MAIN = sheet("Cer_Guc", "5 ELEKTRİFİKASYON (A) – GÜÇ TEMİNİ / CER GÜCÜ / ENERJİ TEMİNİ (5 TM, OG ring, TEİAŞ bağlantısı)", cer)
 
 
 # ================================================================ MEKANİK / ELEKTRİK AG / HABERLEŞME (CSV'den)
 import csv, os
 MEP_DIR = os.environ.get("MEP_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "veri"))
+
+
+# Alt kalemleri "bina başına" verilmiş, cetvel miktarı 4 olan satırlar (çarpan düzeltmesi)
+CARP_OVERRIDE = {"elektrik": {"331": 4, "341": 4}}
 
 
 def groups_from_csv(key):
@@ -578,7 +582,7 @@ def groups_from_csv(key):
     groups, cur, carp = [], None, 1
     for r in rows:
         if r["tip"] == "ANA":
-            carp = num(r["carpan"]) or 1
+            carp = CARP_OVERRIDE.get(key, {}).get(r["sira"], num(r["carpan"]) or 1)
             cur = [r["sira"], r["poz"], f"{r['kalem']} ({r['miktar']} {r['birim']})", []]
             groups.append(cur)
             if r["id"] in out:  # alt kalemi olmayan ana kalem
@@ -600,11 +604,11 @@ def groups_from_csv(key):
 
 
 mekanik = groups_from_csv("mekanik")
-ws_mk, MK_TOT, MK_RFQ, MK_MAIN = sheet("Mekanik", "01 MEKANİK – Sıra 159–168, 343–363 (HVAC, yangın, drenaj, sıhhi, basınçlı hava)", mekanik)
+ws_mk, MK_TOT, MK_RFQ, MK_MAIN = sheet("Mekanik", "2 MEKANİK – Sıra 159–168, 343–363 (HVAC, yangın, drenaj, sıhhi, basınçlı hava)", mekanik)
 elk_ag = groups_from_csv("elektrik")
-ws_ea, EA_TOT, EA_RFQ, EA_MAIN = sheet("Elektrik_AG", "02-B ELEKTRİK – AG dağıtım, topraklama, AG kablolar, AG tesisat-aydınlatma, yangın ihbar", elk_ag)
+ws_ea, EA_TOT, EA_RFQ, EA_MAIN = sheet("Elektrik_AG", "1 ELEKTRİK (A) – AG dağıtım, topraklama, AG kablolar, AG tesisat-aydınlatma, yangın ihbar", elk_ag)
 hab = groups_from_csv("haberlesme")
-ws_hb, HB_TOT, HB_RFQ, HB_MAIN = sheet("Haberlesme", "02-C ELEKTRİK – Kontrol ve haberleşme (iletim, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, ücret toplama)", hab)
+ws_hb, HB_TOT, HB_RFQ, HB_MAIN = sheet("Haberlesme", "1 ELEKTRİK (B) – Kontrol ve haberleşme (iletim, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, ücret toplama)", hab)
 
 # ---------------------------------------------------------------- İdare düzeltmeleri
 D = wb.create_sheet("Idare_Duzeltme")
@@ -643,7 +647,7 @@ for col, w in zip("ABCDEF", (6, 26, 38, 40, 55, 14)):
 
 # ---------------------------------------------------------------- Özet
 O = wb.create_sheet("Ozet", 0)
-O["A1"] = "ŞANLIURFA HRS 1. ETAP – MEP BÜTÇE ÇALIŞMASI (MEKANİK, ELEKTRİK, SİNYALİZASYON, KATENER, ASANSÖR)"
+O["A1"] = "ŞANLIURFA HRS 1. ETAP – MEP BÜTÇE ÇALIŞMASI (ELEKTRİK, MEKANİK, ASANSÖR, SİNYALİZASYON, ELEKTRİFİKASYON)"
 O["A1"].font = Font(bold=True, size=13)
 O["A2"] = ("İKN 2026/1327584 • Teklif sahibi: ÖZVER İNŞAAT A.Ş. • Hazırlayan: MEP Center • 06.10.2026 • "
            "EUR, KDV hariç, montaj+test+devreye alma dahil (taşeron fiyatı), Şanlıurfa şantiye teslim. "
@@ -655,52 +659,78 @@ oh = ["Disiplin", "Cetvel sıraları", "Kalem bazlı bütçe (düzeltilmiş) EUR
 for j, h in enumerate(oh, 1):
     c = O.cell(row=4, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
 O.row_dimensions[4].height = 45
-orows = [
-    ("01 Mekanik", "159–168, 343–363", f"={MK_TOT}", f"={RISK['MEKANIK']}", f"={MK_RFQ}", None, "", "Isıtma-soğutma, havalandırma, yangın söndürme (sprinkler, FM200, hidrant), drenaj, sıhhi tesisat, basınçlı hava"),
-    ("02-A Elektrik – Güç temini / cer gücü", "169–179, 187–189, 197, 200–210, 219, 227", f"={CG_TOT}",
-     f"={RISK['CER']}", f"={CG_RFQ}", "=Teklifler!F11", "Sistem bazlı ref. (5 TM; yalnız OG+trafo+DC)",
-     "OG ring + TEİAŞ bağlantı kabloları (transe dahil), kompanzasyon, 34,5 kV hücreler, 5 cer TM, TM yardımcı sistemleri"),
-    ("02-B Elektrik – AG dağıtım, aydınlatma, yangın ihbar, topraklama", "180–186, 190–196, 198–199, 211–218, 322–342", f"={EA_TOT}",
-     f"={RISK['ELK_AG']}", f"={EA_RFQ}", None, "", "İstasyon/depo ADP, AG kablolar, iç tesisat ve aydınlatma, UPS'ler, yangın ihbar, topraklama"),
-    ("02-C Elektrik – Kontrol ve haberleşme", "236–321", f"={HB_TOT}", f"={RISK['HAB']}", f"={HB_RFQ}", "=Teklifler!F12",
-     "Referans kalem bazlı (EM_Butce_Tahmini)", "Fiber iletim, telefon, telsiz, anons, CCTV, saat, erişim kontrol, SCADA, YBS, turnikeler"),
-    ("03 Sinyalizasyon + araç takip", "228–235", f"={SN_TOT}", f"={RISK['SINYAL']}", f"={SN_RFQ}", "=Teklifler!F7",
-     "Sistem bazlı ref. (makas başı)", "Point Link/CASCO 7,28 M€ (DAP, gümrük hariç) aykırı – kıyas dışı"),
-    ("04 Katener", "220–226", f"={KT_TOT}", f"={RISK['KATENER']}", f"={KT_RFQ}", "=Teklifler!F9",
-     "Sistem bazlı ref. (km başı)", "Direk temelleri inşaat kapsamında; lente yok; depo direkleri cetvel direk kalemlerinde"),
-    ("05 Asansör", "364–365", f"={AS_TOT}", f"={RISK['ASANSOR']}", f"={AS_RFQ}", "=Teklifler!F5",
-     "En düşük teklif (TK Elevator)", "13 asansör; Schindler + TK ortalaması (bakım hariç)"),
+sub = [  # (disiplin, alt kalem, sıralar, tutar, risk, rfq, kıyas, kıyas kaynağı, açıklama)
+    ("1 ELEKTRİK", "AG dağıtım, AG kablolar, iç tesisat-aydınlatma, UPS, yangın ihbar, topraklama", "180–186, 190–196, 198–199, 211–218, 322–342",
+     EA_TOT, RISK['ELK_AG'], EA_RFQ, None, "", "İstasyon/depo ADP, AG besleme kabloları, aydınlatma, UPS'ler, yangın ihbar"),
+    ("1 ELEKTRİK", "Kontrol ve haberleşme (fiber, telefon, telsiz, anons, CCTV, saat, erişim, SCADA, YBS, turnike)", "236–321",
+     HB_TOT, RISK['HAB'], HB_RFQ, "=Teklifler!F12", "Referans kalem bazlı", "ON Elektronik (saat+YBS) ve Teknomaks (CCTV) teklifleri ekte/bekleniyor"),
+    ("2 MEKANİK", "Isıtma-soğutma, havalandırma, yangın söndürme, drenaj, sıhhi tesisat, basınçlı hava", "159–168, 343–363",
+     MK_TOT, RISK['MEKANIK'], MK_RFQ, None, "", "Asansör hariç (ayrı disiplin)"),
+    ("3 ASANSÖR", "13 asansör (12 üst geçit 1000 kg + 1 idari bina 800 kg)", "364–365",
+     AS_TOT, RISK['ASANSOR'], AS_RFQ, "=Teklifler!F5", "En düşük teklif (TK Elevator)", "Schindler + TK ortalaması; Emlift teklifi ekte (okunamadı)"),
+    ("4 SİNYALİZASYON", "Hat boyu + depo sinyalizasyon, araç üstü, merkez, araç takip (AVLS)", "228–235",
+     SN_TOT, RISK['SINYAL'], SN_RFQ, "=Teklifler!F7", "Sistem bazlı ref. (makas başı)", "Point Link 7,28 M€ kıyas dışı; Mukan AVLS teklifi ekte"),
+    ("5 ELEKTRİFİKASYON", "Güç temini ve cer gücü (OG ring, TEİAŞ bağlantısı, 34,5 kV hücreler, 5 cer TM, kaçak akım)", "169–179, 187–189, 197, 200–210, 219, 227",
+     CG_TOT, RISK['CER'], CG_RFQ, "=Teklifler!F11", "Sistem bazlı ref. (5 TM; yalnız OG+trafo+DC)", ""),
+    ("5 ELEKTRİFİKASYON", "Katener (hat boyu, depo, direkler)", "220–226",
+     KT_TOT, RISK['KATENER'], KT_RFQ, "=Teklifler!F9", "Sistem bazlı ref. (km başı)", "Direk temelleri inşaatta; ana hatta lente yok"),
 ]
+DIS = ["1 ELEKTRİK", "2 MEKANİK", "3 ASANSÖR", "4 SİNYALİZASYON", "5 ELEKTRİFİKASYON"]
+oh = ["Disiplin", "Kapsam", "Kalem bazlı bütçe EUR", "Risk payı EUR", "Önerilen bütçe EUR",
+      "Önerilen bütçe USD", "Önerilen bütçe TL", "Pay %", "RFQ miktarlarıyla (düzeltmesiz) EUR", "Referans / teklif kıyası EUR", "Açıklama"]
+for j, h in enumerate(oh, 1):
+    c = O.cell(row=4, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+O.row_dimensions[4].height = 45
 r0 = 5
-for i, (ad, sira, tot, risk, rfq, kiyas, ksrc, acik) in enumerate(orows):
-    r = r0 + i
-    vals = [ad, sira, tot, risk, f"=C{r}*(1+D{r})", f"=E{r}*{P_USD}", f"=E{r}*{P_TRY}", rfq, kiyas, ksrc, acik]
+rT = r0 + len(DIS)
+rS0 = rT + 4          # alt kırılım tablosu başlığı
+O.cell(row=rS0 - 1, column=1, value="ALT KIRILIM (disiplin içi)").font = Font(bold=True, size=12)
+sh2 = ["Disiplin", "Alt kalem", "Cetvel sıraları", "Kalem bazlı EUR", "Risk %", "Önerilen EUR", "RFQ miktarlarıyla EUR",
+       "Kıyas EUR", "Kıyas kaynağı", "Açıklama"]
+for j, h in enumerate(sh2, 1):
+    c = O.cell(row=rS0, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+for i, (d, ad, sira, tot, risk, rfq, kiyas, ksrc, acik) in enumerate(sub):
+    r = rS0 + 1 + i
+    vals = [d, ad, sira, f"={tot}", f"={risk}", f"=D{r}*(1+E{r})", f"={rfq}", kiyas, ksrc, acik]
     for j, v in enumerate(vals, 1):
         c = O.cell(row=r, column=j, value=v); c.border = BOX; c.alignment = WRAP
-        if j in (3, 5, 6, 7, 8, 9): c.number_format = EUR
-        if j == 4: c.number_format = "0%"
-rT = r0 + len(orows)
-O.cell(row=rT, column=1, value="TOPLAM").font = BOLD
-for col in "CEFGHI":
+        if j in (4, 6, 7, 8): c.number_format = EUR
+        if j == 5: c.number_format = "0%"
+rS1, rS2 = rS0 + 1, rS0 + len(sub)
+kapsam = {"1 ELEKTRİK": "AG tesisat, aydınlatma, yangın ihbar, topraklama, kontrol-haberleşme, SCADA",
+          "2 MEKANİK": "HVAC, yangın söndürme, drenaj, sıhhi tesisat, basınçlı hava",
+          "3 ASANSÖR": "13 asansör", "4 SİNYALİZASYON": "Sinyalizasyon + araç takip (AVLS)",
+          "5 ELEKTRİFİKASYON": "Güç temini/cer gücü + katener"}
+for i, d in enumerate(DIS):
+    r = r0 + i
+    rng = lambda col: f"SUMIF($A${rS1}:$A${rS2},$A{r},{col}${rS1}:{col}${rS2})"
+    vals = [d, kapsam[d], "=" + rng("D"), f"=E{r}-C{r}", "=" + rng("F"), f"=E{r}*{P_USD}", f"=E{r}*{P_TRY}",
+            f"=E{r}/$E${rT}", "=" + rng("G"), "=" + rng("H"), ""]
+    for j, v in enumerate(vals, 1):
+        c = O.cell(row=r, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (3, 4, 5, 6, 7, 9, 10): c.number_format = EUR
+        if j == 8: c.number_format = "0.0%"
+    O.cell(row=r, column=1).font = BOLD
+O.cell(row=rT, column=1, value="TOPLAM MEP").font = BOLD
+for col in "CDEFGIJ":
     c = O[f"{col}{rT}"]; c.value = f"=SUM({col}{r0}:{col}{rT-1})"; c.number_format = EUR; c.font = BOLD
+O[f"H{rT}"] = f"=SUM(H{r0}:H{rT-1})"; O[f"H{rT}"].number_format = "0.0%"
 for j in range(1, 12):
     O.cell(row=rT, column=j).fill = FILL_TOT; O.cell(row=rT, column=j).border = BOX
-O.cell(row=rT + 1, column=1, value="  02 Elektrik paketi toplamı (02-A + 02-B + 02-C)").font = BOLD
-O.cell(row=rT + 2, column=1, value="  Elektrifikasyon (02-A cer gücü + 04 katener)").font = BOLD
-for col in "CEFGH":
-    c = O[f"{col}{rT+1}"]; c.value = f"={col}{r0+1}+{col}{r0+2}+{col}{r0+3}"; c.number_format = EUR
-    c = O[f"{col}{rT+2}"]; c.value = f"={col}{r0+1}+{col}{r0+5}"; c.number_format = EUR
+rT = rS2 + 1   # aşağıdaki döküm için
 
 # Ana kalem dökümü
-rB = rT + 5
+rB = rT + 3
 O.cell(row=rB - 1, column=1, value="CETVEL SIRASI BAZINDA DÖKÜM (risk payı hariç, EUR)").font = Font(bold=True, size=12)
 for j, h in enumerate(["Disiplin", "Sıra", "Kalem", "Tutar EUR"], 1):
     c = O.cell(row=rB, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX
 rr = rB + 1
-for disip, groups, mains, sh in (("01 Mekanik", mekanik, MK_MAIN, "Mekanik"), ("02-A Güç temini / cer", cer, CG_MAIN, "Cer_Guc"),
-                                 ("02-B Elektrik AG", elk_ag, EA_MAIN, "Elektrik_AG"), ("02-C Haberleşme", hab, HB_MAIN, "Haberlesme"),
-                                 ("03 Sinyalizasyon", sinyal, SN_MAIN, "Sinyal"), ("04 Katener", katener, KT_MAIN, "Katener"),
-                                 ("05 Asansör", asansor, AS_MAIN, "Asansor")):
+for disip, groups, mains, sh in (("1 Elektrik – AG/aydınlatma/yangın", elk_ag, EA_MAIN, "Elektrik_AG"),
+                                 ("1 Elektrik – haberleşme/SCADA", hab, HB_MAIN, "Haberlesme"),
+                                 ("2 Mekanik", mekanik, MK_MAIN, "Mekanik"), ("3 Asansör", asansor, AS_MAIN, "Asansor"),
+                                 ("4 Sinyalizasyon", sinyal, SN_MAIN, "Sinyal"),
+                                 ("5 Elektrifikasyon – güç temini/cer", cer, CG_MAIN, "Cer_Guc"),
+                                 ("5 Elektrifikasyon – katener", katener, KT_MAIN, "Katener")):
     for g in groups:
         O.cell(row=rr, column=1, value=disip)
         O.cell(row=rr, column=2, value=g[0])
@@ -725,7 +755,7 @@ for i, t in enumerate(notes):
     O.merge_cells(start_row=rN + i, start_column=1, end_row=rN + i, end_column=11)
     O.row_dimensions[rN + i].height = 15 if i == 0 else 32
 O.cell(row=rN, column=1).font = BOLD
-for col, w in zip("ABCDEFGHIJK", (34, 22, 18, 9, 18, 16, 18, 18, 18, 26, 60)):
+for col, w in zip("ABCDEFGHIJK", (24, 48, 18, 16, 18, 16, 18, 10, 18, 18, 40)):
     O.column_dimensions[col].width = w
 O.freeze_panes = "A5"
 

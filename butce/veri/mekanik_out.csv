@@ -1,0 +1,285 @@
+id,bf_eur,kaynak,q_corr,not
+MEK0002,1885.16,REF,,
+MEK0003,22,TAHMIN,,
+MEK0004,5,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0005,150,TAHMIN,,
+MEK0006,950,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0007,18,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0008,5,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0009,120,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0011,1885.16,REF,,
+MEK0012,22,TAHMIN,,
+MEK0013,5,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0014,150,TAHMIN,,
+MEK0015,950,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0016,18,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0017,5,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0018,120,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0020,1885.16,REF,,
+MEK0021,22,TAHMIN,,
+MEK0022,5,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0023,150,TAHMIN,,
+MEK0024,950,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0025,18,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0026,5,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0027,120,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0029,1885.16,REF,,
+MEK0030,22,TAHMIN,,
+MEK0031,5,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0032,150,TAHMIN,,
+MEK0033,950,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0034,18,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0035,5,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0036,120,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0038,1885.16,REF,,
+MEK0039,22,TAHMIN,,
+MEK0040,5,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0041,150,TAHMIN,,
+MEK0042,950,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0043,18,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0044,5,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0045,120,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0047,1885.16,REF,,
+MEK0048,22,TAHMIN,,
+MEK0049,5,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0050,150,TAHMIN,,
+MEK0051,950,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0052,18,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0053,5,REF-duz,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0054,120,TAHMIN,0,İdare: kabin splitleri sıra 143 kabin fiyatında
+MEK0056,1425.83,REF,,
+MEK0057,1850,REF-duz,,14 kW kanallı; 9 kW ile tutarlı montajlı fiyat
+MEK0058,21960.96,REF,,
+MEK0059,23500,REF-duz,,84 kW; 78 kW DU-01 ile kW oranında tutarlı
+MEK0060,32,TAHMIN,,VRF büyük çaplı izoleli boru
+MEK0061,220,TAHMIN,,
+MEK0062,25,TAHMIN,,
+MEK0063,42,TAHMIN,,Kanal ~35 €/m² + menfez payı
+MEK0064,220,TAHMIN,,Kumanda + merkezi kontrol payı
+MEK0065,8,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0066,450,TAHMIN,,
+MEK0067,6000,TAHMIN,,
+MEK0069,950,TAHMIN,,
+MEK0070,1050,TAHMIN,,
+MEK0071,1278.29,REF,,
+MEK0072,750,REF-duz,,"Ref 11.526 hatalı (set/sistem); 2,5 kW duvar tipi"
+MEK0073,1274.37,REF,,
+MEK0074,11500,TAHMIN,,~39 kW modül; DU-01 78 kW fiyatı ile tutarlı
+MEK0075,12200,TAHMIN,,~42 kW modül
+MEK0076,1100,REF-duz,,"Ref düşük; montajlı 3,5 kW split"
+MEK0077,350,TAHMIN,,
+MEK0078,162.47,REF,,
+MEK0079,209.25,REF,,
+MEK0080,30,REF-duz,,VRF büyük çap; montaj+izolasyon
+MEK0081,22,TAHMIN,,
+MEK0082,220,REF-duz,,Ref 1.004 aşırı yüksek; refnet kiti montajlı
+MEK0083,8,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0084,220,REF-duz,,Ref yüksek; kumanda + merkezi kontrol payı
+MEK0085,42,TAHMIN,,Kanal + menfez
+MEK0086,25,TAHMIN,,
+MEK0087,450,TAHMIN,,
+MEK0088,1100,TAHMIN,,"3,5 kW split montajlı"
+MEK0089,350,TAHMIN,,
+MEK0090,20.18,REF,,
+MEK0091,6,REF-duz,,Ref malzeme fiyatı; montajlı
+MEK0092,1100,TAHMIN,,
+MEK0093,26,TAHMIN,,Bakır boru + drenaj birlikte
+MEK0094,1850,TAHMIN,,14 kW kanallı; trafo IU-02 ile aynı
+MEK0095,31348.95,REF,,
+MEK0096,32,TAHMIN,,
+MEK0097,150,REF-duz,,Ref malzeme; montaj+bağlantı dahil
+MEK0098,42,TAHMIN,,
+MEK0099,8,TAHMIN,,
+MEK0100,5000,TAHMIN,,
+MEK0102,1074.15,REF,,
+MEK0103,650,TAHMIN,,
+MEK0104,1200,TAHMIN,,Kanal+panjur+filtreli menfez takımı
+MEK0105,400,TAHMIN,,
+MEK0107,5000,TAHMIN,,
+MEK0108,6000,TAHMIN,,
+MEK0109,8000,REF-duz,,Ref düşük; 3100 m³/h IGK montajlı
+MEK0110,165.01,REF,,
+MEK0111,1255.52,REF,,
+MEK0112,233.86,REF,,
+MEK0113,837.02,REF,,
+MEK0114,550,TAHMIN,,
+MEK0115,3500,TAHMIN,,Radyal fan + teleskopik kol
+MEK0116,1400,REF-duz,,Ref düşük; 2000 m³/h radyal fan
+MEK0117,1255.52,REF,,
+MEK0118,1456.59,REF,,
+MEK0119,160,REF-duz,,Ref yüksek; 100 m³/h duvar fanı
+MEK0120,200,TAHMIN,,
+MEK0121,320,REF-duz,,300 m³/h kanal fanı; diğer fanlarla tutarlı
+MEK0122,33.63,REF,,
+MEK0123,15.69,REF,,
+MEK0124,33.45,REF,,
+MEK0125,41.82,REF,,
+MEK0126,59.44,REF,,
+MEK0127,229.7,REF,,
+MEK0128,275.95,REF,,
+MEK0129,318.09,REF,,
+MEK0130,318,TAHMIN,,EF-01 ile aynı
+MEK0131,450,TAHMIN,,
+MEK0132,55,TAHMIN,,Kanal+flex+menfez+EAP m² başına paylaştırıldı
+MEK0133,380,TAHMIN,,
+MEK0134,220,TAHMIN,,
+MEK0135,2000,TAHMIN,,Exproof fan + H2 sensörü + damper
+MEK0137,45,TAHMIN,,Askı+levha dahil
+MEK0138,80,REF-duz,,Ref düşük; CO2 5 kg askı+levha dahil
+MEK0140,45,TAHMIN,,Askı+levha dahil
+MEK0141,80,REF-duz,,Ref düşük; CO2 5 kg askı+levha dahil
+MEK0143,45,TAHMIN,,Askı+levha dahil
+MEK0144,80,REF-duz,,Ref düşük; CO2 5 kg askı+levha dahil
+MEK0146,45,TAHMIN,,Askı+levha dahil
+MEK0147,80,REF-duz,,Ref düşük; CO2 5 kg askı+levha dahil
+MEK0149,45,TAHMIN,,Askı+levha dahil
+MEK0150,80,REF-duz,,Ref düşük; CO2 5 kg askı+levha dahil
+MEK0152,45,TAHMIN,,Askı+levha dahil
+MEK0153,80,REF-duz,,Ref düşük; CO2 5 kg askı+levha dahil
+MEK0155,80,TAHMIN,,
+MEK0157,34866.59,TAHMIN,,YP-02 ref fiyatı ile aynı
+MEK0158,34866.59,REF,,
+MEK0159,5002.45,REF,,
+MEK0160,15000,REF-duz,,Ref düşük; 3 pano (90 kW yolvermeli) + test hattı
+MEK0161,6500,REF-duz,,Ref çok düşük; DN200 kollektör + vanalar
+MEK0162,72,TAHMIN,,"Çap dağılımına göre ağırlıklı (8""-1"")"
+MEK0163,1300,REF-duz,,Ref düşük; yangın onaylı DN100 PRV
+MEK0164,450,REF-duz,,Ref düşük; montajlı siyam ikizi
+MEK0165,373.93,REF,,
+MEK0166,250,REF-duz,,Ref düşük; montajlı itfaiye vanası
+MEK0167,60,REF-duz,,DN100 galvaniz montajlı çapa göre
+MEK0168,38,REF-duz,,DN65 galvaniz montajlı
+MEK0169,28,REF-duz,,DN50 galvaniz montajlı
+MEK0170,340.45,REF,,
+MEK0171,80,REF-duz,,Ref 11.571 hatalı (sistem fiyatı); CO2 5 kg
+MEK0172,45,REF-duz,,Ref yüksek; ABC 6 kg
+MEK0173,30000,TAHMIN,,"3 zonlu FM200, tek silindir manifold"
+MEK0174,30,REF-duz,,Ref düşük; montajlı başlık
+MEK0175,80,TAHMIN,,
+MEK0176,65,REF-duz,,Askı+levha+montaj
+MEK0177,45,TAHMIN,,
+MEK0178,80,TAHMIN,,
+MEK0179,63,TAHMIN,,1 ABC + 1 CO2 ortalaması
+MEK0180,32,REF-duz,,Ref malzeme; montaj + koruma kafesi
+MEK0181,350,TAHMIN,,
+MEK0182,20.86,REF,,
+MEK0183,21,REF-duz,,Ref düşük; DN32 montajlı
+MEK0184,24,REF-duz,,Ref düşük; DN40 montajlı
+MEK0185,30.44,REF,,
+MEK0186,38,TAHMIN,,
+MEK0187,48,TAHMIN,,
+MEK0188,60,TAHMIN,,
+MEK0189,90,REF-duz,,Ref yüksek; DN150 galvaniz ~90 €/m
+MEK0190,45,REF-duz,,DN150/100/50 karışık toprak altı; kazı hariç
+MEK0191,3500,REF-duz,,Ref düşük; komple alarm vana istasyonu
+MEK0192,600,REF-duz,,Ref düşük; izlenebilir vana+akış anahtarı+test
+MEK0193,75000,TAHMIN,,"Elektrikli+dizel+jokey, pano ve kollektör"
+MEK0194,250,TAHMIN,,Depo hacim artışı m³ başına
+MEK0196,50,REF-duz,,Ref düşük; ızgaralı süzgeç montajlı
+MEK0197,17.11,REF,,
+MEK0198,14,TAHMIN,,
+MEK0199,25,TAHMIN,,
+MEK0201,50,REF-duz,,Ref düşük; ızgaralı süzgeç montajlı
+MEK0202,17.11,REF,,
+MEK0203,14,TAHMIN,,
+MEK0204,25,TAHMIN,,
+MEK0206,50,REF-duz,,Ref düşük; ızgaralı süzgeç montajlı
+MEK0207,17.11,REF,,
+MEK0208,14,TAHMIN,,
+MEK0209,25,TAHMIN,,
+MEK0211,50,REF-duz,,Ref düşük; ızgaralı süzgeç montajlı
+MEK0212,17.11,REF,,
+MEK0213,14,TAHMIN,,
+MEK0214,25,TAHMIN,,
+MEK0216,50,REF-duz,,Ref düşük; ızgaralı süzgeç montajlı
+MEK0217,17.11,REF,,
+MEK0218,14,TAHMIN,,
+MEK0219,25,TAHMIN,,
+MEK0221,17,TAHMIN,,İstasyon ref Ø100 ile tutarlı
+MEK0222,14,TAHMIN,,
+MEK0223,25,TAHMIN,,
+MEK0225,18,TAHMIN,,
+MEK0227,17,TAHMIN,,
+MEK0228,129.1,REF,,
+MEK0229,4500,REF-duz,,"Ref çok düşük; EN858 PE ayırıcı, kazı hariç"
+MEK0230,1549.57,REF,,
+MEK0231,18,TAHMIN,,
+MEK0232,97.24,REF,,
+MEK0233,45,TAHMIN,,
+MEK0234,6000,TAHMIN,,
+MEK0235,15,TAHMIN,,
+MEK0236,75,REF-duz,,Ref düşük; Ø125 süzgeç ile tutarlı
+MEK0237,24,TAHMIN,,
+MEK0238,120,TAHMIN,,
+MEK0239,1800,TAHMIN,,Pompa + seviye şalteri + pano payı
+MEK0240,27.28,REF,,
+MEK0241,13,TAHMIN,,
+MEK0242,15,REF-duz,,Ref yüksek; Ø100 PVC iniş
+MEK0243,30,TAHMIN,,
+MEK0245,120,TAHMIN,,Paslanmaz ızgaralı
+MEK0246,15,TAHMIN,,
+MEK0247,14,REF-duz,,Ref malzeme; montajlı
+MEK0249,9869.28,REF,,
+MEK0250,4800,REF-duz,,Ref yüksek; 2x7 m³/h hidrofor
+MEK0251,14000,REF-duz,,Ref max seçilmiş; 30 m³/h dubleks yumuşatıcı
+MEK0252,6000,TAHMIN,,
+MEK0253,6040.41,REF,,
+MEK0254,2500,REF-duz,,"Ref düşük; 3"" flatör+PRV+sayaç seti"
+MEK0255,40,TAHMIN,,
+MEK0256,14.36,REF,,
+MEK0257,8,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0258,9,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0259,10,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0260,14,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0261,8,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0262,9,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0263,10,REF-duz,,Ref malzeme; izoleli montajlı
+MEK0264,8,TAHMIN,,
+MEK0265,9,TAHMIN,,
+MEK0266,1476.86,REF,,
+MEK0267,566.35,REF,,
+MEK0268,6500,TAHMIN,,
+MEK0269,300,REF-duz,,Ref düşük; rezervuar+taharet montajlı
+MEK0270,200,REF-duz,,Ref düşük; batarya+sifon montajlı
+MEK0271,280,REF-duz,,Ref düşük; fotoselli musluk dahil
+MEK0272,250,REF-duz,,Ref düşük; tekne+duş seti montajlı
+MEK0273,205.27,REF,,
+MEK0274,106.43,REF,,
+MEK0275,900,REF-duz,,Ref düşük; klozet+lavabo+barlar
+MEK0276,1521.76,REF,,
+MEK0277,3000,TAHMIN,,
+MEK0278,8.5,TAHMIN,,
+MEK0279,245,TAHMIN,,3 klozet+2 lavabo+2 eviye ortalaması
+MEK0280,285.22,REF,,
+MEK0281,8.5,TAHMIN,,
+MEK0282,8.5,REF-duz,,Ref malzeme; montajlı
+MEK0283,280,REF-duz,,Ref max seçilmiş; 7 kW ani ısıtıcı
+MEK0284,235,TAHMIN,,Klozet+lavabo+eviye ortalaması
+MEK0286,15,TAHMIN,,
+MEK0287,13,TAHMIN,,
+MEK0288,10,TAHMIN,,
+MEK0289,8,TAHMIN,,
+MEK0290,30,REF-duz,,Ref malzeme; sifonlu süzgeç montajlı
+MEK0291,43.45,REF,,
+MEK0292,38.48,REF,,
+MEK0293,1879.45,REF,,
+MEK0294,12,REF-duz,,Ref düşük; Ø70-100 montajlı
+MEK0295,35,TAHMIN,,
+MEK0296,12,TAHMIN,,
+MEK0297,35,TAHMIN,,
+MEK0299,21255.67,REF,,
+MEK0300,5820.0,REF,,
+MEK0301,2394.07,REF,,
+MEK0302,600,REF-duz,,Ref düşük; 882 m³/h hat filtresi
+MEK0303,308.12,REF,,
+MEK0304,239.53,REF,,
+MEK0305,48,REF-duz,,"Ref çok düşük; 3"" galvaniz montajlı"
+MEK0306,28,REF-duz,,"2"" galvaniz montajlı"
+MEK0307,20,REF-duz,,"1 1/4"" galvaniz montajlı"
+MEK0308,17,REF-duz,,"1"" galvaniz montajlı"
+MEK0309,12,REF-duz,,"Ref 1"" den yüksek; 1/2"" montajlı"
+MEK0310,120,REF-duz,,Ref düşük; FRL+hızlı bağlantı+vana
+MEK0311,150,REF-duz,,"3"" vana montajlı"
+MEK0312,2500,TAHMIN,,
+MEK0313,50000,TAHMIN,,Komple kum verme sistemi; teyit edilmeli
+MEK0315,4000,TAHMIN,,Küçük tramvay deposu ölçeğinde proje
