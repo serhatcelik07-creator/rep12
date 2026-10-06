@@ -352,7 +352,11 @@ def main():
         print("\nPanele girdiğiniz kullanıcı adı ve şifreyi yazın (bilgisayar kendini otomatik kaydeder).")
         while True:
             user = ask("Panel kullanıcı adı", "claude")
-            pw = getpass.getpass("Panel şifresi (yazarken görünmez): ")
+            pw = getpass.getpass("Panel şifresi (yazarken görünmez; panelden üretilmiş bir token varsa onu da yapıştırabilirsiniz): ").strip()
+            if pw.startswith("mch_"):  # panelden elle üretilmiş anahtar
+                cfg["token"] = pw
+                print("  ✓ Token kaydedildi")
+                break
             try:
                 res = register(cfg, user, pw, cfg["machine"])
                 cfg["token"] = res["token"]
