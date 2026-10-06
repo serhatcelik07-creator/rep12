@@ -19,23 +19,17 @@ Bu `klavye-paylas` klasörünü iki bilgisayara da kopyala. İkisinde de [Python
 
 ### Mac
 
-```bash
-cd klavye-paylas
-python3 -m pip install -r requirements-mac.txt
-python3 mac_taraf.py
-```
+**`mac_baslat.command`** dosyasına çift tıkla. İlk seferde gerekli paketleri kendisi kurar.
+(`.py` dosyasına çift tıklama, düzenleyicide açılır.)
 
-İlk açılışta **Sistem Ayarları → Gizlilik ve Güvenlik → Erişilebilirlik** bölümünde Terminal'e izin ver, sonra programı yeniden başlat. "Gelen bağlantılara izin verilsin mi?" sorusuna **İzin Ver** de.
+- "Geliştiricisi doğrulanamadı" derse: dosyaya **sağ tık → Aç → Aç**.
+- **Sistem Ayarları → Gizlilik ve Güvenlik → Erişilebilirlik** bölümünde Terminal'e izin ver, pencereyi kapatıp dosyaya tekrar çift tıkla.
+- "Gelen bağlantılara izin verilsin mi?" sorusuna **İzin Ver** de.
 
 ### Windows
 
-```bat
-cd klavye-paylas
-py -m pip install -r requirements-windows.txt
-py windows_taraf.py
-```
-
-(veya `windows_baslat.bat` dosyasına çift tıkla). Windows Güvenlik Duvarı sorarsa **Özel ağlar** için izin ver.
+**`windows_baslat.bat`** dosyasına çift tıkla. İlk seferde gerekli paketleri kendisi kurar.
+Python kurarken **"Add python.exe to PATH"** kutusunu işaretlemeyi unutma. Windows Güvenlik Duvarı sorarsa **Özel ağlar** için izin ver.
 
 İki tarafta da aynı şifreyi gir. Windows, Mac'i ağda kendisi bulur ve `[+] Mac'e baglanildi` yazar. Artık **↓** ile Mac'e, **↑** ile Windows'a geçebilirsin.
 
