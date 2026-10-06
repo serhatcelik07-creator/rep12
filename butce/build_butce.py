@@ -37,8 +37,8 @@ V["A1"] = "VARSAYIMLAR (sarı hücreler değiştirilebilir; tüm sayfalar formü
 V["A1"].font = Font(bold=True, size=12)
 vrows = [
     ("Parametre", "Değer", "Kaynak / açıklama"),
-    ("EUR/USD kuru", 1.146, "21.09.2026 piyasa kapanışı (USD/EUR 0,8723). Teklif günü TCMB/ECB kuru ile güncelleyin."),
-    ("EUR/TRY kuru", 56.10, "20.09.2026 TCMB efektif satış ~56,11. Teklif günü kuru ile güncelleyin."),
+    ("EUR/USD kuru", 1.1225, "ECB referans kuru, 02.10.2026 (eurofxref). Teklif günü kuru ile güncelleyin."),
+    ("EUR/TRY kuru", 55.165, "ECB referans kuru, 02.10.2026 (eurofxref). Teklif günü kuru ile güncelleyin."),
     ("Hat uzunluğu – RFQ kabulü (km)", 6.56, "Katener şartnamesi; RFQ cetvellerinde kullanıldı"),
     ("Hat uzunluğu – idare cevabı (km)", 6.44, "İdare cevabı 05.10.2026, soru 18"),
     ("Hat boyu uzunluk düzeltme oranı", "=B6/B5", "Hat boyu iletken/kablo uzunluklarına uygulanır"),
@@ -148,6 +148,7 @@ TUR = {"TEKLIF": ("2026 TEKLİF", PatternFill("solid", fgColor="C6EFCE")),
        "TAHMIN": ("MÜHENDİSLİK TAHMİNİ", PatternFill("solid", fgColor="FFE699")),
        "SIFIR": ("KAPSAM DIŞI (0)", PatternFill("solid", fgColor="EDEDED"))}
 TYPE_TOT = {}
+ITEM_COUNT = [0]
 
 
 def fiyat_turu(kaynak, q):
@@ -231,6 +232,7 @@ def sheet(name, title, groups, mode=None):
             ws.cell(row=mr, column=j).border = BOX
         r += 1
         first = r
+        ITEM_COUNT[0] += len(items)
         for kalem, birim, q_rfq, q_corr, bf, kaynak, notu in items:
             tv = TEKLIF_OVR.get((name, poz, kalem.strip()))
             rv = None if tv else REVIZE.get((name, str(sira), kalem.strip()))
@@ -242,7 +244,8 @@ def sheet(name, title, groups, mode=None):
                 if abs(float(rv["bf_yeni"]) - float(rv["bf_eski"] or 0)) > 0.005:
                     notu = (notu + " | " if notu else "") + f"İlk tahmin BF {float(rv['bf_eski']):,.2f}"
                 bf = float(rv["bf_yeni"])
-                kaynak = rv["kaynak_yeni"] + (f" – {rv['emsal_ozet']}" if rv["emsal_ozet"] else "")
+                kaynak = rv["kaynak_yeni"] + (f" – {rv['emsal_ozet']}" if rv["emsal_ozet"] else "") + \
+                    (f" [Emsal ID: {rv['ref_idler']}]" if rv.get("ref_idler") else "")
             qc = q_rfq if q_corr is None else q_corr
             etk, bol = pay_sinifi(kalem, birim, sira, mode)
             tur = fiyat_turu(kaynak, qc if isinstance(qc, (int, float)) else 1)
@@ -259,6 +262,7 @@ def sheet(name, title, groups, mode=None):
             if q_corr is not None and q_corr != q_rfq:
                 ws.cell(row=r, column=6).fill = FILL_CHG
             ws.cell(row=r, column=1).border = BOX
+            ws.row_dimensions[r].outlineLevel = 1
             r += 1
         last = r - 1
         ws.cell(row=mr, column=10, value=f"=SUM(J{first}:J{last})").number_format = EUR
@@ -283,6 +287,18 @@ def sheet(name, title, groups, mode=None):
         ws.cell(row=rr, column=10, value=f'=SUMIF($K$5:$K${last},"{TUR[key][0]}",$J$5:$J${last})').number_format = EUR
         ws.cell(row=rr, column=11, value=f"=IF($J${r}=0,0,J{rr}/$J${r})").number_format = "0%"
         TYPE_TOT[name][key] = f"'{name}'!$J${rr}"
+    rr = rt + 4
+    ws.cell(row=rr, column=3, value="İdare cevabıyla kapsam dışı kalan kalemlerin RFQ'daki değeri (bilgi)").fill = TUR["SIFIR"][1]
+    ws.cell(row=rr, column=10, value=f'=SUMPRODUCT(($K$5:$K${last}="{TUR["SIFIR"][0]}")*$E$5:$E${last}*$I$5:$I${last})').number_format = EUR
+    TYPE_TOT[name]["SIFIR"] = f"'{name}'!$J${rr}"
+    # sayfa başı özet kutusu
+    ws.sheet_properties.outlinePr.summaryBelow = False
+    ws["A3"] = "DİSİPLİN TOPLAMI →"; ws["A3"].font = Font(bold=True, color="FFFFFF"); ws["A3"].fill = FILL_H
+    ws.merge_cells("A3:B3")
+    ws["C3"] = (f'="Kalem bazlı toplam: "&TEXT(J{r},"#,##0")&" €   |   2026 teklif: "&TEXT(K{rt+1},"0%")&'
+                f'"   |   Geçmiş teklif uyarlaması: "&TEXT(K{rt+2},"0%")&"   |   Tahmin: "&TEXT(K{rt+3},"0%")&'
+                f'"   |   Kalem kalem görmek için sol kenardaki [+] / [1][2] düğmelerini kullanın"')
+    ws["C3"].font = Font(bold=True, color="1F4E78"); ws.merge_cells("C3:M3"); ws.row_dimensions[3].height = 22
     return ws, f"'{name}'!$J${r}", f"'{name}'!$J${r+1}", {g[0]: main_cells[i] for i, g in enumerate(groups)}
 
 
@@ -649,7 +665,7 @@ ws_cg, CG_TOT, CG_RFQ, CG_MAIN = sheet("Cer_Guc", "5 ELEKTRİFİKASYON (A) – G
 
 
 # ================================================================ MEKANİK / ELEKTRİK AG / HABERLEŞME (CSV'den)
-import csv, os
+import csv, os, collections
 MEP_DIR = os.environ.get("MEP_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "veri"))
 
 
@@ -737,6 +753,7 @@ B.merge_cells(start_row=_b, start_column=1, end_row=_b, end_column=11); B.row_di
 for col, w in zip("ABCDEFGHIJK", (14, 34, 16, 5, 52, 9, 10, 12, 12, 14, 30)):
     B.column_dimensions[col].width = w
 
+
 # ---------------------------------------------------------------- Gelen tekliflerin değerlendirmesi
 E = wb.create_sheet("Teklif_Degerlendirme", 1)
 E["A1"] = "GELEN TEKLİFLERİN DEĞERLENDİRMESİ (06.10.2026 itibarıyla okunabilen teklifler)"
@@ -814,6 +831,170 @@ for k, t in enumerate(ozet_txt):
     E.merge_cells(start_row=15 + k, start_column=1, end_row=15 + k, end_column=14); E.row_dimensions[15 + k].height = 30
 for col, w in zip("ABCDEFGHIJKLMN", (18, 22, 11, 18, 13, 6, 13, 14, 8, 26, 38, 38, 22, 34)):
     E.column_dimensions[col].width = w
+
+
+# ---------------------------------------------------------------- YÖNTEM (metodoloji)
+Y = wb.create_sheet("Yontem")
+Y.sheet_view.showGridLines = False
+Y.column_dimensions["A"].width = 4
+for col, w in zip("BCDEFGHIJKL", (30, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16)):
+    Y.column_dimensions[col].width = w
+H1 = Font(bold=True, size=16, color="1F4E78"); H2 = Font(bold=True, size=12, color="FFFFFF")
+FILL_SEC = PatternFill("solid", fgColor="1F4E78"); FILL_SOFT = PatternFill("solid", fgColor="F2F2F2")
+Y["B2"] = "BİRİM FİYATLAR NASIL BELİRLENDİ? – YÖNTEM VE İZLENEBİLİRLİK"; Y["B2"].font = H1
+Y["B3"] = ("Bu bütçedeki her kalem, cetveldeki miktarı ve izlenebilir bir fiyat kaynağıyla birlikte verilmiştir. "
+           "Aşağıda fiyatların hangi veriden, hangi kurallarla ve hangi düzeltmelerle türetildiği adım adım açıklanmıştır.")
+Y["B3"].alignment = WRAP; Y.merge_cells("B3:L3"); Y.row_dimensions[3].height = 32
+_y = 5
+
+
+def sec(title):
+    global _y
+    _y += 1
+    Y.cell(row=_y, column=2, value=title).font = H2
+    for j in range(2, 13):
+        Y.cell(row=_y, column=j).fill = FILL_SEC
+    _y += 1
+
+
+def para(text, h=30):
+    global _y
+    c = Y.cell(row=_y, column=2, value=text); c.alignment = WRAP
+    Y.merge_cells(start_row=_y, start_column=2, end_row=_y, end_column=12); Y.row_dimensions[_y].height = h
+    _y += 1
+
+
+def table(hdr, rows, fmt=None):
+    global _y
+    for j, h in enumerate(hdr, 2):
+        c = Y.cell(row=_y, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+    Y.row_dimensions[_y].height = 30
+    _y += 1
+    for r_ in rows:
+        for j, v in enumerate(r_, 2):
+            c = Y.cell(row=_y, column=j, value=v); c.border = BOX; c.alignment = WRAP
+            if fmt and j - 2 in fmt: c.number_format = fmt[j - 2]
+        _y += 1
+
+
+sec("1. FİYAT ÖNCELİK SIRASI (her kalem için bu sırayla)")
+table(["Öncelik", "Fiyat türü", "Açıklama", "", "", "", "Renk"], [
+    [1, "2026 TEKLİF", "Bu ihale için 29.09–06.10.2026 arasında alınan firma teklifleri (Schindler, TK Elevator, Emlift, Mukan Rail, ON Elektronik). Teklif kalem fiyatı doğrudan kullanılır.", "", "", "", "Yeşil"],
+    [2, "GEÇMİŞ TEKLİF UYARLAMA", "Aynı tip/boyutta ekipman için geçmiş raylı sistem projelerinde alınmış gerçek teklifler (emsal). Kur ve enflasyonla 2026'ya taşınır; gerekirse montaj/boyut düzeltmesi yapılır.", "", "", "", "Mavi"],
+    [3, "MÜHENDİSLİK TAHMİNİ", "Veritabanında karşılaştırılabilir emsal bulunmayan kalemler (tasarım, test, yazılım, inşaat payları vb.). 2026 Türkiye piyasa bilgisiyle tahmin edilir; her satırda gerekçe yazılıdır.", "", "", "", "Sarı"],
+    ["–", "KAPSAM DIŞI (0)", "İdare cevaplarıyla (05.10.2026) kapsam dışı kalan kalemler; miktar 0, bilgi için satırda bırakılmıştır.", "", "", "", "Gri"]])
+for rr_ in range(_y - 4, _y):
+    Y.merge_cells(start_row=rr_, start_column=4, end_row=rr_, end_column=7); Y.row_dimensions[rr_].height = 42
+    Y.cell(row=rr_, column=8).fill = TUR[["TEKLIF", "EMSAL", "TAHMIN", "SIFIR"][rr_ - (_y - 4)]][1]
+
+sec("2. GEÇMİŞ TEKLİF VERİTABANI")
+para("Kaynak: MEP Center proje arşivindeki raylı sistem projelerinin 'MALIYET / GELEN_TEKLIF' klasörlerinde bulunan tedarikçi teklifleri. "
+     "Tekliflerdeki fiyat satırları tek tek okunmuş, her satır kaynak dosya yolu, firma, tarih, para birimi ve kapsamıyla (malzeme / malzeme+montaj) kaydedilmiştir.", 32)
+table(["Gösterge", "Veritabanı (tümü)", "Bu bütçede kullanılan emsaller"], [
+    ["Fiyat satırı", 6809, f"=COUNTA(Emsal_Kaynaklari!A5:A5000)"],
+    ["Proje", 42, 28], ["Firma", 222, 103], ["Teklif yılları", "2008 – 2025", "ağırlıkla 2014 – 2025"],
+    ["Tramvay / LRT satırı", 1352, 535], ["Metro satırı", 3273, 509], ["Diğer (YHT, banliyö, anahat, bina)", 2184, 139]], {1: "#,##0", 2: "#,##0"})
+para("Başlıca tramvay/LRT referansları: Bursa T2 Kent Meydanı–Terminal (Haluk, MET, AKE, Delta, FER, AKT), İzmir Konak/Karşıyaka tramvayı (Siemens, Usluel, Hanning & Kahl, CONTEC, Aktif, Netaş), "
+     "Kocaeli tramvayı (Sekaray, Özgür Mak., Uluhanlar), Konya Alaaddin–Adliye (Hanning & Kahl, ABB), Eminönü–Alibeyköy (Elektroline), Samsun LRT (Usluel, Balfour Beatty, Uskom). "
+     "Metro referansları (İzmir Buca, Narlıdere, Kabataş–Mahmutbey, Kirazlı–Halkalı vb.) yalnız tramvay emsali yoksa ve ölçek düzeltmesiyle kullanılmıştır.", 46)
+
+sec("3. FİYATI 2026'YA TAŞIMA ZİNCİRİ")
+table(["Adım", "İşlem", "Kaynak"], [
+    ["1", "Orijinal birim fiyat (teklifteki para birimi ile)", "Teklif dokümanı (dosya yolu Emsal_Kaynaklari sayfasında)"],
+    ["2", "EUR'ya çevirme: Fiyat ÷ teklif günündeki kur (TRY, USD → EUR)", "ECB euro referans kurları (eurofxref-hist), teklif günü veya önceki iş günü"],
+    ["3", "Enflasyon eskalasyonu: × HICP(Ağu-2026) ÷ HICP(teklif ayı)", "Euro Bölgesi HICP genel endeksi (ECB ICP.M.U2.N.000000.4.INX, 2015=100); Ağu-2026 = Ağu-2025 × 1,033 (Eurostat öncü %3,3)"],
+    ["4", "Kapsam düzeltmesi: yalnız malzeme ise montaj payı eklenir", "Bölüm 5'teki oranlar"],
+    ["5", "Boyut/teknoloji düzeltmesi (kVA, kW, kesit, yaş)", "Bölüm 5'teki kurallar"],
+    ["6", "Emsallerin medyanı alınır (≥2 emsal); tek emsalde mevcut tahminle %50 harmanlanır", "Aykırı değerler ve iç maliyet tahminleri düşük ağırlıklı"]])
+for rr_ in range(_y - 6, _y):
+    Y.merge_cells(start_row=rr_, start_column=3, end_row=rr_, end_column=6); Y.merge_cells(start_row=rr_, start_column=7, end_row=rr_, end_column=12)
+    Y.row_dimensions[rr_].height = 30
+
+sec("4. ÖRNEK HESAPLAR (canlı formül – hücreleri değiştirerek kontrol edilebilir)")
+HICP_HEDEF = 133.57723
+_eh = ["Kalem", "Emsal (ID – proje – firma – tarih)", "Orijinal fiyat", "Para birimi", "Kur (1 EUR =)", "EUR (teklif günü)",
+       "HICP teklif ayı", "HICP Ağu-2026", "Eskalasyon katsayısı", "EUR Ağu-2026", "Bütçe BF €"]
+for j, h in enumerate(_eh, 2):
+    c = Y.cell(row=_y, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+Y.row_dimensions[_y].height = 32
+_y += 1
+_ex = [("DC fider hücresi HSCB (Cer_Guc 188)", "R00877 – Bursa T2 Kent Meydanı–Terminal – Haluk Elektrik – 04.06.2015", 102250, "TRY", 3.0377, 100.72,
+        "Haluk 44.641 / MET 43.769 / Kocaeli 74.194 → medyan 44.641 €"),
+       ("Depo elektrikli makas motoru (Sinyal 230)", "R06521 – İzmir Konak tramvayı – Hanning & Kahl – 11.02.2014", 10920, "EUR", 1, 99.14,
+        "H&K 14.713 / CONTEC 15.090 / Elektroline 9.121 → medyan 14.713 + %8 montaj = 15.890 €"),
+       ("OG kablo 1×400 Al 36 kV (Cer_Guc 171)", "R00678 – İzmir Üçyol–Buca metrosu – Türk Prysmian – 03.05.2021", 14.43, "USD", 1.2044, 107.42,
+        "Prysmian 14,90 + 2 € çekme; Haluk 17,29; MET 19,14 → medyan 17,29 €/m")]
+for ad, em, fy, pb, kur, hicp, sonuc in _ex:
+    r_ = _y
+    vals = [ad, em, fy, pb, kur, f"=D{r_}/F{r_}", hicp, HICP_HEDEF, f"=I{r_}/H{r_}", f"=G{r_}*J{r_}", sonuc]
+    for j, v in enumerate(vals, 2):
+        c = Y.cell(row=r_, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (4, 7, 11): c.number_format = "#,##0.00"
+        if j in (6, 8, 9): c.number_format = "0.0000"
+        if j == 10: c.number_format = "0.0000"
+    Y.cell(row=r_, column=11).font = BOLD
+    Y.row_dimensions[r_].height = 45
+    _y += 1
+para("Örnek: Haluk'un 2015'teki 102.250 TL'lik DC fider hücresi, teklif günü kuru 3,0377 ile 33.660 €; Euro Bölgesi enflasyonu ile (×1,3262) Ağustos 2026'da 44.641 € eder. "
+     "Aynı kalem için başka bağımsız tekliflerle birlikte medyan alınır; tek bir teklif bütçeyi belirlemez.", 32)
+
+sec("5. DÜZELTME KURALLARI")
+table(["Durum", "Uygulanan düzeltme", "Gerekçe"], [
+    ["Emsal yalnız malzeme (montaj hariç)", "Kablo +%25–35 · tava +%40 · armatür/dedektör +%30 · ekipman +%8–20 · elektronik +%5–15", "Bütçe fiyatları montaj+test dahil (taşeron fiyatı)"],
+    ["Farklı güç/boyut", "Trafo kVA^0,6 · VRF kW^0,8 · kompresör debi^0,7 · kablo kesit/bakır ağırlığı oranı", "Ölçek ekonomisi; aynı tipte en yakın boyut tercih edildi"],
+    ["Eski elektronik (CCTV, IT, sunucu)", "2014 öncesi ×0,4–0,5 · 2015 ×0,85", "Elektronik fiyatları zamanla düşer; HICP eskalasyonu fazla gösterir"],
+    ["Bakır yoğun kalemler (2012–2015 emsal)", "+%15–30", "2026 bakır fiyatı 2015'in belirgin üstünde"],
+    ["Metro (1500 V DC, yeraltı) emsali", "Ölçek ve gerilim düzeltmesi, ancak tramvay emsali yoksa", "Metro ekipmanı tramvaya göre pahalıdır"],
+    ["Tek emsal", "Mevcut tahminle %50 harman ('REF-derin(1)')", "Tek veriye aşırı güvenmemek için"],
+    ["İç maliyet / keşif (İDİS, MET keşfi vb.)", "Düşük ağırlık; gerçek tedarikçi teklifi varsa kullanılmaz", "Tedarikçi teklifi piyasa fiyatını daha iyi yansıtır"]])
+for rr_ in range(_y - 7, _y):
+    Y.merge_cells(start_row=rr_, start_column=3, end_row=rr_, end_column=7); Y.merge_cells(start_row=rr_, start_column=8, end_row=rr_, end_column=12)
+    Y.row_dimensions[rr_].height = 32
+
+sec("6. MİKTARLAR")
+para("Miktarlar idarenin birim fiyat cetveli, ihale projeleri ve şartnamelerden çıkarılan RFQ (teklif talebi) cetvellerinden alınmıştır. "
+     "Tedarikçilere gönderilen cetvellerde bilinçli olarak yukarıdan tutulan metraj payları (uzunluklarda %10 fire; Mekanik/Elektrik set alt kalemlerinde dağıtık malzemeye %30) bu bütçede geri alınmıştır (Varsayımlar'da açılıp kapatılabilir). "
+     "İdarenin 05.10.2026 tarihli açıklama cevapları uygulanmıştır (Idare_Duzeltme sayfası): 14 araç, tüm makaslar motorlu, ana hatta lente yok, kavşak TSKP kapsam dışı, hat 6,44 km, OG ring 7.964 m, fiber 24/8 core SM, istasyon UPS 20 dk vb.", 58)
+
+sec("7. KONTROLLER")
+para("• Her kalem tek tek eşleştirilmiş; emsal ID'leri ilgili satırın 'Fiyat kaynağı / emsal' sütununda ve Emsal_Kaynaklari sayfasında yer alır.  "
+     "• Disiplin toplamları sistem bazlı ölçütlerle (hat-km, makas başı, TM başı) karşılaştırılmıştır (Ozet ve Teklifler).  "
+     "• Gelen 2026 teklifleri bütçe karşılığıyla kıyaslanmıştır (Teklif_Degerlendirme): Asansör ±%16, AVLS +%3, saat/YBS ±%6 içinde.  "
+     "• Tüm tutarlar formüllüdür; kur, risk payı ve metraj payı Varsayimlar sayfasından değiştirilebilir.", 62)
+
+sec("8. SINIRLAMALAR")
+para("Emsal bulunamayan kalemler (toplamın ~%20'si) mühendislik tahminidir; tedarikçi teklifleri geldikçe bu kalemler teklif fiyatına dönüştürülecektir. "
+     "Euro Bölgesi enflasyonu Türkiye'deki yerel işçilik maliyet artışını tam yansıtmayabilir. Fiyatlar KDV, gümrük ve bakım hariçtir.", 32)
+
+# ---------------------------------------------------------------- EMSAL KAYNAKLARI
+K = wb.create_sheet("Emsal_Kaynaklari")
+K["A1"] = "EMSAL KAYNAKLARI – bu bütçede kullanılan geçmiş teklif satırları (her satır kaynak teklif dosyasına izlenebilir)"
+K["A1"].font = Font(bold=True, size=13)
+K["A2"] = "EUR (Ağu-2026) = Orijinal fiyat ÷ ECB kuru (teklif günü) × HICP(Ağu-2026)/HICP(teklif ayı). Kullanıldığı kalem sayısı: bu emsale atıf yapan bütçe satırı adedi."
+K["A2"].alignment = WRAP; K.merge_cells("A2:N2"); K.row_dimensions[2].height = 28
+_used = collections.Counter()
+for _r in REVIZE.values():
+    for x in (_r.get("ref_idler") or "").replace(",", ";").split(";"):
+        if x.strip(): _used[x.strip()] += 1
+_kh = ["Emsal ID", "Proje", "Hat tipi", "Firma", "Teklif tarihi", "Kalem (teklifteki ifade)", "Birim", "Orijinal BF",
+       "Para birimi", "Kapsam", "EUR (Ağu-2026)", "Eşleşen URF poz", "Kullanıldığı kalem sayısı", "Not"]
+for j, h in enumerate(_kh, 1):
+    c = K.cell(row=4, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+_k = 5
+for _r in csv.DictReader(open(os.path.join(MEP_DIR, "veri_referans.csv"), encoding="utf-8")):
+    if _r["ID"] not in _used: continue
+    def _f(v):
+        try: return float(v)
+        except (TypeError, ValueError): return v
+    vals = [_r["ID"], _r["Proje"], _r["Hat tipi"], _r["Firma"], (_r["Teklif tarihi"] or "")[:10], _r["Kalem (teklif)"], _r["Birim (teklif)"],
+            _f(_r["Birim fiyat (orijinal)"]), _r["Para birimi"], _r["Kapsam"], _f(_r["EUR (Ağu-2026)"]), _r["URF poz"], _used[_r["ID"]], _r["Not"]]
+    for j, v in enumerate(vals, 1):
+        c = K.cell(row=_k, column=j, value=v)
+        if j in (8, 11): c.number_format = "#,##0.00"
+    _k += 1
+K.auto_filter.ref = f"A4:N{_k-1}"; K.freeze_panes = "B5"
+for col, w in zip("ABCDEFGHIJKLMN", (10, 26, 9, 24, 11, 60, 8, 12, 8, 9, 13, 10, 10, 50)):
+    K.column_dimensions[col].width = w
 
 # ---------------------------------------------------------------- Teklif durumu (Gmail)
 G = wb.create_sheet("Teklif_Durumu")
@@ -960,17 +1141,83 @@ for col in "KLM":
     c = O[f"{col}{rT}"]; c.value = f"=SUMPRODUCT(C{r0}:C{rT-1},{col}{r0}:{col}{rT-1})/C{rT}"; c.number_format = "0%"; c.font = BOLD
 for j in range(1, 14):
     O.cell(row=rT, column=j).fill = FILL_TOT; O.cell(row=rT, column=j).border = BOX
+FILL_HL = PatternFill("solid", fgColor="FCE4D6"); FILL_HLT = PatternFill("solid", fgColor="C55A11")
+THICK = Side(style="medium", color="C55A11"); HBOX = Border(left=THICK, right=THICK, top=THICK, bottom=THICK)
+
+
+def hl_title(row, text, ncol=8):
+    c = O.cell(row=row, column=1, value=text); c.font = Font(bold=True, size=12, color="FFFFFF")
+    for j in range(1, ncol + 1):
+        O.cell(row=row, column=j).fill = FILL_HLT
+    O.row_dimensions[row].height = 20
+
+
 _ib = rS2 + 2
-O.cell(row=_ib, column=1, value="İHALE GENELİ – MEP DIŞI TEKLİFLER (bilgi; MEP toplamına dahil değil)").font = Font(bold=True, size=12)
+# --- Vurgu 1: idare cevabıyla kapsam dışı kalanlar
+hl_title(_ib, "▶ KAPSAM DIŞI KALEMLER – İdare cevaplarıyla (05.10.2026) bütçeden düşülen kalemlerin RFQ'daki değeri")
+_h = ["Disiplin sayfası", "Düşülen başlıca kalemler", "", "", "RFQ birim fiyatlarıyla değer €"]
+for j, h in enumerate(_h, 1):
+    c = O.cell(row=_ib + 1, column=j, value=h); c.font = BOLD; c.fill = FILL_HL; c.border = BOX
+_kd = [("Sinyal", "Kavşak TSKP, trafik lambaları/direkleri/kabloları; manuel makas mekanizmaları; mevcut depo kontrol merkezi entegrasyonu"),
+       ("Katener", "Ana hat ankraj lentesi + 68 lente temeli; depo direkleri ve temelleri (cetvel direk kalemleriyle çift sayım)"),
+       ("Mekanik", "Güvenlik kabini splitleri (sıra 143 modüler kabin fiyatında)"),
+       ("Elektrik_AG", "Kavşak TSKP beslemeleri"),
+       ("Haberlesme", "Mevcut sistem entegrasyonları (mevcut sistem yok)")]
+for k, (shn, txt) in enumerate(_kd):
+    r_ = _ib + 2 + k
+    O.cell(row=r_, column=1, value=shn); O.cell(row=r_, column=2, value=txt).alignment = WRAP
+    O.merge_cells(start_row=r_, start_column=2, end_row=r_, end_column=4)
+    c = O.cell(row=r_, column=5, value=f"={TYPE_TOT[shn]['SIFIR']}"); c.number_format = EUR
+    for j in range(1, 6): O.cell(row=r_, column=j).border = BOX
+    O.row_dimensions[r_].height = 30
+_kt = _ib + 2 + len(_kd)
+O.cell(row=_kt, column=1, value="Toplam düşülen").font = BOLD
+c = O.cell(row=_kt, column=5, value=f"=SUM(E{_ib+2}:E{_kt-1})"); c.number_format = EUR; c.font = BOLD
+O.cell(row=_kt + 1, column=1, value=("Ayrıca RFQ'daki bilinçli metraj payları (%10 fire, dağıtık malzemede %30) bütçeden geri alınmıştır; "
+                                    "etkisi: 'RFQ cetvel miktarlarıyla' sütunu − 'Kalem bazlı bütçe'.")).alignment = WRAP
+O.merge_cells(start_row=_kt + 1, start_column=1, end_row=_kt + 1, end_column=8); O.row_dimensions[_kt + 1].height = 28
+
+# --- Vurgu 2: yüklenici kapsamındaki depo ekipmanları (MEP dışı) – tahmini
+_db = _kt + 3
+hl_title(_db, "▶ KAPSAM DIŞI EKİPMANLAR – Yüklenici kapsamındaki depo ekipmanları (MEP paketlerinde yok) – bilgi amaçlı tahmini bütçe")
+_h = ["Ekipman", "Açıklama", "Miktar", "Birim fiyat €", "Tutar €", "Fiyat türü"]
+for j, h in enumerate(_h, 1):
+    c = O.cell(row=_db + 1, column=j, value=h); c.font = BOLD; c.fill = FILL_HL; c.border = BOX
+DEPO_EKIP = [("Köprülü vinç 7,5 t", "Atölye, ~20 m açıklık, ray+yürüyüş yolu, montaj dahil", 1, 55000),
+             ("Köprülü vinç 1 t", "Atölye yardımcı vinç / monoray", 1, 15000),
+             ("Araç kaldırma lifti 11 t", "Senkron kolon lift (10 + 2 yedek), kumanda dahil", 12, 16000),
+             ("Katener bakım aracı", "Karayolu-demiryolu, kaldırma platformlu, ölçüm donanımlı", 1, 650000),
+             ("Manevra aracı (shunter)", "Karayolu-demiryolu tip, tramvay çekebilir", 1, 400000)]
+for k, (ad, ac, q, bf) in enumerate(DEPO_EKIP):
+    r_ = _db + 2 + k
+    vals = [ad, ac, q, bf, f"=C{r_}*D{r_}", "PİYASA TAHMİNİ (veritabanında emsal yok)"]
+    for j, v in enumerate(vals, 1):
+        c = O.cell(row=r_, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (4, 5): c.number_format = EUR
+    O.cell(row=r_, column=6).fill = TUR["TAHMIN"][1]
+_dt = _db + 2 + len(DEPO_EKIP)
+O.cell(row=_dt, column=1, value="Toplam (bilgi)").font = BOLD
+c = O.cell(row=_dt, column=5, value=f"=SUM(E{_db+2}:E{_dt-1})"); c.number_format = EUR; c.font = BOLD
+O.cell(row=_dt + 1, column=1, value="İdare cevabı: depo ekipmanları (1 t + 7,5 t köprülü vinç, 12 × 11 t lift, katener bakım aracı, shunter vb.) yüklenici kapsamındadır; MEP teklif paketlerine dahil edilmemiştir. Rakamlar teklif alınana kadar mertebe göstergesidir.").alignment = WRAP
+O.merge_cells(start_row=_dt + 1, start_column=1, end_row=_dt + 1, end_column=8); O.row_dimensions[_dt + 1].height = 28
+
+# --- Vurgu 3: Rayba (ihale geneli, MEP dışı)
+_ib = _dt + 3
+hl_title(_ib, "▶ İHALE GENELİ – MEP DIŞI GELEN TEKLİF: RAYBA YAPI (demiryolu üstyapı) – MEP toplamına dahil değil")
+for j, h in enumerate(["Firma", "Teklif", "", "", "EUR", "USD", "TL"], 1):
+    c = O.cell(row=_ib + 1, column=j, value=h); c.font = BOLD; c.fill = FILL_HL; c.border = BOX
 for k, (t, ref) in enumerate(IHALE_GENEL):
-    O.cell(row=_ib + 1 + k, column=1, value="Rayba Yapı")
-    O.cell(row=_ib + 1 + k, column=2, value=t)
-    c = O.cell(row=_ib + 1 + k, column=5, value=f"={ref}"); c.number_format = EUR
-    c = O.cell(row=_ib + 1 + k, column=6, value=f"=E{_ib + 1 + k}*{P_USD}"); c.number_format = EUR
-    c = O.cell(row=_ib + 1 + k, column=7, value=f"=E{_ib + 1 + k}*{P_TRY}"); c.number_format = EUR
-    for j in range(1, 8): O.cell(row=_ib + 1 + k, column=j).border = BOX
-O.cell(row=_ib + 1 + len(IHALE_GENEL), column=2, value="Ayrıntı: Ihale_Geneli_Bilgi sayfası (S-LINE kapsülleri hat döşeme fiyatında olabilir – çift sayım kontrolü)")
-rT = _ib + 2 + len(IHALE_GENEL)   # aşağıdaki döküm için
+    r_ = _ib + 2 + k
+    O.cell(row=r_, column=1, value="Rayba Yapı"); O.cell(row=r_, column=2, value=t)
+    O.merge_cells(start_row=r_, start_column=2, end_row=r_, end_column=4)
+    for j, f in ((5, f"={ref}"), (6, f"=E{r_}*{P_USD}"), (7, f"=E{r_}*{P_TRY}")):
+        c = O.cell(row=r_, column=j, value=f); c.number_format = EUR; c.font = Font(bold=True, color="C55A11")
+    for j in range(1, 8): O.cell(row=r_, column=j).border = BOX
+_rt = _ib + 2 + len(IHALE_GENEL)
+O.cell(row=_rt, column=1, value=("Rayba teklifi 42×R50 + 2×R100 makas + 3 kruvazman (= 56 makas) ile sinyal/katener makas kabulünü teyit ediyor. "
+                                 "S-LINE kapsülleri hat döşeme fiyatında olabilir – çift sayım kontrolü; beton/donatı hariç. Ayrıntı: Ihale_Geneli_Bilgi.")).alignment = WRAP
+O.merge_cells(start_row=_rt, start_column=1, end_row=_rt, end_column=8); O.row_dimensions[_rt].height = 30
+rT = _rt + 1   # aşağıdaki döküm için
 
 # Ana kalem dökümü
 rB = rT + 3
@@ -1012,9 +1259,83 @@ for col, w in zip("ABCDEFGHIJKLM", (24, 48, 18, 16, 18, 16, 18, 10, 18, 18, 30, 
     O.column_dimensions[col].width = w
 O.freeze_panes = "A5"
 
-_order = ["Ozet", "Teklif_Degerlendirme", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
-          "Teklifler", "Teklif_Durumu", "Idare_Duzeltme", "Varsayimlar"]
-wb._sheets = [wb[n] for n in _order] + [w for w in wb.worksheets if w.title not in _order]
+
+# ---------------------------------------------------------------- Özet: KPI kartları + grafikler
+from openpyxl.chart import BarChart, PieChart, Reference
+from openpyxl.chart.label import DataLabelList
+for col, w in zip("OPQRS", (30, 18, 18, 18, 4)):
+    O.column_dimensions[col].width = w
+_kpi = [("TOPLAM MEP ÖNERİLEN BÜTÇE (EUR)", f"=E{r0+len(DIS)}", EUR),
+        ("USD karşılığı", f"=F{r0+len(DIS)}", EUR), ("TL karşılığı", f"=G{r0+len(DIS)}", EUR),
+        ("Fiyatlandırılan kalem sayısı", ITEM_COUNT[0], "#,##0"),
+        ("Teklif + geçmiş teklif emsaline dayanan pay", f"=K{r0+len(DIS)}+L{r0+len(DIS)}", "0%")]
+O["O4"] = "BÜTÇE GÖSTERGELERİ"; O["O4"].font = Font(bold=True, color="FFFFFF", size=12)
+for j in range(15, 18): O.cell(row=4, column=j).fill = FILL_H
+for k, (lab, f, nf) in enumerate(_kpi):
+    r_ = 5 + k
+    O.cell(row=r_, column=15, value=lab).font = BOLD
+    c = O.cell(row=r_, column=16, value=f); c.number_format = nf; c.font = Font(bold=True, size=12, color="1F4E78")
+    for j in (15, 16): O.cell(row=r_, column=j).border = BOX
+# grafik verisi
+_gd = 12
+O.cell(row=_gd, column=15, value="Grafik verisi (EUR, risk hariç)").font = BOLD
+for j, h in enumerate(["Disiplin", "2026 teklif", "Geçmiş teklif uyarlama", "Mühendislik tahmini"], 15):
+    c = O.cell(row=_gd + 1, column=j, value=h); c.font = F_H; c.fill = FILL_H
+for i, d in enumerate(DIS):
+    r_ = _gd + 2 + i
+    O.cell(row=r_, column=15, value=d)
+    for j, col in zip((16, 17, 18), "KLM"):
+        c = O.cell(row=r_, column=j, value=f"=SUMIF($A${rS1}:$A${rS2},$O{r_},{col}${rS1}:{col}${rS2})"); c.number_format = EUR
+ch = BarChart(); ch.type = "bar"; ch.grouping = "stacked"; ch.overlap = 100
+ch.title = "Disiplin bazında bütçe ve fiyat kaynağı (EUR)"; ch.y_axis.title = "EUR"; ch.height = 9; ch.width = 18
+data = Reference(O, min_col=16, max_col=18, min_row=_gd + 1, max_row=_gd + 1 + len(DIS))
+cats = Reference(O, min_col=15, min_row=_gd + 2, max_row=_gd + 1 + len(DIS))
+ch.add_data(data, titles_from_data=True); ch.set_categories(cats)
+for ser, colr in zip(ch.series, ("70AD47", "5B9BD5", "FFC000")):
+    ser.graphicalProperties.solidFill = colr; ser.graphicalProperties.line.solidFill = colr
+O.add_chart(ch, f"O{_gd + 3 + len(DIS)}")
+pc = PieChart(); pc.title = "Disiplin payları (önerilen bütçe)"; pc.height = 8; pc.width = 12
+pc.add_data(Reference(O, min_col=5, min_row=r0 - 1, max_row=r0 + len(DIS) - 1), titles_from_data=True)
+pc.set_categories(Reference(O, min_col=1, min_row=r0, max_row=r0 + len(DIS) - 1))
+pc.dataLabels = DataLabelList(); pc.dataLabels.showPercent = True
+O.add_chart(pc, f"O{_gd + 23 + len(DIS)}")
+O.sheet_view.showGridLines = False
+
+# ---------------------------------------------------------------- Teklif istenen firmalar
+_fp = os.path.join(MEP_DIR, "rfq_firmalar.csv")
+if os.path.exists(_fp):
+    FM = wb.create_sheet("Teklif_Istenen_Firmalar")
+    FM["A1"] = "TEKLİF İSTENEN FİRMALAR – serhat@mepcenter.com.tr ile 29.09–06.10.2026 arasında gönderilen teklif talepleri"
+    FM["A1"].font = Font(bold=True, size=13)
+    _fr = list(csv.DictReader(open(_fp, encoding="utf-8-sig")))
+    _order = ["ELEKTRIK", "MEKANIK", "ASANSOR", "SINYALIZASYON", "KATENER"]
+    _fr.sort(key=lambda f: (min([_order.index(x) for x in _order if x in (f.get("paketler") or "").upper()] or [9]), f.get("firma", "")))
+    _cols = [("firma", "Firma", 30), ("firma_turu", "Firma türü", 22), ("faaliyet", "Faaliyet alanı", 34), ("ulke", "Ülke", 7),
+             ("paketler", "Paket(ler)", 20), ("durum", "Dönüş durumu", 15), ("ilk_gonderim", "İlk gönderim", 11),
+             ("hatirlatma", "Hatırlatma", 9), ("email_adresleri", "E-posta", 34), ("not", "Not", 40)]
+    # özet sayaçları
+    FM["A3"] = "Toplam firma"; FM["B3"] = len(_fr); FM["A3"].font = BOLD
+    _cnt = collections.Counter(f.get("durum") or "CEVAP YOK" for f in _fr)
+    FM["D3"] = "Dönüş durumu: " + " · ".join(f"{k}: {v}" for k, v in _cnt.most_common())
+    FM.merge_cells("D3:J3")
+    _DFILL = {"TEKLİF GELDİ": "C6EFCE", "VERECEK": "DDEBF7", "SORU SORDU": "FFF2CC", "YÖNLENDİRDİ": "FFF2CC",
+              "VERMİYOR": "F8CBAD", "ULAŞMADI": "EDEDED", "CEVAP YOK": "FFFFFF"}
+    for j, (k, h, w) in enumerate(_cols, 1):
+        c = FM.cell(row=5, column=j, value=h); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+        FM.column_dimensions[get_column_letter(j)].width = w
+    for i, f in enumerate(_fr, start=6):
+        for j, (k, h, w) in enumerate(_cols, 1):
+            c = FM.cell(row=i, column=j, value=f.get(k, "")); c.border = BOX; c.alignment = WRAP
+        d = (f.get("durum") or "CEVAP YOK").upper()
+        for key, colr in _DFILL.items():
+            if key in d:
+                FM.cell(row=i, column=6).fill = PatternFill("solid", fgColor=colr); break
+    FM.auto_filter.ref = f"A5:J{5 + len(_fr)}"; FM.freeze_panes = "B6"
+
+
+_order = ["Ozet", "Yontem", "Teklif_Degerlendirme", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
+          "Emsal_Kaynaklari", "Teklif_Istenen_Firmalar", "Teklifler", "Teklif_Durumu", "Idare_Duzeltme", "Varsayimlar"]
+wb._sheets = [wb[n] for n in _order if n in wb.sheetnames] + [w for w in wb.worksheets if w.title not in _order]
 _tabs = {"Ozet": "1F4E78", "Teklif_Degerlendirme": "70AD47", "Elektrik_AG": "FFC000", "Haberlesme": "FFC000", "Mekanik": "5B9BD5",
          "Asansor": "A5A5A5", "Sinyal": "ED7D31", "Cer_Guc": "7030A0", "Katener": "7030A0"}
 for n, col in _tabs.items():
@@ -1024,5 +1345,13 @@ for ws in wb.worksheets:
     ws.page_setup.orientation = "landscape"
     ws.page_setup.fitToWidth = 1
 
+from copy import copy as _copy
+for _ws in wb.worksheets:
+    for _row in _ws.iter_rows():
+        for _c in _row:
+            if _c.has_style or _c.value is not None:
+                _f = _copy(_c.font); _f.name = "Arial"
+                if not _f.sz: _f.sz = 10
+                _c.font = _f
 wb.save(OUT)
 print("OK", OUT)
