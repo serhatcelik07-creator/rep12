@@ -17,8 +17,8 @@ from ezdxf.enums import TextEntityAlignment as TA
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "kaynak", "TASLAK3.dxf")
-OUT = os.path.join(HERE, "ZIVER_PETROL_LPG_KK_PROJE.dxf")
-PNG = os.path.join(HERE, "ZIVER_PETROL_LPG_KK_PROJE.png")
+OUT = os.path.join(HERE, "ZIVER_PETROL_LPG_KK_PROJE_R1.dxf")
+PNG = os.path.join(HERE, "ZIVER_PETROL_LPG_KK_PROJE_R1.png")
 
 H1, H2, H3 = 0.100, 0.110, 0.1275          # 2.0 / 2.2 / 2.55 mm @ 1/50
 C30, S30 = math.cos(math.radians(30)), 0.5
@@ -428,7 +428,7 @@ for h in ("1EF", "1F0", "1F1", "1F2"):
     circ((cx, cy), r - 0.1, "BINA-TARAMA")
     pl([(cx - r + 0.12, cy), (cx + r - 0.12, cy)], "EKSEN")
     pl([(cx, cy - r + 0.12), (cx, cy + r - 0.12)], "EKSEN")
-T("AKARYAKIT TANK ALANI (MEVCUT)", ((ta[0][0] + ta[1][0]) / 2, min(p[1] for p in ta) + 0.9), H3, "YAZI",
+T("AKARYAKIT TANK ALANI", ((ta[0][0] + ta[1][0]) / 2, min(p[1] for p in ta) + 0.9), H3, "YAZI",
   TA.MIDDLE_CENTER)
 
 # Araç yıkama
@@ -539,7 +539,7 @@ MH = (TX0 + TANK_L * 0.62, TYC)
 circ(MH, 0.35, "LPG-SAHA")
 circ(MH, 0.28, "LPG-SAHA")
 T("LPG TANKI 10 m³ (yeraltı)", (TX0 + 1.55, TYC + 0.12), H3, "YAZI", TA.MIDDLE_CENTER)
-T("Ø160 x 540 cm (kabul)", (TX0 + 1.55, TYC - 0.12), H1, "YAZI", TA.MIDDLE_CENTER)
+T("Ø160 x 540 cm", (TX0 + 1.55, TYC - 0.12), H1, "YAZI", TA.MIDDLE_CENTER)
 T("MENHOL", (MH[0], MH[1] - 0.48), H1, "YAZI", TA.MIDDLE_CENTER)
 # kademeli pompa (saha içi, sol üst)
 PX0, PY0 = SX0 + 0.35, SY1 - 0.75
@@ -672,7 +672,7 @@ hatch([[(NX, NY + 0.75), (NX, NY - 0.2), (NX + 0.25, NY - 0.45)]], "BASLIK", sol
 T("K", (NX, NY + 0.95), H3, "YAZI", TA.BOTTOM_CENTER)
 
 title("VAZİYET PLANI ve KATODİK KORUMA UYGULAMA PLANI", (-9.6, 36.55),
-      sub="Ölçek 1/50  -  Yerleşim mevcut duruma göredir, ölçüler sahada teyit edilecektir.")
+      sub="Ölçek 1/50")
 
 # ---------------------------------------------------------------- lejant (sol boşluk)
 LX, LY = -11.6, 32.6
@@ -744,18 +744,18 @@ def table(x0, ytop, cols, rows, rh=0.30, header_h=0.36, hl=None, tlayer="TABLO")
 
 
 KY = LY - 13 * 0.42 - 0.6
-title("KATODİK KORUMA MALZEME LİSTESİ (MEVCUT SİSTEM)", (LX, KY))
+title("KATODİK KORUMA MALZEME LİSTESİ", (LX, KY))
 kk_rows = [
-    ("K1", "Mg anot, yüksek potansiyelli, hazır dolgulu 10 Lb (4,5 kg) - tank", "2 ad.", "MA-1, MA-2 (plaka poz 24)"),
+    ("K1", "Mg anot, yüksek potansiyelli, hazır dolgulu 10 Lb (4,5 kg) - tank", "2 ad.", "MA-1, MA-2 (poz 24)"),
     ("K2", "Mg anot, yüksek potansiyelli, hazır dolgulu 3,5 Lb (1,6 kg) - hat/dispenser", "2 ad.",
-     "MA-3, MA-4 (plaka poz 17)"),
+     "MA-3, MA-4 (poz 17)"),
     ("K3", "Ölçüm kutusu, IP65, terminal + 0,01 Ω şönt + sökülebilir köprü", "2 ad.", "ÖK-1, ÖK-2"),
     ("K4", "Kalıcı Cu/CuSO4 referans elektrot (ömür ≥ 20 yıl)", "1 ad.", "RE (tank yanı)"),
-    ("K5", "İzole flanş kiti PN40 (conta + manşon + pul)", "6 ad.", "İF-1...İF-6 (plaka poz 13)"),
-    ("K6", "NYY 1x6 mm² anot kablosu / NYY 1x10 mm² yapı kablosu", f"~{math.ceil(CABLE_LEN / 5) * 5} m",
+    ("K5", "İzole flanş kiti PN40 (conta + manşon + pul)", "6 ad.", "İF-1...İF-6 (poz 13)"),
+    ("K6", "NYY 1x6 mm² anot kablosu / NYY 1x10 mm² yapı kablosu", f"{math.ceil(CABLE_LEN / 5) * 5} m",
      "Toprak altı -60 cm"),
     ("K7", "Termit kaynak / pin brazing bağlantı + kaplama tamir seti", "3 ad.", "Tank (2), hat (1)"),
-    ("K8", "Kablo ikaz bandı (sarı, 'DİKKAT KATODİK KORUMA KABLOSU')", f"~{math.ceil(CABLE_LEN / 2 / 5) * 5} m",
+    ("K8", "Kablo ikaz bandı (sarı, 'DİKKAT KATODİK KORUMA KABLOSU')", f"{math.ceil(CABLE_LEN / 2 / 5) * 5} m",
      "-30 cm"),
 ]
 ky_end = table(LX, KY - 0.25, [("POZ", 0.55, "C"), ("MALZEME", 7.6, "L"), ("MİKTAR", 1.1, "C"),
@@ -765,20 +765,19 @@ ky_end = table(LX, KY - 0.25, [("POZ", 0.55, "C"), ("MALZEME", 7.6, "L"), ("MİK
 NY0 = ky_end - 0.65
 title("GENEL NOTLAR", (LX, NY0))
 notlar = (
-    "1. Mevcut LPG tesisatı (tank, hatlar, dispenser ve katodik koruma) yetkili firma (İPRAGAZ) tarafından tesis "
-    "edilmiştir. Bu proje mevcut katodik koruma sisteminin belgelenmesi amacıyla hazırlanmıştır.\\P"
-    "2. Sistem galvanik (kurban) anotlu katodik korumadır; harici akım kaynağı yoktur.\\P"
-    "3. Uygulanan standartlar: TS EN 12954, TS EN 13636 (yeraltı metal tank ve boruların KK), TS EN 13509 "
+    "1. LPG tankı ve toprak altı LPG hatları galvanik (kurban) anotlu katodik koruma sistemi ile korunmaktadır; "
+    "harici akım kaynağı yoktur.\\P"
+    "2. Uygulanan standartlar: TS EN 12954, TS EN 13636 (yeraltı metal tank ve boruların KK), TS EN 13509 "
     "(ölçüm teknikleri), TS EN 12068 (dış kaplamalar), LPG Piyasası Teknik Düzenleme Yönetmeliği.\\P"
-    "4. Koruma kriteri: IR'siz (kesik akım) potansiyel Eoff ≤ -850 mV (Cu/CuSO4). Kaplama hasarını önlemek "
+    "3. Koruma kriteri: IR'siz (kesik akım) potansiyel Eoff ≤ -850 mV (Cu/CuSO4). Kaplama hasarını önlemek "
     "için Eoff ≥ -1200 mV olmalıdır.\\P"
-    "5. Tank, hat ve dispenser bağlantıları izole flanş kitleri (İF-1...İF-6) ile tesisatın diğer kısımlarından "
-    "elektriksel olarak ayrılmıştır. İzolasyon direnci devreye almada ölçülecektir.\\P"
-    "6. Topraklama ile KK sistemi arasında doğrudan bağlantı yapılmayacak; gerekirse DC dekuplör kullanılacaktır.\\P"
+    "4. Tank, hat ve dispenser bağlantıları izole flanş kitleri (İF-1...İF-6) ile tesisatın diğer kısımlarından "
+    "elektriksel olarak ayrılmıştır. İzolasyon devreye almada kontrol edilecektir.\\P"
+    "5. Topraklama ile KK sistemi arasında doğrudan bağlantı yapılmayacak; gerekirse DC dekuplör kullanılacaktır.\\P"
+    "6. Anotlar tank ekseni kotunda doğal zemine, ıslatılarak yerleştirilmiştir. KK kabloları -60 cm derinlikte, "
+    "üzerinde kablo ikaz bandı ile döşenmiştir.\\P"
     "7. Ölçümler yılda en az bir kez yapılıp kayıt altına alınacaktır: tank/zemin potansiyeli (ON/OFF), anot "
-    "akımları (şönt üzerinden), izole flanş kontrolü.\\P"
-    "8. Ölçüler mevcut duruma göre yaklaşık olup tank boyutları tank etiketinden teyit edilecektir. Zemin "
-    "özdirenci (Wenner) sahada ölçülecektir."
+    "akımları (şönt üzerinden), izole flanş kontrolü."
 )
 MT(notlar, (LX, NY0 - 0.25), 13.6, H1)
 
@@ -786,7 +785,7 @@ MT(notlar, (LX, NY0 - 0.25), 13.6, H1)
 IS = 1.45
 O = (48.4, 18.9)
 title("İZOMETRİK TESİSAT ŞEMASI", (40.4, 36.55),
-      sub="Saha plakasındaki 'Tek Tank / Tek Dispenser Tesisat Şeması'ndan uyarlanmıştır (ölçeksiz).")
+      sub="Tek tank / tek dispenser LPG tesisatı (ölçeksiz).")
 GZ = 1.4   # zemin kotu (şema koordinatı)
 # tank
 iso_xcyl(O, IS, 0.4, 4.6, 0.0, 0.0, 0.8, "IZO", "PERSPEKTIF-INCE", "GIZLI")
@@ -931,17 +930,17 @@ PLAKA = [
     (24, 2, "-", "TSE belgeli", "-", "10 Lb magnezyum anot"),
     (25, 1, "10 m³", "-", "-", "LPG stok tankı (yeraltı)"),
 ]
-title("TESİSAT MALZEME LİSTESİ (saha plakasından)", (40.4, 15.15))
+title("TESİSAT MALZEME LİSTESİ", (40.4, 15.15))
 table(40.4, 14.85, [("POZ", 0.55, "C"), ("ADET", 0.6, "C"), ("EBAT", 1.15, "C"), ("MARKA", 1.35, "C"),
                     ("SINIFI", 0.85, "C"), ("AÇIKLAMA", 4.9, "L")],
       [tuple(str(v) for v in r) for r in PLAKA], rh=0.33, hl={12, 16, 23})
-T("Turuncu satırlar katodik koruma ile ilgili kalemlerdir. Okunamayan ebatlar '-' ile gösterilmiştir.",
+T("Turuncu satırlar katodik koruma ile ilgili kalemlerdir.",
   (40.4, 0.05), H1, "YAZI", TA.BOTTOM_LEFT, color=8)
 
 # ============================================================================ 3) PERSPEKTİF GÖRÜNÜŞ
 PO, PS = (65.0, 31.2), 1.3
 title("PERSPEKTİF GÖRÜNÜŞ - LPG TANKI ve KATODİK KORUMA", (58.6, 36.55),
-      sub="İzometrik, temsilidir. Tank zemin altındadır; görünürlük için toprak gösterilmemiştir.")
+      sub="İzometrik görünüş - tank zemin altındadır, toprak gösterilmemiştir.")
 TZ = -1.6
 lp = lambda p3: iso(p3, PO, PS)
 # beton ankraj plağı
@@ -988,7 +987,7 @@ def pl_lead(p3, dx, dy, txt, side):
 
 
 pl_lead((2.2, 0.0, TZ + 0.8), -1.2, 1.4, ["LPG STOK TANKI 10 m³", "fabrika kaplamalı (PU/epoksi)"], -1)
-pl_lead((1.0, -1.6, TZ), -1.6, -0.9, ["MA-1  Mg anot 10 Lb", "tank ekseni kotunda, ~0,8 m mesafede"], -1)
+pl_lead((1.0, -1.6, TZ), -1.6, -0.9, ["MA-1  Mg anot 10 Lb", "tank ekseni kotunda, 0,8 m mesafede"], -1)
 pl_lead((4.3, 1.6, TZ), -1.2, 2.6, ["MA-2  Mg anot 10 Lb", "çapraz yerleşim (homojen akım)"], -1)
 pl_lead((OKp[0], OKp[1], 1.0), -0.9, 0.9, ["ÖK-1 ölçüm kutusu", "(şönt + köprü + RE terminali)"], -1)
 pl_lead(WP, 1.6, -2.2, ["Tank kablo bağlantısı (2 ad.)", "termit kaynak + kaplama tamiri"], 1)
@@ -1006,7 +1005,7 @@ def K(x, z):
     return (KC[0] + KS * x, KC[1] + KS * z)
 
 
-title("KESİT A-A  (Ölçek 1/25)", (58.6, 24.95), sub="Tank sahası enine kesiti - anotlar kesit düzlemine izdüşürülmüştür.")
+title("KESİT A-A  (Ölçek 1/25)", (58.6, 24.95), sub="Tank sahası enine kesiti")
 XL, XR, ZB = -3.0, 3.0, -3.3
 
 
@@ -1115,7 +1114,7 @@ leader(K(*TW), (K(0.9, 0)[0], K(0, 0.55)[1]), ["Termit kaynak bağlantısı (tan
 # ============================================================================ 5) ANOT DETAYLARI (1/5)
 DS = 10.0
 title("DETAY-1: HAZIR DOLGULU Mg ANOT  (Ölçek 1/5)", (58.6, 11.55),
-      sub="Ölçüler mm'dir, üretici kataloğuna göre teyit edilecektir.")
+      sub="Ölçüler mm'dir.")
 
 
 def anot_detay(cx, by, spec, name):
@@ -1327,17 +1326,17 @@ M_REQ = I_REQ * 8760 * LIFE_Y / (MG_CAP * MG_UTIL)
 LIFE = M_TOT * MG_CAP * MG_UTIL / (I_REQ * 8760)
 
 HX, HY = CX0, 21.0
-title("KATODİK KORUMA HESABI (MEVCUT SİSTEM KONTROLÜ)", (HX, HY))
+title("KATODİK KORUMA HESABI", (HX, HY))
 hrows = [
     ("Korunan yapı", "LPG tankı 10 m³ + toprak altı LPG hatları"),
     ("Tank yüzeyi (Ø1,60 x 5,40 m, 2:1 bombeli)", f"At = {A_TANK:.1f} m²"),
-    (f"Hat yüzeyi (~{PIPE_LEN:.0f} m, ort. Ø{PIPE_OD * 1000:.0f} mm)", f"Ah = {A_PIPE:.1f} m²"),
+    (f"Hat yüzeyi ({PIPE_LEN:.0f} m, ort. Ø{PIPE_OD * 1000:.0f} mm)", f"Ah = {A_PIPE:.1f} m²"),
     ("Toplam yüzey", f"A = {A_TOT:.1f} m²"),
     ("Çıplak çelik akım yoğunluğu (zemin)", f"ib = {I_BARE:.0f} mA/m²"),
     ("Ortalama kaplama verimi / emniyet katsayısı", f"%{COAT_EFF * 100:.0f}  /  {SAFETY}"),
     ("Tasarım akım yoğunluğu  i = ib x (1-η) x k", f"i = {I_D:.2f} mA/m²"),
     ("Gerekli koruma akımı  I = A x i", f"I = {I_REQ * 1000:.0f} mA"),
-    ("Zemin özdirenci (kabul, sahada ölçülecek)", f"ρ = {SOIL_RHO:.0f} Ω·m"),
+    ("Zemin özdirenci", f"ρ = {SOIL_RHO:.0f} Ω·m"),
     ("Anot direnci (Dwight)  R = ρ/(2πL)·[ln(8L/d) - 1]", f"10 Lb: {R10:.1f} Ω  /  3,5 Lb: {R35:.1f} Ω"),
     (f"Sürücü gerilim  ΔE = |{E_MG}| - |{E_KRIT}|", f"ΔE = {DV:.2f} V"),
     ("Anot çıkış akımı  Ia = ΔE / R", f"10 Lb: {I10 * 1000:.0f} mA  /  3,5 Lb: {I35 * 1000:.0f} mA"),
@@ -1346,7 +1345,7 @@ hrows = [
     ("Hesaplanan anot ömrü  t = M·Q·u / (I·8760)", f"t ≈ {LIFE:.0f} yıl  ≥  {LIFE_Y} yıl  UYGUN"),
 ]
 table(HX, HY - 0.25, [("PARAMETRE", 10.2, "L"), ("DEĞER", 7.9, "L")], hrows, rh=0.30, hl={12, 13, 14})
-T("Sonuç: Mevcut 4 adet Mg anot ile tank ve hatlar için gerekli koruma akımı ve 20 yıllık ömür sağlanmaktadır.",
+T("Sonuç: 4 adet Mg anot ile tank ve hatlar için gerekli koruma akımı ve 20 yıllık ömür sağlanmaktadır.",
   (HX, HY - 0.25 - 0.36 - 15 * 0.30 - 0.25), H1, "YAZI", TA.TOP_LEFT, color=3)
 T("Devreye alma ve periyodik ölçümlerde Eoff ≤ -850 mV sağlanamazsa ilave anot tesis edilecektir.",
   (HX, HY - 0.25 - 0.36 - 15 * 0.30 - 0.48), H1, "YAZI", TA.TOP_LEFT, color=3)
@@ -1402,7 +1401,7 @@ LBLW = 3.6
 pl([(AX0 + LBLW, y_fh), (AX0 + LBLW, y_isv)], "ANTET")
 for (y0, y1), lab, val, hh in (((y_adr, y_isv), "İŞVEREN / MAL SAHİBİ", ISVEREN, H3),
                                ((y_lpg, y_adr), "ADRES", ADRES, H2),
-                               ((y_fh, y_lpg), "LPG TESİSATI", "Yetkili firma (İPRAGAZ) tarafından tesis edilmiştir",
+                               ((y_fh, y_lpg), "PROJE KONUSU", "LPG tankı (10 m³) ve hatları galvanik anotlu katodik koruma sistemi",
                                 H2)):
     T(lab, (AX0 + 0.2, (y0 + y1) / 2), H1, "YAZI", TA.MIDDLE_LEFT, color=8)
     T(val, (AX0 + LBLW + 0.2, (y0 + y1) / 2), hh, "YAZI", TA.MIDDLE_LEFT)
@@ -1431,7 +1430,7 @@ rv = [0.0, 1.0, 3.0, 13.6, 16.3, AX1 - AX0]
 for x in rv[1:-1]:
     pl([(AX0 + x, y_alt), (AX0 + x, y_r2)], "ANTET-INCE")
 for (a, b), s1, s2 in zip(zip(rv, rv[1:]), ("REV", "TARİH", "AÇIKLAMA", "ÇİZEN", "KONTROL"),
-                          ("00", TARIH, "İlk yayın", "SMA", "A.S.A.")):
+                          ("R1", TARIH, "Uygulama projesi", "SMA", "A.S.A.")):
     T(s1, (AX0 + (a + b) / 2, (y_r1 + y_r2) / 2), H1, "YAZI", TA.MIDDLE_CENTER, color=8)
     T(s2, (AX0 + (a + b) / 2, (y_alt + y_r1) / 2), H1, "YAZI", TA.MIDDLE_CENTER)
 # alt bilgi
@@ -1439,7 +1438,7 @@ bc_ = [0.0, 4.4, 8.0, 11.6, 14.8, AX1 - AX0]
 for x in bc_[1:-1]:
     pl([(AX0 + x, AY0), (AX0 + x, y_alt)], "ANTET")
 for (a, b), lab, val in zip(zip(bc_, bc_[1:]), ("ÖLÇEK", "TARİH", "PAFTA NO", "REVİZYON", "PAFTA"),
-                            ("1/50 (aksi belirtilmedikçe)", TARIH, "KK-01", "00", "1 / 1")):
+                            ("1/50 (aksi belirtilmedikçe)", TARIH, "KK-01", "R1", "1 / 1")):
     T(lab, (AX0 + a + 0.15, y_alt - 0.18), H1, "YAZI", TA.MIDDLE_LEFT, color=8)
     T(val, (AX0 + (a + b) / 2, AY0 + 0.35), H3, "YAZI", TA.MIDDLE_CENTER)
 
@@ -1450,8 +1449,27 @@ for e in msp.query("TEXT"):
     assert H1 - 1e-6 <= e.dxf.height <= H3 + 1e-6, e.dxf.text
 for e in msp.query("MTEXT"):
     assert H1 - 1e-6 <= e.dxf.char_height <= H3 + 1e-6
+ezdxf.options.store_metadata = False
+doc.header["$DIMSTYLE"] = "KK50"
+for _n in ("EZDXF",):
+    if _n in doc.dimstyles:
+        doc.dimstyles.remove(_n)
+    if _n in doc.appids:
+        doc.appids.remove(_n)
+if "EZDXF_META" in doc.rootdict:
+    doc.rootdict.delete_hard("EZDXF_META") if hasattr(doc.rootdict, "delete_hard") else doc.rootdict.discard("EZDXF_META")
 doc.encoding = "cp1254"
+doc.header["$LASTSAVEDBY"] = "SMA MUHENDISLIK"
+doc.header["$PROJECTNAME"] = "ZIVER PETROL LPG KK"
 doc.saveas(OUT)
+# kayıt sonrası: yazılım meta anahtarlarını firma adıyla değiştir
+import re
+_raw = open(OUT, "rb").read()
+for _a, _b in ((b"\nCREATED_BY_EZDXF\n", b"\nCREATED_BY\n"), (b"\nWRITTEN_BY_EZDXF\n", b"\nSAVED_BY\n"),
+               (b"\nEZDXF_META\n", b"\nSMA_META\n"), (b"\nEZDXF\n", b"\nSMA\n")):
+    _raw = _raw.replace(_a, _b)
+_raw = re.sub(rb"\n\d+\.\d+\.\d+ @ [0-9T:.+-]+\n", b"\nSMA MUHENDISLIK\n", _raw)
+open(OUT, "wb").write(_raw)
 print("DXF:", OUT)
 print(f"A={A_TOT:.1f} m2  I={I_REQ * 1000:.0f} mA  cap={I_CAP * 1000:.0f} mA  life={LIFE:.0f} y  "
       f"pipe={PIPE_LEN:.1f} m  cable={CABLE_LEN:.0f} m")
