@@ -86,12 +86,18 @@ EKIPMAN = [
     ('EF-07', 'HAVALANDIRMA', 'Abdesthane Egzost Fanı', 'Kanal tipi, 400 m³/h', 'ABDESTHANELER', '2', 1, 1, 0.20, 230, 1, 0.85, '2KTP', 'FAN', (18180, 2255), 'Edirne HVL EF-04 eşdeğeri'),
     # --- KLİMA (VRF dışı) ---
     ('MK-1', 'KLİMA', 'VRF Merkezi Kumanda', 'Dokunmatik, tüm iç üniteler', 'GÜVENLİK-DANIŞMA', 'Z', 1, 1, 0.02, 230, 1, 0.90, 'ZKTP', 'KUMANDA', (5700, 1700), 'Edirne VRF notu'),
-    ('SPLT-1', 'KLİMA', 'Server Odası Split Klima (İç+Dış)', '12.000 Btu/h (3,5 kW), 7/24, 1 asıl + 1 yedek', 'SERVER ODASI', 'Z', 2, 1, 1.10, 230, 1, 0.90, 'ZKTP', 'SPLIT', (3530, 1135), 'Edirne SPLT-1 eşdeğeri'),
+    ('MSP-1', 'KLİMA', 'Multi Split Dış Ünite (ASIL)', '2 iç üniteli, 6,8 kW soğutma, inverter, -15 °C kış soğutma kiti, 7/24', 'DIŞ CEPHE (Z-10 ÖNÜ)', 'Z', 1, 1, 2.10, 230, 1, 0.90, 'ADP', 'SPLIT_DIS', (3440, 850), 'Teknik hacim yük hesabı (Soğutma Yükü sayfası)'),
+    ('MSP-1Y', 'KLİMA', 'Multi Split Dış Ünite (YEDEK)', 'Asıl ile aynı; arızada otomatik devreye giriş + haftalık rotasyon', 'DIŞ CEPHE (Z-10 ÖNÜ)', 'Z', 1, 0, 2.10, 230, 1, 0.90, 'ADP', 'SPLIT_DIS', (3560, 850), 'Yedeklilik: 1 asıl + 1 yedek'),
+    ('MS-1/1', 'KLİMA', 'Multi Split Duvar Tipi İç Ünite - Server', '3,5 kW soğutma (12.000 Btu/h), 7/24', 'SERVER ODASI', 'Z', 1, 1, 0.04, 230, 1, 0.90, 'ADP', 'SPLIT', (3652, 1500), 'Teknik hacim yük hesabı'),
+    ('MS-1/2', 'KLİMA', 'Multi Split Duvar Tipi İç Ünite - Elk. Pano O.', '2,5 kW soğutma (9.000 Btu/h), 7/24', 'ELK.ANA PANO O.', 'Z', 1, 1, 0.04, 230, 1, 0.90, 'ADP', 'SPLIT', (3495, 1585), 'Teknik hacim yük hesabı'),
 ]
 
 # VRF dış ünite konumu (bahçe, kuzey cephe, beton kaide üzerinde)
 VRF_DIS_KONUM = {'VRF-1A': (4720, 2720), 'VRF-1B': (4870, 2720), 'VRF-2A': (5040, 2720)}
-SPLIT_DIS_KONUM = [(3440, 850), (3560, 850)]
+# Teknik hacimler (multi split): (kod, mahal, alan m², iç ısı yükü W, açıklama, iç ünite kW)
+TEKNIK = [('MS-1/1', 'Z-10 SERVER ODASI', 11.40, 2500, 'Server/network kabini ısı yükü (1 kabin, ön değer)', 3.5),
+          ('MS-1/2', 'Z-11 ELK.ANA PANO O.', 10.62, 1000, 'Ana dağıtım panosu + kompanzasyon + UPS kayıpları (ön değer)', 2.5)]
+MSP_DIS_KW = 6.8
 YAGMUR_DEPO = (3600, 2770, 3880, 2930)   # gömülü depo dikdörtgeni
 
 # Elle konumlandırılan iç üniteler (küçük/etiketle çakışan mahaller): (x, y, etiket yönü 'B'=alt, 'R'=sağ)

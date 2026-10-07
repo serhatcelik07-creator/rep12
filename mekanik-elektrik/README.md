@@ -16,8 +16,9 @@
 
 ## Özet (kurulu / talep)
 - VRF klima: 3 dış ünite toplam 48,6 kW (400V 3N~) + 37 kaset iç ünite. Dış üniteler kuzey cephe bahçesinde, beton kaide üzerinde (çatıda değil).
-- Isıtma, sıhhi tesisat, yağmur suyu, havalandırma ve server split klima: yaklaşık 9,4 kW
-- **Mekanik toplam: 60,1 kW kurulu / 57,9 kW talep**
+- Z-10 Server + Z-11 Elektrik Ana Pano odası: ortak multi split. 2 duvar tipi iç ünite (3,5 + 2,5 kW), 1 asıl (MSP-1) + 1 yedek (MSP-1Y) dış ünite (6,8 kW, 2,10 kW elektrik, 7/24). Ana dağıtım panosundan (ADP) beslenir.
+- Isıtma, sıhhi tesisat, yağmur suyu ve havalandırma: yaklaşık 9,4 kW
+- **Mekanik toplam: 62,2 kW kurulu / 59,0 kW talep** (yedek cihazlar talebe katılmaz)
 
 ## Kaynaklar ve varsayımlar
 - Kazan (2×80 kW), pompa debi/basma, boyler (500 L), sirkülasyon, hidrofor ve yağmur suyu değerleri TMO Mardin hesap Excel'lerinden alındı. Cihaz yerleşimi `mardin_2` ve `ısıtma_v11` taslaklarından alındı.

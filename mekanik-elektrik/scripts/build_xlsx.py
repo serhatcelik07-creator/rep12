@@ -214,6 +214,38 @@ nts = ['Yöntem: Q güneş = A·SHGF·SC·CLF ; Q iletim = U·A·ΔT ; Q duvar =
        'Mavi hücreler girdi olup değiştirildiğinde tüm yükler ve "VRF İç Üniteler" sayfasındaki kapasite kontrolü yeniden hesaplanır.']
 for i, s in enumerate(nts):
     wsS.cell(row=rst + 2 + i, column=1, value=s).font = Font(name=F, size=8, italic=True)
+# --- Teknik hacimler (multi split) yük hesabı
+rk = rst + 2 + len(nts) + 1
+wsS.cell(row=rk, column=1, value='TEKNİK HACİMLER - MULTİ SPLİT SOĞUTMA YÜKÜ (Z-10 Server + Z-11 Elektrik Ana Pano Odası; 1 asıl + 1 yedek dış ünite)').font = fB
+rk += 1
+hk = ['Ünite Kodu', 'Mahal', 'Alan (m²)', 'İç Isı Yükü (W)', 'Açıklama', 'Aydınlatma (W)', 'Zarf + İnfiltrasyon (W/m²)', 'Zarf + İnfiltrasyon (W)',
+      'TOPLAM YÜK (kW) (emniyetli)', 'İç Ünite Kap. (kW)', 'Kontrol']
+for c, h in enumerate(hk, 1):
+    cell = wsS.cell(row=rk, column=c, value=h); cell.font = fH; cell.fill = hdrFill; cell.alignment = CEN; cell.border = BR
+wsS.row_dimensions[rk].height = 36
+tk0 = rk + 1
+for i, (kod, mah, alan, qi, acik, kap) in enumerate(TEKNIK):
+    r = tk0 + i
+    vals = [kod, mah, alan, qi, acik]
+    for c, v in enumerate(vals, 1):
+        wsS.cell(row=r, column=c, value=v).font = fIn if c in (3, 4) else fN
+    wsS.cell(row=r, column=6, value=f"=C{r}*{PR['Aydınlatma yükü']}")
+    c7 = wsS.cell(row=r, column=7, value=30); c7.font = fIn
+    wsS.cell(row=r, column=8, value=f'=C{r}*G{r}')
+    wsS.cell(row=r, column=9, value=f"=(D{r}+F{r}+H{r})*{PR['Emniyet katsayısı']}/1000")
+    c10 = wsS.cell(row=r, column=10, value=kap); c10.font = fIn
+    wsS.cell(row=r, column=11, value=f'=IF(J{r}>=I{r},"UYGUN","KAPASİTE ARTIR")')
+    style_row(wsS, r, 11)
+    wsS.cell(row=r, column=9).number_format = '0.00'
+tk1 = tk0 + len(TEKNIK) - 1
+r = tk1 + 1
+wsS.cell(row=r, column=2, value='MULTİ SPLİT DIŞ ÜNİTE (her biri: asıl / yedek)')
+wsS.cell(row=r, column=9, value=f'=SUM(I{tk0}:I{tk1})')
+c10 = wsS.cell(row=r, column=10, value=MSP_DIS_KW); c10.font = fIn
+wsS.cell(row=r, column=11, value=f'=IF(AND(J{r}>=I{r},J{r}>=0.9*SUM(J{tk0}:J{tk1})),"UYGUN","KONTROL ET")')
+style_row(wsS, r, 11, totFill, True)
+wsS.cell(row=r, column=9).number_format = '0.00'
+wsS.cell(row=r + 1, column=1, value='Varsayım: iç ısı yükleri ön değerdir (server kabin ve pano kayıpları satın alınacak ekipmana göre güncellenmelidir). Zarf + infiltrasyon 30 W/m² alınmıştır. Dış ünite, iki iç ünite kapasite toplamının en az %90\'ını karşılamalıdır. 7/24 çalışma için kış soğutma (low ambient) kiti gereklidir.').font = Font(name=F, size=8, italic=True)
 wsS.freeze_panes = wsS.cell(row=H0 + 1, column=4)
 setw(wsS, [10, 8, 20, 12, 8, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7, 34, 9, 9, 9, 8, 9, 9, 8, 9, 10, 9, 13, 9, 7])
 
@@ -409,7 +441,7 @@ title(wsP, 'PANO VE KAT BAZINDA MEKANİK YÜK ÖZETİ', PROJ, 6)
 G = "'Elektrik Güç Tablosu'"
 header(wsP, 4, ['Besleyen Pano', 'Açıklama', 'Cihaz Adedi', 'Kurulu Güç (kW)', 'Talep Güç (kW)', 'Pay (Talep)'])
 panos = [('MP', 'Mekanik Pano - Teshin Merkezi (ısıtma, hidrofor, yağmur suyu, teshin fanları)'), ('VRF-P', 'VRF Dış Ünite Panosu (400V 3N~)'),
-         ('ZKTP', 'Zemin Kat Tali Panosu'), ('1KTP', '1. Kat Tali Panosu'), ('2KTP', '2. Kat Tali Panosu')]
+         ('ZKTP', 'Zemin Kat Tali Panosu'), ('ADP', 'Ana Dağıtım Panosu - Z-10 Server / Z-11 Pano odası multi split (7/24)'), ('1KTP', '1. Kat Tali Panosu'), ('2KTP', '2. Kat Tali Panosu')]
 for i, (p, a) in enumerate(panos):
     rr = 5 + i
     wsP.cell(row=rr, column=1, value=p); wsP.cell(row=rr, column=2, value=a)

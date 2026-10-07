@@ -116,7 +116,7 @@ for x in (8, 14, 20, 26, 32):
 SYM = {'KAZAN': ('MEK_KAZAN', 50, 35), 'PANEL': ('MEK_PANEL', 30, 20), 'POMPA': ('MEK_POMPA', 20, 20),
        'POMPA2': ('MEK_POMPA2', 44, 30), 'BOYLER': ('MEK_BOYLER', 60, 60), 'GAZ': ('MEK_GAZ', 18, 18),
        'FAN': ('MEK_FAN', 40, 28), 'HIDROFOR': ('MEK_HIDROFOR', 66, 38), 'DALGIC': ('MEK_DALGIC', 32, 32),
-       'DAVLUMBAZ': ('MEK_DAVLUMBAZ', 70, 45), 'KUMANDA': ('MEK_KUMANDA', 16, 11), 'SPLIT': ('MEK_SPLIT', 80, 20)}
+       'DAVLUMBAZ': ('MEK_DAVLUMBAZ', 70, 45), 'KUMANDA': ('MEK_KUMANDA', 16, 11), 'SPLIT': ('MEK_SPLIT', 80, 20), 'SPLIT_DIS': ('MEK_SPLIT_DIS', 80, 30)}
 
 # ---------------------------------------------------------------- yardımcı çizimler
 def text(x, y, s, h, layer, align=TextEntityAlignment.LEFT, color=None):
@@ -143,7 +143,7 @@ def guc_txt(e):
     if adet > 1:
         yd = f" ({cal}+{adet-cal})" if cal < adet else ''
         return f"{adet}x{tr(kw)} kW{yd} {fz}"
-    return f"{tr(kw)} kW {fz}"
+    return f"{tr(kw)} kW{' (yedek)' if cal == 0 else ''} {fz}"
 
 # ---------------------------------------------------------------- ekipmanlar
 placed_boxes = []
@@ -164,10 +164,7 @@ for e in EKIPMAN:
         text(x - w/2, y - h/2 - 9, g, 6.5, 'MEK-ELK-GUC')
 
 # Split klima dış üniteleri (server)
-for i, (x, y) in enumerate(SPLIT_DIS_KONUM):
-    msp.add_blockref('MEK_SPLIT_DIS', (x, y), dxfattribs={'layer': 'MEK-ELK-KLIMA'})
-    tagbox(x - 40, y + 18, f'SPLT-1/{"D" if i==0 else "D (YEDEK)"}', 'MEK-ELK-KLIMA', 7)
-text(3380, 818, 'SPLT-1 dış üniteler (dış cephe konsolu) - besleme iç ünite üzerinden', 6.5, 'MEK-ELK-GUC')
+# Multi split dış üniteleri EKIPMAN listesinden çizilir (MSP-1 asıl, MSP-1Y yedek)
 
 # Yağmur suyu deposu (gömülü) - gösterim
 x0, y0, x1, y1 = YAGMUR_DEPO
@@ -410,13 +407,14 @@ leg = [('MEK_VRF_KASET_570', 'VRF iç ünite - kaset tip 4 yöne üflemeli', 'ME
        ('MEK_DALGIC', 'Dalgıç pompa', 'MEK-ELK-SIHHI'),
        ('MEK_FAN', 'Kanal tipi aspiratör / fan', 'MEK-ELK-HVL'),
        ('MEK_DAVLUMBAZ', 'Davlumbaz aspiratörü', 'MEK-ELK-HVL'),
-       ('MEK_SPLIT', 'Split klima iç ünite', 'MEK-ELK-KLIMA'),
+       ('MEK_SPLIT', 'Multi split duvar tipi iç ünite', 'MEK-ELK-KLIMA'),
+       ('MEK_SPLIT_DIS', 'Multi split dış ünite (asıl / yedek)', 'MEK-ELK-KLIMA'),
        ('MEK_GAZ', 'Gaz kaçak dedektörü + selenoid vana', 'MEK-ELK-ISITMA'),
        ('MEK_PANEL', 'Kaskad kontrol paneli', 'MEK-ELK-ISITMA'),
        ('MEK_KUMANDA', 'VRF merkezi kumanda', 'MEK-ELK-KLIMA')]
 yy = ly - 70
 for i, (bn, s, lay) in enumerate(leg):
-    col = i // 7; row = i % 7
+    col = i // 8; row = i % 8
     bx = x3 + 80 + col*720; by = yy - row*95
     msp.add_blockref(bn, (bx, by), dxfattribs={'layer': lay, 'xscale': 0.8 if 'DIS' in bn else 1, 'yscale': 0.8 if 'DIS' in bn else 1})
     text(bx + 90, by, s, 9, 'MEK-ELK-TABLO', TextEntityAlignment.MIDDLE_LEFT)
@@ -433,9 +431,10 @@ notes = [
     '3. VRF iç üniteleri mahal bazında soğutma yükü hesabına göre seçilmiştir (Mardin 38,5 °C KT / iç 24 °C; cam güneş+iletim, dış duvar, çatı, insan, aydınlatma, cihaz, infiltrasyon, %10 emniyet). Detay: Excel "Soğutma Yükü" sayfası.',
     '4. VRF dış üniteler üstten hava atışlı olacak, 10 cm beton kaide ve çelik kafes içinde bahçeye konulacaktır. Merkezi kumanda Z-04 Güvenlik-Danışma mahallindedir.',
     '5. Teshin merkezi fanları ex-proof olacak, gaz alarmı ile kazan ve selenoid vana enterlokajı yapılacaktır. Kanal tipi WC fanları aydınlatma/zaman rölesi ile çalışacaktır.',
-    '6. Talep gücü: yedek (stand-by) cihazlar hariç çalışan cihaz adedi ile hesaplanmıştır. Pano kodları: MP=Mekanik Pano (Teshin Merkezi), VRF-P=VRF Dış Ünite Panosu, ZKTP/1KTP/2KTP=Kat Tali Panoları.',
+    '6. Talep gücü: yedek (stand-by) cihazlar hariç çalışan cihaz adedi ile hesaplanmıştır. Pano kodları: MP=Mekanik Pano (Teshin Merkezi), VRF-P=VRF Dış Ünite Panosu, ZKTP/1KTP/2KTP=Kat Tali Panoları, ADP=Ana Dağıtım Panosu (teknik hacim klimaları, 7/24).',
+    '7. Z-10 Server ve Z-11 Elektrik Pano odaları ortak multi split ile soğutulur: 2 duvar tipi iç ünite, 1 asıl (MSP-1) + 1 yedek (MSP-1Y) dış ünite; yedek ünite arıza/alarmda otomatik devreye girer.',
 ]
-ny = ly - 70 - 7*95 - 40
+ny = ly - 70 - 8*95 - 40
 for i, s in enumerate(notes):
     text(x3, ny - i*24, s, 9 if i else 11, 'MEK-ELK-TABLO')
 
