@@ -6,6 +6,7 @@ kalem kalem, formüllü bütçe. EUR, KDV hariç, montaj dahil, Ekim 2026.
 Sayfalar:
 - **Ozet** – disiplin bazında bütçe (EUR/USD/TL), risk payı, RFQ (şişirmeli) kıyası, fiyat kaynağı dağılımı; alt kırılım; cetvel sırası dökümü
 - **Teklif_Degerlendirme** – gelen tekliflerin bütçe karşılığıyla kıyası, sapmalar, ticari şartlar
+- **PointLink_Kiyas** – Point Link/CASCO sinyal teklifinin kalem kalem kıyası (win1 arşivinden)
 - **Ihale_Geneli_Bilgi** – MEP dışı gelen teklifler (Rayba demiryolu + S-LINE), bilgi amaçlı
 - **Elektrik_AG, Haberlesme, Mekanik, Asansor, Sinyal, Cer_Guc, Katener** – kalem kalem: RFQ miktarı, idare düzeltmesi,
   geri alınan metraj payı, net miktar, birim fiyat, tutar, fiyat türü (2026 teklif / geçmiş teklif uyarlaması / tahmin), emsal

@@ -149,6 +149,7 @@ TUR = {"TEKLIF": ("2026 TEKLİF", PatternFill("solid", fgColor="C6EFCE")),
        "SIFIR": ("KAPSAM DIŞI (0)", PatternFill("solid", fgColor="EDEDED"))}
 TYPE_TOT = {}
 ITEM_COUNT = [0]
+ROWMAP = {}
 
 
 def fiyat_turu(kaynak, q):
@@ -247,6 +248,7 @@ def sheet(name, title, groups, mode=None):
                 kaynak = rv["kaynak_yeni"] + (f" – {rv['emsal_ozet']}" if rv["emsal_ozet"] else "") + \
                     (f" [Emsal ID: {rv['ref_idler']}]" if rv.get("ref_idler") else "")
             qc = q_rfq if q_corr is None else q_corr
+            ROWMAP[(name, str(sira), kalem.strip())] = r
             etk, bol = pay_sinifi(kalem, birim, sira, mode)
             tur = fiyat_turu(kaynak, qc if isinstance(qc, (int, float)) else 1)
             vals = {2: poz, 3: kalem, 4: birim, 5: q_rfq, 6: qc, 7: etk,
@@ -754,6 +756,88 @@ for col, w in zip("ABCDEFGHIJK", (14, 34, 16, 5, 52, 9, 10, 12, 12, 14, 30)):
     B.column_dimensions[col].width = w
 
 
+
+# ---------------------------------------------------------------- Point Link kalem kalem kıyas
+PL = wb.create_sheet("PointLink_Kiyas")
+PL["A1"] = "POINT LINK / CASCO SİNYALİZASYON + AVLS TEKLİFİ – KALEM KALEM KIYAS (teklif 01.10.2026, 7.281.784 EUR, DAP Şanlıurfa, KDV ve gümrük hariç)"
+PL["A1"].font = Font(bold=True, size=13)
+PL["A2"] = ("Kaynak: PointLink_2026-10-01_Sinyalizasyon_AVLS_Teklif.pdf (8 sayfa; win1 G:\\urfa_ihale\\...\\Gelen_Teklifler\\03_SINYALIZASYON'dan aktarıldı). "
+            "Uyarı: teklif maili mepcenter Gmail'de bulunamıyor; mailimiz firmaya üçüncü kişi tarafından iletilmiş (Fwd) ve yanıt 'Eva' adlı yapay zekâ asistanı imzalı – kaynak teyidi gerekir. "
+            "Teklif RFQ (şişirmeli, idare cevabı öncesi) miktarlarıyla verilmiştir; 'idareye göre uyarlanmış' sütunu aynı birim fiyatlarla idare cevaplarını uygular.")
+PL["A2"].alignment = WRAP; PL.merge_cells("A2:H2"); PL.row_dimensions[2].height = 58
+h = ["Sıra", "Kalem", "Point Link teklif € (RFQ miktarı)", "Point Link – idare cevaplarına göre uyarlanmış €", "Uyarlama", "Bütçemiz (kalem bazlı) €", "Fark (PL uyarlanmış / bütçe − 1)"]
+for j, t in enumerate(h, 1):
+    c = PL.cell(row=4, column=j, value=t); c.font = F_H; c.fill = FILL_H; c.border = BOX; c.alignment = WRAP
+PL.row_dimensions[4].height = 42
+pl_rows = [
+    ("228", "Sinyalizasyon sistemi tasarımı (RAMS, ISA 180.000 dahil)", 540000, "=C5", "—"),
+    ("229", "Hat boyu sinyalizasyon", 2599016, "=C6-151800-156350-60368-13552-11520-7475+4*7950+4*2220",
+     "TSKP (151.800), trafik lambaları/direkleri (156.350), trafik kablo+boru (73.920), manuel makas+izleme (18.995) düşüldü; +4 motorlu makas (PL birim fiyatıyla)"),
+    ("230", "Depo sinyalizasyon", 972370, "=C7-52800+20*7080+20*1980", "20 manuel makas düşüldü; +20 motorlu makas + çubuk seti"),
+    ("231", "Araç üstü sinyalizasyon", 848725, "=(C8-85000)*14/15+85000", "15 → 14 araç"),
+    ("232", "Sinyalizasyon merkez donanımı ve yazılım", 927605, "=C9-82500", "Mevcut depo kontrol merkezi entegrasyonu (82.500) düşüldü"),
+    ("233", "Araç takip – araç üstü", 381565, "=(C10-8960-21600-65000)*14/15+8960+21600+65000", "15 → 14 araç"),
+    ("234", "Araç takip – merkez", 509700, "=C11", "—"),
+    ("235", "Araç takip – tasarım", 150000, "=C12", "—"),
+]
+for i, (sira, ad, pl, adj, nt) in enumerate(pl_rows, start=5):
+    vals = [sira, ad, pl, adj, nt, f"='Sinyal'!{SN_MAIN[sira]}", f"=IF(F{i}=0,\"\",D{i}/F{i}-1)"]
+    for j, v in enumerate(vals, 1):
+        c = PL.cell(row=i, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (3, 4, 6): c.number_format = EUR
+        if j == 7: c.number_format = "+0%;-0%"
+    PL.row_dimensions[i].height = 30
+_t = 5 + len(pl_rows)
+PL.cell(row=_t, column=2, value="Ara toplam").font = BOLD
+for col in "CDF":
+    c = PL[f"{col}{_t}"]; c.value = f"=SUM({col}5:{col}{_t-1})"; c.number_format = EUR; c.font = BOLD
+PL.cell(row=_t + 1, column=2, value="Nakliye ve sigorta (DAP, malzemenin %8'i – PL; uyarlanmışta orantılı)")
+PL[f"C{_t+1}"] = 352802; PL[f"D{_t+1}"] = f"=C{_t+1}*D{_t}/C{_t}"
+PL.cell(row=_t + 2, column=2, value="GENEL TOPLAM (gümrük vergisi ve KDV hariç)").font = BOLD
+for col in "CD":
+    PL[f"{col}{_t+2}"] = f"={col}{_t}+{col}{_t+1}"; PL[f"{col}{_t+2}"].font = BOLD
+PL[f"F{_t+2}"] = f"=F{_t}"; PL[f"G{_t+2}"] = f"=D{_t+2}/F{_t+2}-1"
+for rr in (_t, _t + 1, _t + 2):
+    for col in "CDF": PL[f"{col}{rr}"].number_format = EUR
+    PL[f"G{rr}"].number_format = "+0%;-0%"
+    for j in range(1, 8): PL.cell(row=rr, column=j).fill = FILL_TOT; PL.cell(row=rr, column=j).border = BOX
+PL[f"G{_t}"] = f"=D{_t}/F{_t}-1"
+PLT = {"orj": f"'PointLink_Kiyas'!$C${_t+2}", "adj": f"'PointLink_Kiyas'!$D${_t+2}"}
+
+_u = _t + 5
+PL.cell(row=_u - 1, column=1, value="BİRİM FİYAT KIYASI – farkı oluşturan başlıca kalemler (montajlı birim fiyat, €)").font = Font(bold=True, size=12)
+for j, t in enumerate(["Sıra", "Kalem", "Point Link montajlı BF €", "Bütçemiz BF €", "Fark %", "Yorum"], 1):
+    c = PL.cell(row=_u, column=j, value=t); c.font = F_H; c.fill = FILL_H; c.border = BOX
+uk = [("229", "Elektrikli makas motoru (IP67, iç kilitli, uç konum dedektörlü) – ana hat", 7950, "PL daha düşük (CASCO tramvay tipi; Adapazarı teklifinden)"),
+      ("230", "Elektrikli makas motoru – depo (IP67, el kranklı, uç konum dedektörlü)", 7080, "PL daha düşük"),
+      ("229", "Lokal kontrol ve kumanda kabini SKP (SIL3, GRP IP54)", 166750, "PL ~2,4 kat; Konya/Adapazarı SIL4 kilitleme birimi 165.000 bazlı"),
+      ("230", "Depo sinyalizasyon kontrol ünitesi SKP (SIL2) + IO", 126500, "PL yüksek"),
+      ("229", "Ray devresi / kütle dedektörü (makas kilitleme, bölge meşgul)", 5340, "PL aks sayacı önerir (ray devresi yerine)"),
+      ("229", "Karayolu kavşağı sinyalizasyon kontrol kabini TSP (tramvay öncelik)", 78200, "PL ~9 kat; emsallerimiz 7–23 bin €"),
+      ("229", "Test, devreye alma, entegre test, 15 gün test işletmesi – hat boyu", 360000, "PL saha hizmetleri çok yüksek (Konya 1,1 M€ toplam hizmet)"),
+      ("232", "Sinyalizasyon özel yazılımı + lisanslar (ana uygulama, sinoptik, protokoller)", 299000, "PL ~2 kat"),
+      ("230", "Depo güzergah/kilitleme yazılımı (15+ güzergah), test ve devreye alma", 150000, "PL ~2 kat")]
+for k, (sira, kal, plbf, yorum) in enumerate(uk, start=_u + 1):
+    rr = ROWMAP.get(("Sinyal", sira, kal))
+    ours = f"='Sinyal'!I{rr}" if rr else None
+    vals = [sira, kal, plbf, ours, f"=IF(D{k}=0,\"\",C{k}/D{k}-1)", yorum]
+    for j, v in enumerate(vals, 1):
+        c = PL.cell(row=k, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (3, 4): c.number_format = EUR
+        if j == 5: c.number_format = "+0%;-0%"
+_n = _u + len(uk) + 2
+for k, t in enumerate([
+    "DEĞERLENDİRME",
+    "• Point Link (CASCO) teklifi, idare cevaplarına göre uyarlandığında bile bütçemizin belirgin üstündedir. Fark, makas motoru veya aks sayacı gibi saha ekipmanından değil; kontrol kabinleri (SKP/TSP), yazılım, tasarım/ISA ve test-devreye alma hizmetlerinden kaynaklanır.",
+    "• Teklifteki birim fiyatların bir kısmı firmanın kendi beyanına göre Konya ve Adapazarı CASCO tekliflerinden aktarılmış, döngü/sorgulayıcı/AVLS kalemleri 'mühendislik tahmini'dir. Teklif SIL4 → SIL3/SIL2 düşürmesini yalnız kısmen yansıtır.",
+    "• Bütçe kararı: sinyalizasyon bütçesi geçmiş teklif emsalleri ve Mukan AVLS teklifiyle korunmuştur; Point Link uyarlanmış toplamı 'üst sınır / ithal anahtar teslim senaryosu' olarak raporlanır. Gümrük vergisi ve ithalat masrafları ayrıca eklenmelidir.",
+    "• Teklifin kaynağı (Fwd ile ulaşmış, yapay zekâ imzalı, orijinal mail mepcenter Gmail'de yok) teyit edilmeden kullanılmamalıdır."], start=_n):
+    c = PL.cell(row=k, column=1, value=t); c.alignment = WRAP
+    PL.merge_cells(start_row=k, start_column=1, end_row=k, end_column=7); PL.row_dimensions[k].height = 15 if t == "DEĞERLENDİRME" else 30
+PL.cell(row=_n, column=1).font = BOLD
+for col, w in zip("ABCDEFG", (7, 52, 18, 20, 48, 18, 16)):
+    PL.column_dimensions[col].width = w
+
 # ---------------------------------------------------------------- Gelen tekliflerin değerlendirmesi
 E = wb.create_sheet("Teklif_Degerlendirme", 1)
 E["A1"] = "GELEN TEKLİFLERİN DEĞERLENDİRMESİ (06.10.2026 itibarıyla okunabilen teklifler)"
@@ -795,9 +879,11 @@ erows = [
      "55\" dış ortam ekran 3.500; askı 1.250; yazılım 25.000; tasarım+doküman 26.000", "Medya oynatıcı ekrana dahil",
      "Kablolar ana yüklenicide; geçerlilik belirtilmemiş", "Kalem kalem bütçeye işlendi",
      "Mevcut depo entegrasyonu (11.000) idare cevabıyla düşüldü"),
-    ("Sinyalizasyon (tümü)", "Point Link / CASCO (Çin)", "devir notu", "228–235", 7281784, "EUR", "=E12", f"={SN_TOT}",
-     "Kalem dökümü yok", "Yanıt 'AI asistan Eva' imzalı; mail Gmail'de bulunamadı",
-     "DAP şantiye; KDV ve gümrük hariç", "Kullanılmadı", "Bütçenin ~1,8 katı; dökümsüz – yalnız üst sınır göstergesi"),
+    ("Sinyalizasyon (tümü)", "Point Link / CASCO (Çin)", "01.10.2026", "228–235 (RFQ miktarlarıyla)", 7281784, "EUR", "=E12", f"={SN_TOT}",
+     "Makas motoru 7.950; SKP 166.750; TSP 78.200; aks sayacı 5.340; araç başı 82.019 (sinyal+AVLS)",
+     "Kalem kalem döküm var (PointLink_Kiyas). Aks sayacı ray devresi yerine; TSKP/trafik ekipmanı dahil; mevcut sistem entegrasyonu dahil; 15 araç",
+     "DAP şantiye; KDV, gümrük vergisi hariç; 180 gün; garanti 24 ay. Mail Fwd ile ulaşmış, 'Eva' yapay zekâ imzalı, Gmail'de yok",
+     "Kullanılmadı – üst sınır senaryosu", "İdareye göre uyarlanmış toplam da bütçenin belirgin üstünde; fark kabin, yazılım ve hizmet kalemlerinde (PointLink_Kiyas)"),
 ]
 for i, row in enumerate(erows, start=5):
     row = list(row)
@@ -822,8 +908,8 @@ ozet_txt = [
     "Elektrik: ON Elektronik saat (81.600 €) ve YBS (171.000 €) teklifleri işlendi. Teknomaks (CCTV) ve Lev Müh. (yangın ihbar) çalışıyor; Best Transformer (trafo) dönmedi. Alfanar, Tema, EVA, DC Group vermiyor (Alfanar'dan RMU bütçesi istendi).",
     "Mekanik: Fiyatlı teklif yok. Ekura en geç 09.10 verecek; Protek (FM200) soru sordu. MET, Demta, Birleşim, Genç Müh. vermiyor.",
     "Asansör: 3 teklif (Schindler, TK, Emlift). Edoux verecek; Adakon (Orona) ithal ürünle bütçe verecek; KONE dönmedi.",
-    "Sinyalizasyon: Mukan (AVLS) teklifi geldi. Hugotek ve İntetra dönecek; Alstom ve Savronik vermiyor (bütçe istendi); Hanning & Kahl dönmedi.",
-    "Elektrifikasyon: Fiyatlı teklif yok. Mitaş (direk) verecek; DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk) sorularına cevap verildi; Doruk ve KAM vermiyor.",
+    "Sinyalizasyon: Mukan (AVLS) teklifi geldi; Point Link/CASCO kalem kalem teklifi (7,28 M€) win1 arşivinden alındı. Hugotek ve İntetra dönecek; Alstom ve Savronik vermiyor (bütçe istendi); Hanning & Kahl dönmedi.",
+    "Elektrifikasyon: Mitaş katener direği teklifi geldi (06.10, POLT-3709-R0; ek 9,3 MB, tutar henüz okunamadı); Best Transformer trafo için dönmedi; DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk) sorularına cevap verildi; Doruk ve KAM vermiyor.",
     "Ulaşmayan adres: 26 (mailer-daemon). Ayrıntı: Teklif_Durumu sayfası.",
 ]
 for k, t in enumerate(ozet_txt):
@@ -1333,7 +1419,7 @@ if os.path.exists(_fp):
     FM.auto_filter.ref = f"A5:J{5 + len(_fr)}"; FM.freeze_panes = "B6"
 
 
-_order = ["Ozet", "Yontem", "Teklif_Degerlendirme", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
+_order = ["Ozet", "Yontem", "Teklif_Degerlendirme", "PointLink_Kiyas", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
           "Emsal_Kaynaklari", "Teklif_Istenen_Firmalar", "Teklifler", "Teklif_Durumu", "Idare_Duzeltme", "Varsayimlar"]
 wb._sheets = [wb[n] for n in _order if n in wb.sheetnames] + [w for w in wb.worksheets if w.title not in _order]
 _tabs = {"Ozet": "1F4E78", "Teklif_Degerlendirme": "70AD47", "Elektrik_AG": "FFC000", "Haberlesme": "FFC000", "Mekanik": "5B9BD5",

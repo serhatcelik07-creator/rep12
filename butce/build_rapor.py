@@ -71,7 +71,7 @@ for d, shs in SH.items():
         for r in ws.iter_rows(min_row=5, values_only=True):
             if r[0]:
                 sira = r[0]; continue
-            if r[2] and isinstance(r[9], (int, float)) and r[10]:
+            if r[2] and r[3] and isinstance(r[9], (int, float)) and r[10]:
                 L.append((r[9], sira, r[2], r[3], r[7], r[8], r[10], (r[11] or "")))
     L.sort(key=lambda x: -x[0])
     top_items[d] = L[:8]
@@ -209,6 +209,19 @@ for r in tek:
         continue
     P.append(f"<tr><td><b>{esc(r[1])}</b></td><td>{esc(r[10])}</td><td>{esc(r[11])}</td><td>{esc(r[12])}</td></tr>")
 P.append("</table>")
+if "PointLink_Kiyas" in wb.sheetnames:
+    PLs = wb["PointLink_Kiyas"]
+    P.append("<h3>Point Link / CASCO teklifi – kalem kalem kıyas (sinyalizasyon + araç takip)</h3><table class='small'><tr><th>Sıra</th><th>Kalem</th><th class='n'>PL teklif €</th><th class='n'>PL idareye göre uyarlanmış €</th><th class='n'>Bütçemiz €</th><th class='n'>Fark</th></tr>")
+    for r in PLs.iter_rows(min_row=5, max_row=16, values_only=True):
+        if not r[1]:
+            continue
+        lab = str(r[1])
+        if lab.startswith("BİRİM"):
+            break
+        cls = " class='tot'" if lab.startswith(("Ara toplam", "GENEL")) else ""
+        fark = f"{r[6]*100:+.0f}%" if isinstance(r[6], (int, float)) else ""
+        P.append(f"<tr{cls}><td>{esc(r[0] or '')}</td><td>{esc(lab)}</td><td class='n'>{e(r[2])}</td><td class='n'>{e(r[3])}</td><td class='n'>{e(r[5]) if isinstance(r[5],(int,float)) else ''}</td><td class='n'><b>{fark}</b></td></tr>")
+    P.append("</table><p class='note'>Point Link fiyatları kontrol kabinleri (SKP 166.750 €, TSP 78.200 €), yazılım (299.000 €), tasarım/ISA (540.000 €) ve test-devreye alma (360.000 €) kalemlerinde yüksektir; makas motoru (7.950 €) ve aks sayacı (5.340 €) bütçemizin altındadır. Teklif Fwd ile ulaşmış, yapay zekâ imzalıdır ve orijinal mail mepcenter Gmail'de yoktur – kaynak teyidi gerekir. Bütçede kullanılmamış, üst sınır senaryosu olarak raporlanmıştır.</p>")
 
 # Kapsam dışı + Rayba (vurgu)
 P.append('<h2>4. Kapsam Dışı Kalemler ve İhale Geneli Bilgi</h2>')
