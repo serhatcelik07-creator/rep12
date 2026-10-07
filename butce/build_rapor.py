@@ -223,6 +223,29 @@ if "PointLink_Kiyas" in wb.sheetnames:
         P.append(f"<tr{cls}><td>{esc(r[0] or '')}</td><td>{esc(lab)}</td><td class='n'>{e(r[2])}</td><td class='n'>{e(r[3])}</td><td class='n'>{e(r[5]) if isinstance(r[5],(int,float)) else ''}</td><td class='n'><b>{fark}</b></td></tr>")
     P.append("</table><p class='note'>Point Link fiyatları kontrol kabinleri (SKP 166.750 €, TSP 78.200 €), yazılım (299.000 €), tasarım/ISA (540.000 €) ve test-devreye alma (360.000 €) kalemlerinde yüksektir; makas motoru (7.950 €) ve aks sayacı (5.340 €) bütçemizin altındadır. Orijinal teklif PDF'i (01.10.2026) arşivdedir. Bütçede kullanılmamış, üst sınır senaryosu olarak raporlanmıştır.</p>")
 
+# Teklif karşılaştırma ve seçim matrisi
+if "Teklif_Secim" in wb.sheetnames:
+    SS = wb["Teklif_Secim"]
+    P.append('</div><div class="page"><h2>Teklif Karşılaştırma ve Seçim Matrisi</h2>'
+             "<p class='note'>Her paket için gelen tüm teklifler ve geçmiş teklif emsalleri aynı esasa (idare miktarı, EUR, KDV hariç) getirilmiştir. "
+             "Yeşil satır bütçeye giren seçimdir; fark = alternatif / seçilen − 1.</p>")
+    open_t = False
+    for r in SS.iter_rows(min_row=4, values_only=True):
+        a = r[0]
+        if a and str(a).startswith("BEKLENEN"):
+            break
+        if a and r[1] is None:
+            if open_t: P.append("</table>")
+            P.append(f"<h3>{esc(a)}</h3><table class='small'><tr><th>Alternatif</th><th>Tür</th><th>Tarih</th><th>Esas</th><th class='n'>Tutar €</th><th class='n'>Fark</th><th>Gerekçe / not</th></tr>")
+            open_t = True; continue
+        if a == "Paket" or not r[1]:
+            continue
+        sel = bool(r[7])
+        fark = f"{r[6]*100:+.0f}%" if isinstance(r[6], (int, float)) else ("SEÇİLDİ" if sel else "")
+        st = " style='background:#C6EFCE;font-weight:bold'" if sel else ""
+        P.append(f"<tr{st}><td>{esc(r[1])}</td><td>{esc(r[2])}</td><td>{esc(r[3] or '')}</td><td>{esc(r[4])}</td><td class='n'>{e(r[5])}</td><td class='n'>{fark}</td><td>{esc(r[8] or '')}</td></tr>")
+    if open_t: P.append("</table>")
+
 # Kapsam dışı + Rayba (vurgu)
 P.append('<h2>4. Kapsam Dışı Kalemler ve İhale Geneli Bilgi</h2>')
 P.append('<div class="hl"><div class="t">▶ İdare cevaplarıyla (05.10.2026) bütçeden düşülen kalemler – RFQ birim fiyatlarıyla değeri</div><table class="small"><tr><th>Disiplin sayfası</th><th>Düşülen başlıca kalemler</th><th class="n">Değer €</th></tr>')

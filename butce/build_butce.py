@@ -445,9 +445,16 @@ direk = lambda kod, ad, n, kg, usd_govde, usd_sablon, ek=(): (kod, ad, [
      f"Mitaş {usd_sablon:,.0f} USD/takım".replace(",", ".") + " + %5 nakliye; temel inşaat kapsamında"),
     (f"{ad} dikim/montaj (vinçle dikim, şakül, ankraj tork, rötuş)", "adet", n, None, 600, "TAHMİN",
      "Mitaş teklifinde montaj hariç; 600 €/direk mühendislik tahmini (vinç + ekip)"),
+    (f"{ad} topraklama bağlantısı (direk gövdesi → temel filizi/toprak hattı: 50 mm² Cu ~4 m, pabuç, paslanmaz bulon, ek klemensi, direnç ölçümü)",
+     "adet", n, None, 110, "TAHMİN", "Mitaş kapsamı dışı; temel filizi Elektrik_AG sıra 199'da ayrıca var"),
+    (f"{ad} yüksek gerilim uyarı levhası (alüminyum, reflektif, kelepçeli)", "adet", n, None, 35, "TAHMİN",
+     "Mitaş kapsamı dışı; numaralandırma levhası sıra 220/221'de ayrıca var"),
+    (f"{ad} taban plakası altı rötresiz harç (grout) + ankraj bulonu koruma kapakları", "adet", n, None, 45, "TAHMİN", "Mitaş kapsamı dışı"),
     *ek,
 ])
-TOZ_BOYA = [("OPSİYON – Direklere toz boya (galvaniz üzeri, 228 direğin tümü)", "set", 1, None, f"=45000/{P_USD}*(1+{P_NAK})",
+TOZ_BOYA = [("Fabrika testleri ve 3. taraf gözetim (tüm direkler): galvaniz kalınlık ölçümü, kaynak NDT %10, boyut kontrolü, EN 1090 belgeleri", "set", 1, None, 9000,
+             "TAHMİN", "Mitaş teklifinde testler hariç; saha test/devreye alma sıra 220'de ayrıca var"),
+            ("OPSİYON – Direklere toz boya (galvaniz üzeri, 228 direğin tümü)", "set", 1, None, f"=45000/{P_USD}*(1+{P_NAK})",
              MITAS.replace("TEKLİF (", "TEKLİF – OPSİYON ("), "Mitaş opsiyonu 45.000 USD (tüm direkler) + %5 nakliye; bütçeye dahil edildi")]
 katener = [
     ("220", "2012.A", "Hat Boyu ve Depo Bağlantı Hatları Katener Sistemi", [
@@ -931,6 +938,124 @@ for k, t in enumerate(ozet_txt):
     E.merge_cells(start_row=15 + k, start_column=1, end_row=15 + k, end_column=14); E.row_dimensions[15 + k].height = 30
 for col, w in zip("ABCDEFGHIJKLMN", (18, 22, 11, 18, 13, 6, 13, 14, 8, 26, 38, 38, 22, 34)):
     E.column_dimensions[col].width = w
+
+# ---------------------------------------------------------------- Teklif karşılaştırma ve seçim matrisi
+S = wb.create_sheet("Teklif_Secim")
+S["A1"] = "TEKLİF KARŞILAŞTIRMA VE SEÇİM MATRİSİ – her paket için gelen tüm teklifler, geçmiş teklif emsalleri ve bütçeye giren seçim"
+S["A1"].font = Font(bold=True, size=13)
+S["A2"] = ("Her paket için alternatifler aynı esasa (idare cevaplarıyla düzeltilmiş miktar, EUR, KDV hariç) getirilmiştir. Yeşil satır bütçeye giren seçimdir; "
+           "'Seçime göre fark' = alternatif / seçilen − 1. Geçmiş teklifler HICP (Ağu-2026) ile güncellenmiş ve makas başı ölçeklenmiştir; bilgi ve sağlama amaçlıdır.")
+S["A2"].alignment = WRAP; S.merge_cells("A2:I2"); S.row_dimensions[2].height = 32
+FILL_OK = PatternFill("solid", fgColor="C6EFCE"); FILL_PK = PatternFill("solid", fgColor="D9E1F2")
+TD = "'Teklif_Degerlendirme'!"
+PLK = "'PointLink_Kiyas'!"
+pl_fr = lambda col, a, b: f"SUM({PLK}{col}{a}:{col}{b})*(1+{PLK}C{_t+1}/{PLK}C{_t})"
+SN_SIN = "+".join(f"'Sinyal'!{SN_MAIN[k]}" for k in ("228", "229", "230", "231", "232"))
+paketler = [
+    ("ASANSÖR – 13 asansör (sıra 364–365)", [
+        ("Schindler Türkeli", "2026 TEKLİF", "01.10.2026", "13 asansör, USD → EUR", f"={TD}G5", 0, "Medyana dahil; en yüksek teklif"),
+        ("TK Elevator", "2026 TEKLİF", "02.10.2026", "13 asansör", f"={TD}G6", 0, "Teknik olarak en uygun; geçerlilik 30 gün, kapı ölçüsü teyit edilmeli"),
+        ("Emlift", "2026 TEKLİF", "05.10.2026", "13 asansör, TL → EUR", f"={TD}G7", 0, "En düşük ama teknik föy şartnameye uymuyor (antivandal/dış ortam yok)"),
+        ("Bütçe: 3 teklifin medyanı (= TK birim fiyatları)", "SEÇİM", "", "13 asansör", f"={AS_TOT}", 1,
+         "Tek firmaya bağlı kalmamak için 3 teklifin medyanı alındı; medyan TK'ya denk geliyor ve TK teknik olarak uygun"),
+    ]),
+    ("SİNYALİZASYON – AVLS hariç (sıra 228–232)", [
+        ("Point Link / CASCO – RFQ miktarlarıyla", "2026 TEKLİF", "01.10.2026", "RFQ miktarı, nakliye payı dahil", "=" + pl_fr("C", 5, 9), 0, "Ham teklif; TSKP/trafik ekipmanı, 15 araç, mevcut sistem entegrasyonu dahil"),
+        ("Point Link / CASCO – idare cevaplarına uyarlanmış", "2026 TEKLİF", "01.10.2026", "İdare miktarı (aynı birim fiyatlar)", "=" + pl_fr("D", 5, 9), 0,
+         "Kabin (SKP 166.750, TSP 78.200), yazılım, tasarım/ISA ve test hizmetleri emsallerin 2–9 katı; makas motoru 7.950 € ile ucuz"),
+        ("Bütçemiz – geçmiş teklif emsalleri, kalem kalem", "SEÇİM", "", "İdare miktarı, montaj+kablo dahil", f"={SN_SIN}", 1,
+         "Elektrikli makas başı ≈59 bin €; eski tramvay tekliflerinin 50–76 bin € bandında. Point Link üst sınır senaryosu olarak raporlandı"),
+        ("Emsal: Hanning & Kahl – İzmir Konak+Karşıyaka (2014)", "GEÇMİŞ TEKLİF", "11.02.2014", "64.862 €/makas (2026) × 56 makas", "=64862*56", 0,
+         "3,89 M€ (2026) / 60 makas; 22,17 km, 2 depo, 36 araç; montaj ve kablo hariç"),
+        ("Emsal: Elektroline – Eminönü–Alibeyköy (2016)", "GEÇMİŞ TEKLİF", "20.06.2016", "49.946 €/makas (2026) × 56 makas", "=49946*56", 0,
+         "4,00 M€ (2026) / 80 makas; 9 kavşak, 30 araç; montaj, kablo ve merkez hariç"),
+        ("Emsal: Kocaeli tramvay – müellif keşfi (2014)", "GEÇMİŞ KEŞİF", "24.12.2014", "75.986 €/makas (2026) × 56 makas", "=75986*56", 0,
+         "Tedarikçi teklifi değil; 46 makas, 30 kavşak, 12 araç; AVLS dahil"),
+        ("Bilgi: Point Link beyanı – Konya Alaaddin CASCO", "BEYAN", "10.06.2026", "Firma beyanı, kapsam ayrıntısı yok", 4440670, 0, "Point Link teklifinde referans olarak verilmiş"),
+        ("Bilgi: Point Link beyanı – Adapazarı-Serdivan CASCO", "BEYAN", "13.06.2026", "Firma beyanı, kapsam ayrıntısı yok", 3364100, 0, "Point Link teklifinde referans olarak verilmiş"),
+    ]),
+    ("ARAÇ TAKİP – AVLS (sıra 233–235)", [
+        ("Mukan Rail – RFQ (15 araç)", "2026 TEKLİF", "06.10.2026", "RFQ miktarı", 788000, 0, "Ham teklif"),
+        ("Mukan Rail – idare miktarı (14 araç)", "SEÇİM", "06.10.2026", "İdare miktarı", f"={avls}", 1,
+         "AVLS'ye özel yerli teklif; Point Link uyarlanmış fiyatının ~%25 altında; varsayımlar 11 soruya verilen cevaplara dayalı"),
+        ("Point Link / CASCO – RFQ miktarlarıyla", "2026 TEKLİF", "01.10.2026", "RFQ miktarı, nakliye payı dahil", "=" + pl_fr("C", 10, 12), 0, ""),
+        ("Point Link / CASCO – idare cevaplarına uyarlanmış", "2026 TEKLİF", "01.10.2026", "14 araç, nakliye payı dahil", "=" + pl_fr("D", 10, 12), 0,
+         "Merkez 509.700 € (Mukan 314.500); tasarım 150.000 € (Mukan 154.000)"),
+    ]),
+    ("ELEKTRİK – saat sistemi MSS (sıra 281–289)", [
+        ("ON Elektronik (RayON) – teklif", "2026 TEKLİF", "06.10.2026", "RFQ kapsamı", f"={TD}G9", 0, "Tek teklif"),
+        ("Bütçe: ON birim fiyatları, idare kapsamı", "SEÇİM", "06.10.2026", "İdare kapsamı", f"={MSS_BUT}", 1, "Mevcut depo entegrasyonu (2.500) idare cevabıyla düşüldü"),
+    ]),
+    ("ELEKTRİK – yolcu bilgilendirme YBS (sıra 310–317)", [
+        ("ON Elektronik (RayON) – teklif", "2026 TEKLİF", "06.10.2026", "RFQ kapsamı", f"={TD}G10", 0, "Tek teklif"),
+        ("Bütçe: ON birim fiyatları, idare kapsamı", "SEÇİM", "06.10.2026", "İdare kapsamı", f"={YBS_BUT}", 1, "Mevcut depo entegrasyonu (11.000) idare cevabıyla düşüldü"),
+    ]),
+    ("KATENER DİREKLERİ – 228 direk (sıra 222–226)", [
+        ("Mitaş Endüstri – teklif + toz boya opsiyonu (malzeme, FCA Ankara)", "2026 TEKLİF", "06.10.2026", "315.070 + 45.000 USD", f"={TD}G11", 0,
+         "Montaj, nakliye, topraklama, testler hariç; malzeme ≈2,9 €/kg"),
+        ("Bütçe: Mitaş + %5 nakliye + 600 €/direk dikim + topraklama/levha/harç/test", "SEÇİM", "", "Şantiyede dikili, tamamlanmış", f"={KAT_DIREK}", 1,
+         "2026 firma teklifi geçmiş emsale göre önceliklidir; kapsam dışı kalemler mühendislik tahminiyle tamamlandı"),
+        ("Emsal: geçmiş tramvay direk teklifleri (€/kg × 109.713 kg)", "GEÇMİŞ TEKLİF", "2013–2016", "İmalat + galvaniz + dikim", f"=109713*{P_KG}", 0,
+         "Varsayimlar B13 €/kg; çelik fiyatlarındaki artış nedeniyle Mitaş belirgin üstte"),
+    ]),
+    ("BİLGİ – MEP DIŞI: demiryolu üstyapı", [
+        ("Rayba Yapı – ray, makas, kruvazman + S-LINE", "2026 TEKLİF", "02.10 / 05.10.2026", "MEP dışı", 17348355 + 1759956, 0,
+         "MEP bütçesine dahil değil; 56 makas sayısı sinyal/katener metrajını teyit ediyor"),
+    ]),
+]
+hdr = ["Alternatif (firma / emsal)", "Tür", "Tarih", "Karşılaştırma esası", "Tutar € (KDV hariç)", "Seçime göre fark", "Seçim", "Gerekçe / not"]
+r = 4
+for pk, alts in paketler:
+    c = S.cell(row=r, column=1, value=pk); c.font = Font(bold=True, color="FFFFFF"); c.fill = FILL_H
+    S.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9); r += 1
+    for j, t in enumerate(["Paket"] + hdr, 1):
+        c = S.cell(row=r, column=j, value=t); c.font = BOLD; c.fill = FILL_PK; c.border = BOX; c.alignment = WRAP
+    r += 1
+    sel = [k for k, a in enumerate(alts) if a[5] == 1]
+    sel_row = r + sel[0] if sel else None
+    for k, (ad, tur, tarih, esas, tutar, secim, nt) in enumerate(alts):
+        fark = f"=IF(${'F'}${sel_row}=0,\"\",F{r}/$F${sel_row}-1)" if sel_row and r != sel_row else ""
+        vals = [pk.split(" (")[0].split(" – ")[0], ad, tur, tarih, esas, tutar, fark, "✔ SEÇİLDİ – bütçede" if secim else "", nt]
+        for j, v in enumerate(vals, 1):
+            c = S.cell(row=r, column=j, value=v); c.border = BOX; c.alignment = WRAP
+            if j == 6: c.number_format = EUR
+            if j == 7: c.number_format = "+0%;-0%"
+            if secim: c.fill = FILL_OK; c.font = BOLD
+        S.row_dimensions[r].height = 32
+        r += 1
+    r += 1
+c = S.cell(row=r, column=1, value="BEKLENEN TEKLİFLER (gelince bu matrise ve ilgili satıra işlenecek)"); c.font = Font(bold=True, color="FFFFFF"); c.fill = FILL_H
+S.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9); r += 1
+for t in ["Elektrik: Best Transformer (trafo), Teknomaks (CCTV), Lev Mühendislik (yangın ihbar)",
+          "Mekanik: Ekura (en geç 09.10), Protek (FM200)",
+          "Asansör: Edoux, Adakon (Orona)",
+          "Sinyalizasyon: Hugotek, İntetra",
+          "Elektrifikasyon: DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk)"]:
+    c = S.cell(row=r, column=1, value="• " + t); S.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9); r += 1
+r += 1
+c = S.cell(row=r, column=1, value="SIRA BAZINDA SİNYALİZASYON + AVLS (228–235): tüm teklifler ve seçim"); c.font = Font(bold=True, color="FFFFFF"); c.fill = FILL_H
+S.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9); r += 1
+for j, t in enumerate(["Sıra", "Kalem", "Point Link – RFQ", "Point Link – uyarlanmış", "Mukan Rail – RFQ", "Bütçe (seçilen)", "Seçilen kaynak", "Bütçe / PL uyarlanmış − 1"], 1):
+    c = S.cell(row=r, column=j, value=t); c.font = BOLD; c.fill = FILL_PK; c.border = BOX; c.alignment = WRAP
+r += 1; _s0 = r
+muk = {"233": 319500, "234": 314500, "235": 154000}
+for i, (sira, ad, *_x) in enumerate(pl_rows):
+    vals = [sira, ad, f"={PLK}C{5+i}", f"={PLK}D{5+i}", muk.get(sira, ""), f"='Sinyal'!{SN_MAIN[sira]}",
+            "Mukan Rail 2026 teklifi" if sira in muk else "Geçmiş teklif emsalleri", f"=F{r}/D{r}-1"]
+    for j, v in enumerate(vals, 1):
+        c = S.cell(row=r, column=j, value=v); c.border = BOX; c.alignment = WRAP
+        if j in (3, 4, 5, 6): c.number_format = EUR
+        if j == 8: c.number_format = "+0%;-0%"
+        if j == 6: c.fill = FILL_OK
+    r += 1
+S.cell(row=r, column=2, value="Toplam (nakliye hariç)").font = BOLD
+for col in "CDEF":
+    c = S[f"{col}{r}"]; c.value = f"=SUM({col}{_s0}:{col}{r-1})"; c.number_format = EUR; c.font = BOLD; c.fill = FILL_TOT
+S[f"H{r}"] = f"=F{r}/D{r}-1"; S[f"H{r}"].number_format = "+0%;-0%"
+for col, w in zip("ABCDEFGHI", (16, 44, 14, 14, 26, 16, 12, 20, 60)):
+    S.column_dimensions[col].width = w
+S.freeze_panes = "A4"
+
 
 
 # ---------------------------------------------------------------- YÖNTEM (metodoloji)
@@ -1433,10 +1558,10 @@ if os.path.exists(_fp):
     FM.auto_filter.ref = f"A5:J{5 + len(_fr)}"; FM.freeze_panes = "B6"
 
 
-_order = ["Ozet", "Yontem", "Teklif_Degerlendirme", "PointLink_Kiyas", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
+_order = ["Ozet", "Yontem", "Teklif_Degerlendirme", "Teklif_Secim", "PointLink_Kiyas", "Ihale_Geneli_Bilgi", "Elektrik_AG", "Haberlesme", "Mekanik", "Asansor", "Sinyal", "Cer_Guc", "Katener",
           "Emsal_Kaynaklari", "Teklif_Istenen_Firmalar", "Teklifler", "Teklif_Durumu", "Idare_Duzeltme", "Varsayimlar"]
 wb._sheets = [wb[n] for n in _order if n in wb.sheetnames] + [w for w in wb.worksheets if w.title not in _order]
-_tabs = {"Ozet": "1F4E78", "Teklif_Degerlendirme": "70AD47", "Elektrik_AG": "FFC000", "Haberlesme": "FFC000", "Mekanik": "5B9BD5",
+_tabs = {"Ozet": "1F4E78", "Teklif_Degerlendirme": "70AD47", "Teklif_Secim": "70AD47", "Elektrik_AG": "FFC000", "Haberlesme": "FFC000", "Mekanik": "5B9BD5",
          "Asansor": "A5A5A5", "Sinyal": "ED7D31", "Cer_Guc": "7030A0", "Katener": "7030A0"}
 for n, col in _tabs.items():
     wb[n].sheet_properties.tabColor = col
