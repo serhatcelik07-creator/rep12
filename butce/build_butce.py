@@ -769,7 +769,7 @@ PL = wb.create_sheet("PointLink_Kiyas")
 PL["A1"] = "POINT LINK / CASCO SİNYALİZASYON + AVLS TEKLİFİ – KALEM KALEM KIYAS (teklif 01.10.2026, 7.281.784 EUR, DAP Şanlıurfa, KDV ve gümrük hariç)"
 PL["A1"].font = Font(bold=True, size=13)
 PL["A2"] = ("Kaynak: PointLink_2026-10-01_Sinyalizasyon_AVLS_Teklif.pdf (8 sayfa; win1 G:\\urfa_ihale\\...\\Gelen_Teklifler\\03_SINYALIZASYON'dan aktarıldı). "
-            "Uyarı: teklif maili mepcenter Gmail'de bulunamıyor; mailimiz firmaya üçüncü kişi tarafından iletilmiş (Fwd) ve yanıt 'Eva' adlı yapay zekâ asistanı imzalı – kaynak teyidi gerekir. "
+            "Orijinal PDF 07.10.2026'da doğrudan iletildi (veri/gelen_teklifler/PointLink_Sinyalizasyon_AVLS_Teklif_01.10.2026.pdf). "
             "Teklif RFQ (şişirmeli, idare cevabı öncesi) miktarlarıyla verilmiştir; 'idareye göre uyarlanmış' sütunu aynı birim fiyatlarla idare cevaplarını uygular.")
 PL["A2"].alignment = WRAP; PL.merge_cells("A2:H2"); PL.row_dimensions[2].height = 58
 h = ["Sıra", "Kalem", "Point Link teklif € (RFQ miktarı)", "Point Link – idare cevaplarına göre uyarlanmış €", "Uyarlama", "Bütçemiz (kalem bazlı) €", "Fark (PL uyarlanmış / bütçe − 1)"]
