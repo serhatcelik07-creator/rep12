@@ -55,7 +55,7 @@ vrows = [
     ("Risk/belirsizlik payı – Elektrik AG / aydınlatma / yangın ihbar / topraklama", 0.05, "Kalem bazlı; referans kapsaması düşük"),
     ("Risk/belirsizlik payı – Kontrol ve haberleşme (SCADA, CCTV, telsiz, YBS, turnike)", 0.05, "Kalem bazlı; turnike adedi mimariden sayılacak"),
     ("Metraj payları geri alınsın mı? (1 = evet, 0 = RFQ metrajı)", 1, "RFQ'da bilinçli şişirme: uzunluklara %10 fire; Mekanik+Elektrik set alt kalemlerinde dağıtık malzemeye %30 (devir notu bölüm 10). Bütçe net metrajla hesaplanır."),
-    ("Mitaş direk teklifine nakliye + işçilik (dikim) + overhead payı", 0.20, "Mitaş teklifi FCA Ankara, montaj hariç: ~850 km nakliye + boşaltma, vinçle dikim/şakül/tork, şantiye genel giderleri (teklif bedelinin %)"),
+    ("Ankara → Şanlıurfa nakliye payı (FCA fabrika teslim teklifler için)", 0.05, "Mitaş direk teklifi FCA Ankara; ~850 km kamyon nakliyesi + boşaltma (malzeme bedelinin %)"),
     ("Fiyat esası", "EUR, Ekim 2026, KDV hariç, Şanlıurfa şantiye teslim, montaj+test+devreye alma dahil (taşeron fiyatı)", ""),
 ]
 for i, r in enumerate(vrows, start=3):
@@ -436,17 +436,19 @@ sinyal = [
 ws_sn, SN_TOT, SN_RFQ, SN_MAIN = sheet("Sinyal", "4 SİNYALİZASYON VE ARAÇ TAKİP (AVLS) – Sıra 228–235", sinyal, "SK")
 
 # ================================================================ KATENER
-MITAS = "TEKLİF (Mitaş POLT-3709-R0, 06.10.2026, FCA Ankara, USD, KDV hariç) + %20 nakliye/işçilik/overhead"
+MITAS = "TEKLİF (Mitaş POLT-3709-R0, 06.10.2026, FCA Ankara, USD, KDV hariç) + %5 nakliye payı"
 direk = lambda kod, ad, n, kg, usd_govde, usd_sablon, ek=(): (kod, ad, [
-    (f"{ad} gövdesi – sıcak daldırma galvanizli dikişli boru, taban plakası + kapak dahil ({kg:,.0f} kg toplam) – nakliye ve dikim dahil".replace(",", "."),
+    (f"{ad} gövdesi – sıcak daldırma galvanizli dikişli boru, taban plakası + kapak dahil ({kg:,.0f} kg toplam)".replace(",", "."),
      "adet", n, None, f"={usd_govde}/{P_USD}*(1+{P_NAK})", MITAS,
-     f"Mitaş {usd_govde:,.0f} USD/direk".replace(",", ".") + " × (1+%20 nakliye+işçilik+overhead); topraklama, etiket, testler hariç"),
+     f"Mitaş {usd_govde:,.0f} USD/direk".replace(",", ".") + " + %5 nakliye; montaj (ayrı satır), topraklama, etiket, testler hariç"),
     (f"{ad} ankraj şablonu (ankraj bulonları + şablon, alt montaj takımı)", "takım", n, None, f"={usd_sablon}/{P_USD}*(1+{P_NAK})", MITAS,
-     f"Mitaş {usd_sablon:,.0f} USD/takım".replace(",", ".") + " × (1+%20); temel inşaat kapsamında"),
+     f"Mitaş {usd_sablon:,.0f} USD/takım".replace(",", ".") + " + %5 nakliye; temel inşaat kapsamında"),
+    (f"{ad} dikim/montaj (vinçle dikim, şakül, ankraj tork, rötuş)", "adet", n, None, 600, "TAHMİN",
+     "Mitaş teklifinde montaj hariç; 600 €/direk mühendislik tahmini (vinç + ekip)"),
     *ek,
 ])
 TOZ_BOYA = [("OPSİYON – Direklere toz boya (galvaniz üzeri, 228 direğin tümü)", "set", 1, None, f"=45000/{P_USD}*(1+{P_NAK})",
-             MITAS.replace("TEKLİF (", "TEKLİF – OPSİYON ("), "Mitaş opsiyonu 45.000 USD (tüm direkler) × (1+%20); bütçeye dahil edildi")]
+             MITAS.replace("TEKLİF (", "TEKLİF – OPSİYON ("), "Mitaş opsiyonu 45.000 USD (tüm direkler) + %5 nakliye; bütçeye dahil edildi")]
 katener = [
     ("220", "2012.A", "Hat Boyu ve Depo Bağlantı Hatları Katener Sistemi", [
         ("Kontak teli 120 mm² Cu ETP (EN 50149, Ø13,2) – çekme dahil", "m", 18748.5, f"=18748.5*{H}", 18,
@@ -890,7 +892,7 @@ erows = [
     ("Katener – direkler", "Mitaş Endüstri", "06.10.2026", "222–226 (228 direk + ankraj şablonu + toz boya ops.)", 360070, "USD", "", f"={KAT_DIREK}",
      "Direk 746–1.374 USD; ankraj şablonu 226–523 USD", "Sıcak daldırma galvaniz, dikişli boru, EN 1090-2 EXC2; C/D tipleri Mitaş çizimine göre",
      "FCA Ankara (nakliye hariç); %40 avans, bakiye teslimden önce; 13.10.2026'ya kadar sabit; montaj, topraklama, testler hariç",
-     "Kalem kalem bütçeye işlendi: teklif + toz boya opsiyonu, üzerine %20 nakliye+işçilik+overhead", "Teklif tutarı 315.070 + 45.000 USD toz boya opsiyonu; bütçe = teklif × 1,20"),
+     "Kalem kalem bütçeye işlendi: teklif + toz boya opsiyonu + %5 nakliye; dikim 600 €/direk ayrı tahmin", "Teklif tutarı 315.070 + 45.000 USD toz boya opsiyonu; bütçe karşılığı nakliye ve dikim dahildir"),
     ("Sinyalizasyon (tümü)", "Point Link / CASCO (Çin)", "01.10.2026", "228–235 (RFQ miktarlarıyla)", 7281784, "EUR", "=E12", f"={SN_TOT}",
      "Makas motoru 7.950; SKP 166.750; TSP 78.200; aks sayacı 5.340; araç başı 82.019 (sinyal+AVLS)",
      "Kalem kalem döküm var (PointLink_Kiyas). Aks sayacı ray devresi yerine; TSKP/trafik ekipmanı dahil; mevcut sistem entegrasyonu dahil; 15 araç",
@@ -921,7 +923,7 @@ ozet_txt = [
     "Mekanik: Fiyatlı teklif yok. Ekura en geç 09.10 verecek; Protek (FM200) soru sordu. MET, Demta, Birleşim, Genç Müh. vermiyor.",
     "Asansör: 3 teklif (Schindler, TK, Emlift). Edoux verecek; Adakon (Orona) ithal ürünle bütçe verecek; KONE dönmedi.",
     "Sinyalizasyon: Mukan (AVLS) teklifi geldi; Point Link/CASCO kalem kalem teklifi (7,28 M€) win1 arşivinden alındı. Hugotek ve İntetra dönecek; Alstom ve Savronik vermiyor (bütçe istendi); Hanning & Kahl dönmedi.",
-    "Elektrifikasyon: Mitaş katener direği teklifi (315.070 USD FCA Ankara + 45.000 USD toz boya opsiyonu) %20 nakliye/işçilik/overhead ile bütçeye işlendi; Best Transformer trafo için dönmedi; DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk) sorularına cevap verildi; Doruk ve KAM vermiyor.",
+    "Elektrifikasyon: Mitaş katener direği teklifi (315.070 USD FCA Ankara + 45.000 USD toz boya opsiyonu) %5 nakliye ve 600 €/direk dikim tahminiyle bütçeye işlendi; Best Transformer trafo için dönmedi; DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk) sorularına cevap verildi; Doruk ve KAM vermiyor.",
     "Ulaşmayan adres: 26 (mailer-daemon). Ayrıntı: Teklif_Durumu sayfası.",
 ]
 for k, t in enumerate(ozet_txt):
