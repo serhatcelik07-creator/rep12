@@ -21,13 +21,13 @@ if 'MEK_ELK' not in doc.styles:
     doc.styles.add('MEK_ELK', font='arial.ttf')
 LAYERS = {
     'MEK-ELK-VRF-IC': 4, 'MEK-ELK-VRF-DIS': 5, 'MEK-ELK-ISITMA': 1, 'MEK-ELK-SIHHI': 140,
-    'MEK-ELK-HVL': 3, 'MEK-ELK-KLIMA': 150, 'MEK-ELK-ETIKET': 7, 'MEK-ELK-GUC': 6,
+    'MEK-ELK-HVL': 3, 'MEK-ELK-YANGIN': 1, 'MEK-ELK-KLIMA': 150, 'MEK-ELK-ETIKET': 7, 'MEK-ELK-GUC': 6,
     'MEK-ELK-TABLO': 7, 'MEK-ELK-TABLO-CIZGI': 8, 'MEK-ELK-KAIDE': 8,
 }
 for n, c in LAYERS.items():
     if n not in doc.layers:
         doc.layers.add(n, color=c)
-SYS_LAYER = {'ISITMA': 'MEK-ELK-ISITMA', 'SIHHİ TESİSAT': 'MEK-ELK-SIHHI', 'YAĞMUR SUYU': 'MEK-ELK-SIHHI',
+SYS_LAYER = {'YANGIN': 'MEK-ELK-YANGIN', 'ISITMA': 'MEK-ELK-ISITMA', 'SIHHİ TESİSAT': 'MEK-ELK-SIHHI', 'YAĞMUR SUYU': 'MEK-ELK-SIHHI',
              'HAVALANDIRMA': 'MEK-ELK-HVL', 'KLİMA': 'MEK-ELK-KLIMA'}
 
 def tr(v, d=2):
@@ -165,6 +165,12 @@ for e in EKIPMAN:
 
 # Split klima dış üniteleri (server)
 # Multi split dış üniteleri EKIPMAN listesinden çizilir (MSP-1 asıl, MSP-1Y yedek)
+
+# Yangın suyu deposu (su deposu odası)
+x0, y0, x1, y1 = YANGIN_DEPO
+msp.add_lwpolyline([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], close=True, dxfattribs={'layer': 'MEK-ELK-YANGIN'})
+text((x0+x1)/2, (y0+y1)/2 + 8, 'YANGIN SUYU DEPOSU 50 m³', 9, 'MEK-ELK-ETIKET', TextEntityAlignment.MIDDLE_CENTER)
+text((x0+x1)/2, (y0+y1)/2 - 8, '(OT1: 50 m³/h x 60 dk)', 7, 'MEK-ELK-ETIKET', TextEntityAlignment.MIDDLE_CENTER)
 
 # Yağmur suyu deposu (gömülü) - gösterim
 x0, y0, x1, y1 = YAGMUR_DEPO
@@ -342,7 +348,7 @@ X7 = 2309.806 + DX7  # 26612.5
 cols1 = [('NO', 55, 'C'), ('KOD', 110, 'C'), ('SİSTEM', 230, 'L'), ('CİHAZ ADI / TEKNİK ÖZELLİK', 1480, 'L'),
          ('MAHAL', 520, 'L'), ('KAT', 120, 'C'), ('ADET', 70, 'C'), ('ÇALIŞAN', 95, 'C'), ('BİRİM GÜÇ (kW)', 165, 'R'),
          ('KURULU GÜÇ (kW)', 170, 'R'), ('TALEP GÜÇ (kW)', 165, 'R'), ('GERİLİM / FAZ', 190, 'C'), ('PANO', 120, 'C')]
-order = ['ISITMA', 'SIHHİ TESİSAT', 'YAĞMUR SUYU', 'HAVALANDIRMA', 'KLİMA', 'KLİMA (VRF)']
+order = ['ISITMA', 'SIHHİ TESİSAT', 'YAĞMUR SUYU', 'YANGIN', 'HAVALANDIRMA', 'KLİMA', 'KLİMA (VRF)']
 rows1 = []; n = 0
 sums = OrderedDict((s, [0, 0]) for s in order)
 for s in order:
@@ -433,6 +439,7 @@ notes = [
     '5. Teshin merkezi fanları ex-proof olacak, gaz alarmı ile kazan ve selenoid vana enterlokajı yapılacaktır. Kanal tipi WC fanları aydınlatma/zaman rölesi ile çalışacaktır.',
     '6. Talep gücü: yedek (stand-by) cihazlar hariç çalışan cihaz adedi ile hesaplanmıştır. Pano kodları: MP=Mekanik Pano (Teshin Merkezi), VRF-P=VRF Dış Ünite Panosu, ZKTP/1KTP/2KTP=Kat Tali Panoları, ADP=Ana Dağıtım Panosu (teknik hacim klimaları, 7/24).',
     '7. Z-10 Server ve Z-11 Elektrik Pano odaları ortak multi split ile soğutulur: 2 duvar tipi iç ünite, 1 asıl (MSP-1) + 1 yedek (MSP-1Y) dış ünite; yedek ünite arıza/alarmda otomatik devreye girer.',
+    '8. Yangın pompası (YGP-1) ve jokey pompası (JP-1) ayrı yangın panosundan (YNG-P) ana şalterden önce / jeneratör beslemeli bağlanacaktır; Q = sprinkler 12 x 60 lt/dk (43,2 m³/h) + yangın dolabı 6 m³/h ≈ 50 m³/h, Hm = 80 mSS (OT1); yangın suyu deposu 50 m³.',
 ]
 ny = ly - 70 - 8*95 - 40
 for i, s in enumerate(notes):

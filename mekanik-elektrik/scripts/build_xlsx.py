@@ -361,7 +361,7 @@ for (kat, sis, tip, kap) in grp:
                      kw=f'=INDEX(Tablolar!$E${TIP_FIRST}:$E${TIP_LAST},MATCH(B{{r}},{TIPR},0))/1000',
                      v=230, faz=1, cos=0.90, pano=f'{kat}KTP', src='VRF İç Üniteler sayfası (adet mahal listesinden)', plan=f'{KAT_AD[kat]} planı', link=True))
 
-order = ['ISITMA', 'SIHHİ TESİSAT', 'YAĞMUR SUYU', 'HAVALANDIRMA', 'KLİMA', 'KLİMA (VRF)']
+order = ['ISITMA', 'SIHHİ TESİSAT', 'YAĞMUR SUYU', 'YANGIN', 'HAVALANDIRMA', 'KLİMA', 'KLİMA (VRF)']
 rows.sort(key=lambda d: order.index(d['sist']))
 r = 5
 first = r
@@ -440,7 +440,7 @@ wsP = wb.create_sheet('Pano ve Kat Özeti', 1)
 title(wsP, 'PANO VE KAT BAZINDA MEKANİK YÜK ÖZETİ', PROJ, 6)
 G = "'Elektrik Güç Tablosu'"
 header(wsP, 4, ['Besleyen Pano', 'Açıklama', 'Cihaz Adedi', 'Kurulu Güç (kW)', 'Talep Güç (kW)', 'Pay (Talep)'])
-panos = [('MP', 'Mekanik Pano - Teshin Merkezi (ısıtma, hidrofor, yağmur suyu, teshin fanları)'), ('VRF-P', 'VRF Dış Ünite Panosu (400V 3N~)'),
+panos = [('YNG-P', 'Yangın Pompa Panosu (ana şalterden önce / jeneratör beslemeli)'), ('MP', 'Mekanik Pano - Teshin Merkezi (ısıtma, hidrofor, yağmur suyu, teshin fanları)'), ('VRF-P', 'VRF Dış Ünite Panosu (400V 3N~)'),
          ('ZKTP', 'Zemin Kat Tali Panosu'), ('ADP', 'Ana Dağıtım Panosu - Z-10 Server / Z-11 Pano odası multi split (7/24)'), ('1KTP', '1. Kat Tali Panosu'), ('2KTP', '2. Kat Tali Panosu')]
 for i, (p, a) in enumerate(panos):
     rr = 5 + i

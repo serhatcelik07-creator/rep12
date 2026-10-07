@@ -17,8 +17,9 @@
 ## Özet (kurulu / talep)
 - VRF klima: 3 dış ünite toplam 48,6 kW (400V 3N~) + 37 kaset iç ünite. Dış üniteler kuzey cephe bahçesinde, beton kaide üzerinde (çatıda değil).
 - Z-10 Server + Z-11 Elektrik Ana Pano odası: ortak multi split. 2 duvar tipi iç ünite (3,5 + 2,5 kW), 1 asıl (MSP-1) + 1 yedek (MSP-1Y) dış ünite (6,8 kW, 2,10 kW elektrik, 7/24). Ana dağıtım panosundan (ADP) beslenir.
+- Yangın (Orta Tehlike-1 sprinkler + yangın dolabı): ana pompa YGP-1 Q=50 m³/h (12 sprinkler × 60 lt/dk = 43,2 + dolap 6 m³/h), Hm=80 mSS, 22 kW 400V 3~; jokey JP-1 2 m³/h, 85 mSS, 2,2 kW; yangın suyu deposu 50 m³ (su deposu odası). Ayrı yangın panosundan (YNG-P) beslenir.
 - Isıtma, sıhhi tesisat, yağmur suyu ve havalandırma: yaklaşık 9,4 kW
-- **Mekanik toplam: 62,2 kW kurulu / 59,0 kW talep** (yedek cihazlar talebe katılmaz)
+- **Mekanik toplam: 86,4 kW kurulu / 83,2 kW talep** (yedek cihazlar talebe katılmaz)
 
 ## Kaynaklar ve varsayımlar
 - Kazan (2×80 kW), pompa debi/basma, boyler (500 L), sirkülasyon, hidrofor ve yağmur suyu değerleri TMO Mardin hesap Excel'lerinden alındı. Cihaz yerleşimi `mardin_2` ve `ısıtma_v11` taslaklarından alındı.

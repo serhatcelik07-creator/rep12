@@ -73,10 +73,13 @@ EKIPMAN = [
     ('EF-01', 'HAVALANDIRMA', 'Teshin Merkezi Taze Hava Fanı', 'Kanal tipi aksiyal, ex-proof, 750 m³/h', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'MP', 'FAN', (4190, 1950), 'Edirne HVL EF-01 eşdeğeri'),
     ('EF-02', 'HAVALANDIRMA', 'Teshin Merkezi Egzost Fanı', 'Kanal tipi aksiyal, ex-proof, 500 m³/h', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'MP', 'FAN', (4290, 1950), 'Edirne HVL EF-02 eşdeğeri'),
     # --- TEMİZ SU (Su Deposu) ---
-    ('HD-1', 'SIHHİ TESİSAT', 'Temiz Su Hidroforu (Paket)', '2 pompalı, frekans konv.; Q=2x1,12 m³/h, Palt=2,9 / Püst=4,4 bar, 100 L tank', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 2, 2, 0.75, 400, 3, 0.85, 'MP', 'HIDROFOR', (4210, 2400), 'TEMİZ_SU_DEPO_HİDROFOR_HESABI'),
+    ('HD-1', 'SIHHİ TESİSAT', 'Temiz Su Hidroforu (Paket)', '2 pompalı, frekans konv.; Q=2x1,12 m³/h, Palt=2,9 / Püst=4,4 bar, 100 L tank', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 2, 2, 0.75, 400, 3, 0.85, 'MP', 'HIDROFOR', (4300, 2490), 'TEMİZ_SU_DEPO_HİDROFOR_HESABI'),
     # --- YAĞMUR SUYU ---
     ('SH-1', 'YAĞMUR SUYU', 'Bahçe Sulama Hidroforu', '2 pompalı, yağmur suyu deposundan; 1000 m² bahçe', 'MANEVRA ODASI (BAHÇE)', 'Z', 2, 1, 0.75, 230, 1, 0.85, 'MP', 'HIDROFOR', (3980, 2800), 'YAĞMUR_SUYU_HESABI / mardin_2'),
     ('YP-1', 'YAĞMUR SUYU', 'Yağmur Suyu Deposu Taşma/Boşaltma Dalgıç Pompası', '12 m³ gömülü depo, flatörlü', 'YAĞMUR SUYU DEPOSU (BAHÇE)', 'Z', 1, 1, 1.10, 230, 1, 0.85, 'MP', 'DALGIC', (3700, 2850), 'Edirne yağmur suyu (1-1,5 kW)'),
+    # --- YANGIN (Su Deposu odası) ---
+    ('YGP-1', 'YANGIN', 'Elektrik Motorlu Ana Yangın Pompası', 'OT1 sprinkler 12 x 60 lt/dk = 43,2 m³/h + 1 yangın dolabı 6 m³/h: Q=50 m³/h, Hm=80 mSS, 2900 d/d, yıldız-üçgen', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 1, 22.00, 400, 3, 0.88, 'YNG-P', 'POMPA', (4150, 2300), 'OT1: 12 sprinkler x (5 lt/dk.m² x 12 m²) + dolap 100 lt/dk; Hm=80 mSS (Edirne: 50-59 m³/h, 80 mSS, 20 kW)'),
+    ('JP-1', 'YANGIN', 'Jokey (Basınç Tamamlama) Pompası', 'Q=2 m³/h, Hm=85 mSS', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 1, 2.20, 400, 3, 0.85, 'YNG-P', 'POMPA', (4150, 2430), 'Edirne yangın pompa grubu eşdeğeri'),
     # --- HAVALANDIRMA ---
     ('EF-03', 'HAVALANDIRMA', 'Zemin Kat WC / Personel Egzost Fanı', 'Kanal tipi, 500 m³/h, hız anahtarlı', 'WC HOLÜ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'ZKTP', 'FAN', (5465, 2145), 'Mimari not: MEK.HVL.'),
     ('EF-04', 'HAVALANDIRMA', 'Misafirhane Banyo + Çamaşırhane Egzost Fanı', 'Kanal tipi, 450 m³/h', 'MİSAFİRHANE KORİDOR', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'ZKTP', 'FAN', (6700, 1745), 'Edirne HVL EF-05 eşdeğeri'),
@@ -98,6 +101,7 @@ VRF_DIS_KONUM = {'VRF-1A': (4720, 2720), 'VRF-1B': (4870, 2720), 'VRF-2A': (5040
 TEKNIK = [('MS-1/1', 'Z-10 SERVER ODASI', 11.40, 2500, 'Server/network kabini ısı yükü (1 kabin, ön değer)', 3.5),
           ('MS-1/2', 'Z-11 ELK.ANA PANO O.', 10.62, 1000, 'Ana dağıtım panosu + kompanzasyon + UPS kayıpları (ön değer)', 2.5)]
 MSP_DIS_KW = 6.8
+YANGIN_DEPO = (3400, 2255, 4100, 2555)   # 50 m³ yangın suyu deposu (7,0 x 3,0 x 2,4 m)
 YAGMUR_DEPO = (3600, 2770, 3880, 2930)   # gömülü depo dikdörtgeni
 
 # Elle konumlandırılan iç üniteler (küçük/etiketle çakışan mahaller): (x, y, etiket yönü 'B'=alt, 'R'=sağ)
