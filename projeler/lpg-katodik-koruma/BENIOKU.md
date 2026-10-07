@@ -10,7 +10,11 @@ Katmanlar: `SINIR-YOL, BINA, KANOPI, POMPA-ADASI, LPG-SAHA, LPG-TANK, LPG-HAT, K
 
 ## Kabuller (sahada teyit edilecek)
 - Kroki ölçeksiz; ~50 px = 1 m kabulüyle ölçeklendi. LPG sahası krokideki 6 m / 4 m / 1.2 m pah ölçüleriyle çizildi.
-- LPG tankı: 1 adet yeraltı, ~5 m³ (Ø1.25 × 4.40 m), kaplamalı ("Tek Tank / Tek Dispenser" tesisat şeması).
+- LPG tankı: 10 m³ (plaka poz 25); hesapta Ø1,60 × 5,40 m kabul (plakadaki Ø2350 tank etiketinden teyit edilmeli).
 - Zemin özdirenci 30 Ω·m (Wenner ölçümü yapılmalı), %10 kaplama hasarı, 20 mA/m², 1.3 emniyet, 20 yıl.
-- Sonuç: gerekli ≈ 58 mA → 5 adet 17 lb Mg anot (4 tank + 1 hat), 2 ölçüm kutusu, kalıcı Cu/CuSO4 referans elektrot, 3 izolasyon flanşı.
+- Sonuç: gerekli ≈ 92 mA → 4 × 10 Lb (tank) + 2 × 3,5 Lb (dispenser) Mg anot, 2 ölçüm kutusu, referans elektrot, izolasyon flanşları.
 - `TEYIT` katmanındaki elemanlar krokiden okunamadı.
+
+## Saha plakasından okunanlar (bkz. `plaka/PLAKA_ANALIZI.md`)
+- Poz 25: LPG stok tankı **10 m³** · Poz 24: **2 × 10 Lb** Mg anot · Poz 17: **2 × 3,5 Lb** Mg anot · Poz 13: 6 × izole flanş kiti
+- Taslak bu verilere göre güncellendi: **4 × 10 Lb + 2 × 3,5 Lb** Mg anot, gereken akım ≈ 92 mA, ömür ≈ 28 yıl.
