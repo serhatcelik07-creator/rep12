@@ -21,6 +21,11 @@
 - Isıtma, sıhhi tesisat, yağmur suyu ve havalandırma: yaklaşık 9,4 kW
 - **Mekanik toplam: 113,6 kW kurulu / 88,4 kW talep** (yedek cihazlar talebe katılmaz)
 
+## Isıtma projesi v12 (radyatör yerleşimi)
+- `isitma/5.TMO_MARDIN_ISITMA_v12.dxf`: `5.TMO_MARDİN_ISITMA_v11.dwg` içeriği (kollektörler, PE-X boruları, tablolar, kolon şeması, kazan dairesi şeması) güncel mimari altlık üzerine aktarıldı. Döşemeye kadar inen pencerelerin önündeki 60 radyatör pencere arası dolu duvarlara veya yan duvarlara taşındı; PE-X gidiş/dönüş boruları yeni yerlerine uzatıldı, radyatör etiketleri birlikte taşındı.
+- Radyatör tip/boy/güçleri ve kollektör ağızları değişmedi; kollektör tabloları aynen geçerli. Liste: `isitma/ISITMA_v12_RADYATOR_YER_DEGISIKLIGI.xlsx`.
+- DWG doğrudan yazılamadığı için çıktı DXF'tir (AutoCAD'de açılıp DWG olarak kaydedilebilir). Betikler: `scripts/json2dxf.py`, `scripts/build_isitma.py`.
+
 ## Revizyon
 - Son revizyon kullanıcının `guc2.dxf` dosyası üzerine yapıldı (kullanıcının taşıdığı kazan, gaz dedektörü, teshin fanları ve yangın pompası konumları korunur). `scripts/prep_source.py` bu dosyadan MEK-ELK katmanlarını ayıklar, `build_dxf.py` güncel içeriği yeniden ekler.
 
