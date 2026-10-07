@@ -36,9 +36,17 @@ TIP = {
     'MİSAFİRHANE': (None, 2,    70, 45, 6.0),
     'DİNLENME':    (3.0,  None, 70, 45, 8.0),
     'GÜVENLİK':    (None, 2,    75, 55, 25.0),
+    'HOL':         (10.0, None, 75, 55, 0.0),
+    'LOBİ':        (5.0,  None, 75, 55, 5.0),
+    'MUTFAK':      (None, 2,    80, 80, 100.0),
+    'BEBEK':       (None, 3,    70, 45, 10.0),
 }
 
 def mahal_tipi(ad):
+    if 'MUTFAK' in ad: return 'MUTFAK'
+    if 'KAT HOLÜ' in ad: return 'HOL'
+    if 'LOBİ' in ad: return 'LOBİ'
+    if 'BEBEK' in ad: return 'BEBEK'
     if 'KONFERANS' in ad: return 'KONFERANS'
     if 'MESCİT' in ad: return 'MESCİT'
     if 'YEMEKHANE' in ad: return 'YEMEKHANE'

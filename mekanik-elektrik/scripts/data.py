@@ -25,6 +25,9 @@ VRF_ODALAR = [
     ('Z', '25/A', 'MİSAFİRHANE-2',    22.15, [3.6],      'VRF-1', (6444, 2235, 6809, 2557)),
     ('Z', '26/A', 'MİSAFİRHANE-3',    16.07, [2.8],      'VRF-1', (6494, 1005, 6809, 1290)),
     ('Z', '27/A', 'MİSAFİRHANE-4',    16.40, [2.8],      'VRF-1', (6149, 1005, 6474, 1290)),
+    ('Z', '02',   'KAT HOLÜ',         30.10, [2.8],      'VRF-1', (4645, 1665, 5340, 2100)),
+    ('Z', '07',   'LOBİ',             24.85, [2.8],      'VRF-1', (5366, 1000, 5745, 1636)),
+    ('Z', '08',   'MUTFAK',           8.23,  [2.2],      'VRF-1', (4408, 1010, 4618, 1388)),
     ('1', '13',   'OFİS',             42.65, [3.6, 3.6], 'VRF-1', None),
     ('1', '14',   'ÇOCUK BAKIM/OYUN', 43.80, [3.6, 3.6], 'VRF-1', None),
     ('1', '19',   'OFİS',             27.50, [4.5],      'VRF-1', None),
@@ -48,6 +51,7 @@ VRF_ODALAR = [
     ('2', '11',   'SEKRETERYA',       14.45, [2.8],      'VRF-2', None),
     ('2', '12',   'BAŞ MÜDÜR ODASI',  42.17, [3.6, 3.6], 'VRF-2', None),
     ('2', '13',   'MÜDÜR YARD. ODASI', 21.92, [3.6],     'VRF-2', None),
+    ('2', '19',   'BEBEK BAKIM',      10.55, [2.2],      'VRF-2', None),
 ]
 
 # VRF dış üniteler: (sistem, modül, HP, soğutma kW, elektrik kW, ölçü, hizmet ettiği katlar)
@@ -62,24 +66,25 @@ VRF_DIS = [
 # kod, sistem, ad, özellik, mahal, kat, adet, çalışan adet, birim kW, gerilim, faz, cosφ, pano, sembol, konum(x,y TEMİZ koordinatı), kaynak
 EKIPMAN = [
     # --- ISITMA (Teshin Merkezi) ---
-    ('KZ-1', 'ISITMA', 'Yoğuşmalı Duvar Tipi Doğalgaz Kazanı', '80 kW, kaskad, 70/55 °C, dahili primer pompa', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.30, 230, 1, 0.90, 'MP', 'KAZAN', (4185, 2175), 'KAZAN_BORU_POMPA_HESABI: 2x80 kW'),
-    ('KZ-2', 'ISITMA', 'Yoğuşmalı Duvar Tipi Doğalgaz Kazanı', '80 kW, kaskad, 70/55 °C, dahili primer pompa', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.30, 230, 1, 0.90, 'MP', 'KAZAN', (4250, 2175), 'KAZAN_BORU_POMPA_HESABI: 2x80 kW'),
-    ('KP-1', 'ISITMA', 'Kaskad Kontrol Paneli', 'Dış hava kompanzasyonlu, BMS bağlantılı', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.05, 230, 1, 0.90, 'MP', 'PANEL', (4185, 2125), 'Isıtma v11 kazan dairesi şeması'),
+    ('KZ-1', 'ISITMA', 'Yoğuşmalı Duvar Tipi Doğalgaz Kazanı', '80 kW, kaskad, 70/55 °C, dahili primer pompa', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.30, 230, 1, 0.90, 'MP', 'KAZAN', (4324, 1940), 'KAZAN_BORU_POMPA_HESABI: 2x80 kW'),
+    ('KZ-2', 'ISITMA', 'Yoğuşmalı Duvar Tipi Doğalgaz Kazanı', '80 kW, kaskad, 70/55 °C, dahili primer pompa', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.30, 230, 1, 0.90, 'MP', 'KAZAN', (4389, 1940), 'KAZAN_BORU_POMPA_HESABI: 2x80 kW'),
+    ('KP-1', 'ISITMA', 'Kaskad Kontrol Paneli', 'Dış hava kompanzasyonlu, BMS bağlantılı', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.05, 230, 1, 0.90, 'MP', 'PANEL', (4216, 2104), 'Isıtma v11 kazan dairesi şeması'),
     ('P-1', 'ISITMA', 'Radyatör Devresi Sirkülasyon Pompası', 'İkiz, frekans kontrollü ıslak rotorlu; Q=4,43 m³/h, H=2,24 mSS', 'TESHİN MERKEZİ', 'Z', 2, 1, 0.20, 230, 1, 0.85, 'MP', 'POMPA2', (4335, 2180), 'KAZAN_BORU_POMPA_HESABI sf.4'),
     ('P-2', 'ISITMA', 'Boyler Devresi Sirkülasyon Pompası', 'İkiz, ıslak rotorlu; Q=3,5 m³/h (60,7 kW, ΔT=15 K), H≈3 mSS', 'TESHİN MERKEZİ', 'Z', 2, 1, 0.15, 230, 1, 0.85, 'MP', 'POMPA2', (4420, 2180), 'BOYLER_HESABI: 60,7 kW'),
     ('SP-1', 'SIHHİ TESİSAT', 'Kullanım Sıcak Suyu Resirkülasyon Pompası', 'Q=0,4 m³/h, H=0,5 mSS, bronz gövde', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.05, 230, 1, 0.85, 'MP', 'POMPA', (4505, 2180), 'SİRKÜLASYON_POMPASI_HESABI'),
     ('B-1', 'SIHHİ TESİSAT', 'Serpantinli Boyler', '500 L, kazan beslemeli (elektriksiz)', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.00, 0, 0, 1.0, '-', 'BOYLER', (4600, 2165), 'BOYLER_HESABI: 500 L'),
-    ('GD-1', 'ISITMA', 'Doğalgaz Kaçak Dedektörü + Selenoid Vana', 'Sesli/ışıklı alarm, NC selenoid', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.02, 230, 1, 0.90, 'MP', 'GAZ', (4440, 1955), 'Doğalgaz iç tesisat esasları'),
-    ('EF-01', 'HAVALANDIRMA', 'Teshin Merkezi Taze Hava Fanı', 'Kanal tipi aksiyal, ex-proof, 750 m³/h', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'MP', 'FAN', (4190, 1950), 'Edirne HVL EF-01 eşdeğeri'),
-    ('EF-02', 'HAVALANDIRMA', 'Teshin Merkezi Egzost Fanı', 'Kanal tipi aksiyal, ex-proof, 500 m³/h', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'MP', 'FAN', (4290, 1950), 'Edirne HVL EF-02 eşdeğeri'),
+    ('GD-1', 'ISITMA', 'Doğalgaz Kaçak Dedektörü + Selenoid Vana', 'Sesli/ışıklı alarm, NC selenoid', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.02, 230, 1, 0.90, 'MP', 'GAZ', (4261, 1941), 'Doğalgaz iç tesisat esasları'),
+    ('EF-01', 'HAVALANDIRMA', 'Teshin Merkezi Taze Hava Fanı', 'Kanal tipi aksiyal, ex-proof, 750 m³/h', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'MP', 'FAN', (4176, 2182), 'Edirne HVL EF-01 eşdeğeri'),
+    ('EF-02', 'HAVALANDIRMA', 'Teshin Merkezi Egzost Fanı', 'Kanal tipi aksiyal, ex-proof, 500 m³/h', 'TESHİN MERKEZİ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'MP', 'FAN', (4276, 2182), 'Edirne HVL EF-02 eşdeğeri'),
     # --- TEMİZ SU (Su Deposu) ---
     ('HD-1', 'SIHHİ TESİSAT', 'Temiz Su Hidroforu (Paket)', '2 pompalı, frekans konv.; Q=2x1,12 m³/h, Palt=2,9 / Püst=4,4 bar, 100 L tank', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 2, 2, 0.75, 400, 3, 0.85, 'MP', 'HIDROFOR', (4300, 2490), 'TEMİZ_SU_DEPO_HİDROFOR_HESABI'),
     # --- YAĞMUR SUYU ---
     ('SH-1', 'YAĞMUR SUYU', 'Bahçe Sulama Hidroforu', '2 pompalı, yağmur suyu deposundan; 1000 m² bahçe', 'MANEVRA ODASI (BAHÇE)', 'Z', 2, 1, 0.75, 230, 1, 0.85, 'MP', 'HIDROFOR', (3980, 2800), 'YAĞMUR_SUYU_HESABI / mardin_2'),
     ('YP-1', 'YAĞMUR SUYU', 'Yağmur Suyu Deposu Taşma/Boşaltma Dalgıç Pompası', '12 m³ gömülü depo, flatörlü', 'YAĞMUR SUYU DEPOSU (BAHÇE)', 'Z', 1, 1, 1.10, 230, 1, 0.85, 'MP', 'DALGIC', (3700, 2850), 'Edirne yağmur suyu (1-1,5 kW)'),
     # --- YANGIN (Su Deposu odası) ---
-    ('YGP-1', 'YANGIN', 'Elektrik Motorlu Ana Yangın Pompası', 'OT1 sprinkler 12 x 60 lt/dk = 43,2 m³/h + 1 yangın dolabı 6 m³/h: Q=50 m³/h, Hm=80 mSS, 2900 d/d, yıldız-üçgen', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 1, 22.00, 400, 3, 0.88, 'YNG-P', 'POMPA', (4150, 2300), 'OT1: 12 sprinkler x (5 lt/dk.m² x 12 m²) + dolap 100 lt/dk; Hm=80 mSS (Edirne: 50-59 m³/h, 80 mSS, 20 kW)'),
-    ('JP-1', 'YANGIN', 'Jokey (Basınç Tamamlama) Pompası', 'Q=2 m³/h, Hm=85 mSS', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 1, 2.20, 400, 3, 0.85, 'YNG-P', 'POMPA', (4150, 2430), 'Edirne yangın pompa grubu eşdeğeri'),
+    ('YGP-1', 'YANGIN', 'Elektrik Motorlu Yangın Pompası (ASIL - şebeke)', 'OT1 sprinkler 12 x 60 lt/dk = 43,2 m³/h + 1 yangın dolabı 6 m³/h: Q=50 m³/h, Hm=80 mSS, 2900 d/d, yıldız-üçgen', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 1, 22.00, 400, 3, 0.88, 'YNG-P', 'POMPA', (3890, 2518), 'OT1: 12 sprinkler x (5 lt/dk.m² x 12 m²) + dolap 100 lt/dk; Hm=80 mSS (Edirne: 50-59 m³/h, 80 mSS, 20 kW)'),
+    ('YGP-2', 'YANGIN', 'Elektrik Motorlu Yangın Pompası (YEDEK - jeneratör beslemeli)', 'OT1 sprinkler 12 x 60 lt/dk = 43,2 m³/h + 1 yangın dolabı 6 m³/h: Q=50 m³/h, Hm=80 mSS, 2900 d/d, yıldız-üçgen', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 0, 22.00, 400, 3, 0.88, 'YNG-PJ', 'POMPA', (3960, 2518), 'OT1: 12 sprinkler x (5 lt/dk.m² x 12 m²) + dolap 100 lt/dk; Hm=80 mSS 1 asıl + 1 yedek; yedek pompa jeneratör hattından beslenir'),
+    ('JP-1', 'YANGIN', 'Jokey (Basınç Tamamlama) Pompası', 'Q=2 m³/h, Hm=85 mSS', 'YAĞ.SİS. VE GENEL SU DEPOSU', 'Z', 1, 1, 2.20, 400, 3, 0.85, 'YNG-P', 'POMPA', (3885, 2455), 'Edirne yangın pompa grubu eşdeğeri'),
     # --- HAVALANDIRMA ---
     ('EF-03', 'HAVALANDIRMA', 'Zemin Kat WC / Personel Egzost Fanı', 'Kanal tipi, 500 m³/h, hız anahtarlı', 'WC HOLÜ', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'ZKTP', 'FAN', (5465, 2145), 'Mimari not: MEK.HVL.'),
     ('EF-04', 'HAVALANDIRMA', 'Misafirhane Banyo + Çamaşırhane Egzost Fanı', 'Kanal tipi, 450 m³/h', 'MİSAFİRHANE KORİDOR', 'Z', 1, 1, 0.20, 230, 1, 0.85, 'ZKTP', 'FAN', (6700, 1745), 'Edirne HVL EF-05 eşdeğeri'),
@@ -105,7 +110,21 @@ YANGIN_DEPO = (3400, 2255, 4100, 2555)   # 50 m³ yangın suyu deposu (7,0 x 3,0
 YAGMUR_DEPO = (3600, 2770, 3880, 2930)   # gömülü depo dikdörtgeni
 
 # Elle konumlandırılan iç üniteler (küçük/etiketle çakışan mahaller): (x, y, etiket yönü 'B'=alt, 'R'=sağ)
-VRF_POS = {('Z', '04'): [(5395, 1715, 'B')], ('Z', '26/A'): [(6600, 1048, 'R')]}
+VRF_POS = {('Z', '04'): [(5395, 1715, 'B')], ('Z', '08'): [(4560, 1185, 'B')], ('Z', '26/A'): [(6600, 1048, 'R')]}
 
 # Mahal birim soğutma yükü ön değerleri (W/m²) - varsayılan 150
 WM2 = {('Z', '09/A'): 160, ('2', '10'): 200, ('2', '24/B'): 180, ('2', '25/B'): 180}
+
+# Gizli tavan tipi (alından üflemeli) iç üniteler - misafirhaneler: (x, y, üfleme yönü derece) kapı tarafı giriş holü tavanı
+GIZLI = {('Z', '24/A'): (6117, 2150, 90), ('Z', '25/A'): (6690, 2170, 90),
+         ('Z', '26/A'): (6760, 1345, -90), ('Z', '27/A'): (6212, 1345, -90)}
+VRF_GU = {
+    2.2: ('VRF-GU-1', 'Gizli Tavan Tipi, Alından Üflemeli', 2.5, 0.050, '840x840x238'),
+    2.8: ('VRF-GU-2', 'Gizli Tavan Tipi, Alından Üflemeli', 3.2, 0.050, '840x840x238'),
+    3.6: ('VRF-GU-3', 'Gizli Tavan Tipi, Alından Üflemeli', 4.0, 0.060, '840x840x238'),
+    4.5: ('VRF-GU-4', 'Gizli Tavan Tipi, Alından Üflemeli', 5.0, 0.060, '840x840x238'),
+    5.6: ('VRF-GU-5', 'Gizli Tavan Tipi, Alından Üflemeli', 6.0, 0.062, '840x840x238'),
+}
+
+def tip_bilgi(kat, no, kap):
+    return VRF_GU[kap] if (kat, no) in GIZLI else VRF_TIP[kap]

@@ -71,7 +71,7 @@ PROJ = 'TMO MARDİN BAŞMÜDÜRLÜĞÜ HİZMET BİNASI — Mekanik Tesisat'
 wsL = wb.active; wsL.title = 'Tablolar'
 title(wsL, 'YARDIMCI TABLOLAR', 'VRF iç ünite tipleri (Edirne TMO VRF projesi tip tablosu ile aynı), sigorta ve kablo seçim tabloları', 8)
 header(wsL, 4, ['Tip', 'Ünite Tipi', 'Soğutma Kap. (kW)', 'Isıtma Kap. (kW)', 'Elk. Gücü (W)', 'Boyut (mm)'])
-tips = sorted(VRF_TIP.items())
+tips = sorted(VRF_TIP.items()) + sorted(VRF_GU.items())
 for i, (kap, (tip, ad, qh, ekw, olc)) in enumerate(tips):
     r = 5 + i
     vals = [tip, ad, kap, qh, ekw * 1000, olc]
@@ -155,7 +155,7 @@ TT1, TT2 = 6, 6 + len(CTIP) - 1
 def tlook(col, r):
     return f'INDEX(${col}${TT1}:${col}${TT2},MATCH($D{r},$O${TT1}:$O${TT2},0))'
 
-H0 = 18
+H0 = max(18, 6 + len(CTIP) + 3)
 colsS = ['Kat', 'Mahal No', 'Mahal Adı', 'Mahal Tipi', 'Alan (m²)', 'Kişi Sayısı',
          'Dış Duvar KD (m)', 'Cam KD (m²)', 'Dış Duvar GB (m)', 'Cam GB (m²)', 'Dış Duvar KB (m)', 'Cam KB (m²)', 'Dış Duvar GD (m)', 'Cam GD (m²)', 'Çatı Altı (1/0)', 'Pencereler',
          'Q Cam Güneş (W)', 'Q Cam İletim (W)', 'Q Dış Duvar (W)', 'Q Çatı (W)', 'Q İnsan Duyulur (W)', 'Q Aydınlatma (W)', 'Q Cihaz (W)', 'Q İnfiltrasyon (W)',
@@ -251,14 +251,14 @@ setw(wsS, [10, 8, 20, 12, 8, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7, 34, 9, 9, 9, 8, 9, 9,
 
 # =============================================================== VRF İç Üniteler
 wsI = wb.create_sheet('VRF İç Üniteler')
-title(wsI, 'VRF İÇ ÜNİTE SEÇİM TABLOSU (KASET TİP 4 YÖNE ÜFLEMELİ)', PROJ + ' — Ofis ve çalışma mahalleri', 16)
+title(wsI, 'VRF İÇ ÜNİTE SEÇİM TABLOSU (KASET 4 YÖNE / GİZLİ TAVAN ALINDAN ÜFLEMELİ)', PROJ + ' — Ofis ve çalışma mahalleri', 16)
 colsI = ['Kat', 'Mahal No', 'Mahal Adı', 'Alan (m²)', 'Birim Soğ. Yükü (W/m²)', 'Hesaplanan Soğ. Yükü (kW)', 'Ünite Tipi', 'Adet',
          'Birim Soğ. Kap. (kW)', 'Toplam Soğ. Kap. (kW)', 'Kontrol', 'Toplam Isıt. Kap. (kW)', 'Birim Elk. (W)', 'Toplam Elk. (kW)', 'VRF Sistemi', 'Pano']
 header(wsI, 4, colsI)
 r0 = 5
 for i, (kat, no, ad, alan, kaps, sis, ovr) in enumerate(VRF_ODALAR):
     r = r0 + i
-    tip = VRF_TIP[kaps[0]][0]
+    tip = tip_bilgi(kat, no, kaps[0])[0]
     wsI.cell(row=r, column=1, value=KAT_AD[kat])
     wsI.cell(row=r, column=2, value=no)
     wsI.cell(row=r, column=3, value=ad)
@@ -351,11 +351,11 @@ for i, (sis, mod, hp, qk, ek, olc, katlar) in enumerate(VRF_DIS):
                      kat='ZEMİN KAT', adet=1, cal=1, kw=f"='VRF Dış Üniteler'!E{5 + i}", v=400, faz=3, cos=0.95, pano='VRF-P', src='VRF Dış Üniteler sayfası', plan='ZEMİN KAT planı', link=True))
 grp = OrderedDict()
 for kat, no, ad, alan, kaps, sis, ovr in VRF_ODALAR:
-    k = (kat, sis, VRF_TIP[kaps[0]][0], kaps[0])
+    k = (kat, sis, tip_bilgi(kat, no, kaps[0])[0], kaps[0], (kat, no) in GIZLI)
     grp[k] = 1
-for (kat, sis, tip, kap) in grp:
-    tipad = VRF_TIP[kap][1]
-    rows.append(dict(kod=tip, sist='KLİMA (VRF)', ad=f'VRF İç Ünite ({sis})', oz=f'{tipad}, {kap} kW soğ. / {VRF_TIP[kap][2]} kW ısıtma',
+for (kat, sis, tip, kap, gz) in grp:
+    tipad = (VRF_GU if gz else VRF_TIP)[kap][1]
+    rows.append(dict(kod=tip, sist='KLİMA (VRF)', ad=f'VRF İç Ünite ({sis})', oz=f'{tipad}, {kap} kW soğ. / {(VRF_GU if gz else VRF_TIP)[kap][2]} kW ısıtma',
                      mah=f'{KAT_AD[kat]} ofis/çalışma mahalleri', kat=KAT_AD[kat],
                      adet=f'=SUMIFS({I_ADET},{I_KAT},G{{r}},{I_TIP},B{{r}},{I_SIS},"{sis}")', cal=f'=H{{r}}',
                      kw=f'=INDEX(Tablolar!$E${TIP_FIRST}:$E${TIP_LAST},MATCH(B{{r}},{TIPR},0))/1000',
@@ -440,7 +440,7 @@ wsP = wb.create_sheet('Pano ve Kat Özeti', 1)
 title(wsP, 'PANO VE KAT BAZINDA MEKANİK YÜK ÖZETİ', PROJ, 6)
 G = "'Elektrik Güç Tablosu'"
 header(wsP, 4, ['Besleyen Pano', 'Açıklama', 'Cihaz Adedi', 'Kurulu Güç (kW)', 'Talep Güç (kW)', 'Pay (Talep)'])
-panos = [('YNG-P', 'Yangın Pompa Panosu (ana şalterden önce / jeneratör beslemeli)'), ('MP', 'Mekanik Pano - Teshin Merkezi (ısıtma, hidrofor, yağmur suyu, teshin fanları)'), ('VRF-P', 'VRF Dış Ünite Panosu (400V 3N~)'),
+panos = [('YNG-P', 'Yangın Pompa Panosu - asıl pompa (şebeke, ana şalterden önce)'), ('YNG-PJ', 'Yangın Pompa Panosu - yedek pompa (jeneratör beslemeli)'), ('MP', 'Mekanik Pano - Teshin Merkezi (ısıtma, hidrofor, yağmur suyu, teshin fanları)'), ('VRF-P', 'VRF Dış Ünite Panosu (400V 3N~)'),
          ('ZKTP', 'Zemin Kat Tali Panosu'), ('ADP', 'Ana Dağıtım Panosu - Z-10 Server / Z-11 Pano odası multi split (7/24)'), ('1KTP', '1. Kat Tali Panosu'), ('2KTP', '2. Kat Tali Panosu')]
 for i, (p, a) in enumerate(panos):
     rr = 5 + i

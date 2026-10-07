@@ -60,6 +60,17 @@ def kaset(name, s):
 kaset('MEK_VRF_KASET_570', 57)
 kaset('MEK_VRF_KASET_840', 84)
 
+b = blk('MEK_VRF_GIZLI')          # gizli tavan tipi, alından üflemeli (üfleme yönü +Y)
+rect(b, 84, 48)                     # cihaz gövdesi
+rect(b, 84, 10, 0, 29)              # üfleme plenumu / menfez
+for x in range(-36, 40, 8):
+    b.add_line((x, 25), (x, 33))    # menfez kanatları
+b.add_line((-42, -24), (42, 24)); b.add_line((-42, 24), (42, -24))   # gizli (tavan içi) işareti
+b = blk('MEK_OK')                   # üfleme oku (uzunluk 60, +Y)
+b.add_line((0, 0), (0, 60))
+b.add_solid([(0, 70), (-6, 56), (6, 56)])
+b.add_lwpolyline([(0, 70), (-6, 56), (6, 56)], close=True)
+
 def vrf_dis(name, w):
     b = blk(name)
     rect(b, w, 77)
@@ -180,8 +191,14 @@ msp.add_lwpolyline([(3920, 2760), (4060, 2760), (4060, 2880), (3920, 2880)], clo
 text(3990, 2866, 'MANEVRA ODASI', 6.5, 'MEK-ELK-ETIKET', TextEntityAlignment.MIDDLE_CENTER)
 
 # VRF dış üniteler + beton kaide
-kx0 = min(p[0] for p in VRF_DIS_KONUM.values()) - 110; kx1 = max(p[0] for p in VRF_DIS_KONUM.values()) + 100
-ky = list(VRF_DIS_KONUM.values())[0][1]
+VRF_DIS_KONUM = {}
+_x = 4660
+for d in VRF_DIS:
+    w = 124 if d[2] >= 12 else 93
+    VRF_DIS_KONUM[d[1]] = (_x + w / 2, 2720)
+    _x += w + 30
+kx0 = 4660 - 50; kx1 = _x - 30 + 50
+ky = 2720
 msp.add_lwpolyline([(kx0, ky-75), (kx1, ky-75), (kx1, ky+75), (kx0, ky+75)], close=True, dxfattribs={'layer': 'MEK-ELK-KAIDE'})
 text(kx0 + 5, ky + 82, 'VRF DIŞ ÜNİTELER - 10 cm BETON KAİDE + ÇELİK KAFES (KAİDE, ÜNİTE EBADINDAN 50 cm BÜYÜK)', 7, 'MEK-ELK-ETIKET')
 for d in VRF_DIS:
@@ -235,8 +252,22 @@ for kat, no, ad, alan, kaps, sistem, ovr in VRF_ODALAR:
     chosen = [(c[0], c[1], 'B') for c in chosen]
     if (kat, no) in VRF_POS:
         chosen = VRF_POS[(kat, no)]
+    if (kat, no) in GIZLI:
+        gx, gy, ang = GIZLI[(kat, no)]
+        kap = kaps[0]
+        tip, tipad, qh, ekw, olc = tip_bilgi(kat, no, kap)
+        msp.add_blockref('MEK_VRF_GIZLI', (gx, gy), dxfattribs={'layer': 'MEK-ELK-VRF-IC', 'rotation': ang - 90})
+        sgn = 1 if ang > 0 else -1
+        for dx in (-28, 0, 28):      # alından üfleme okları (odaya doğru)
+            msp.add_blockref('MEK_OK', (gx + dx, gy + sgn * 36), dxfattribs={'layer': 'MEK-ELK-VRF-IC', 'rotation': ang - 90})
+        ty0 = gy - sgn * 34 - (9 if sgn > 0 else -27)
+        text(gx - 42, ty0, f'{sistem} {tip} (gizli tavan)', 6.5, 'MEK-ELK-ETIKET')
+        text(gx - 42, ty0 - 10, f'alından üfleme {tr(kap,1)} kW soğ.', 6.5, 'MEK-ELK-ETIKET')
+        text(gx - 42, ty0 - 20, f'{tr(ekw)} kW 230V 1~', 6.5, 'MEK-ELK-GUC')
+        ic_list.append((kat, no, ad, alan, kap, sistem, gx, gy))
+        continue
     for kap, (ux, uy, side) in zip(kaps, chosen):
-        tip, tipad, qh, ekw, olc = VRF_TIP[kap]
+        tip, tipad, qh, ekw, olc = tip_bilgi(kat, no, kap)
         msp.add_blockref('MEK_VRF_KASET_840' if kap >= 7 else 'MEK_VRF_KASET_570', (ux, uy), dxfattribs={'layer': 'MEK-ELK-VRF-IC'})
         if side == 'R':
             text(ux + 33, uy + 12, f'{sistem} {tip}', 6.5, 'MEK-ELK-ETIKET')
@@ -303,10 +334,10 @@ for d in VRF_DIS:
 from collections import OrderedDict
 grp = OrderedDict()
 for kat, no, ad, alan, kap, sistem, ux, uy in ic_list:
-    k = (kat, sistem, kap)
+    k = (kat, sistem, kap, (kat, no) in GIZLI)
     grp[k] = grp.get(k, 0) + 1
-for (kat, sistem, kap), n in grp.items():
-    tip, tipad, qh, ekw, olc = VRF_TIP[kap]
+for (kat, sistem, kap, gz), n in grp.items():
+    tip, tipad, qh, ekw, olc = VRF_GU[kap] if gz else VRF_TIP[kap]
     add_row(tip, 'KLİMA (VRF)', f'{sistem} İç Ünite, {tipad}, {tr(kap,1)} kW soğ. / {tr(qh,1)} kW ısıtma', f'{KAT_AD[kat]} ofis/çalışma mahalleri', kat, n, n, ekw, '230V 1~', f'{kat}KTP')
 
 # --- kat paftalarına mini tablolar
@@ -321,7 +352,7 @@ for kat in ('Z', '1', '2'):
             continue
         short = r['ad'].split(' - ')[0]
         if r['kod'].startswith('TİP'):
-            short = r['ad'].split(' soğ.')[0].replace('İç Ünite, Kaset Tip 4 Yöne Üflemeli,', 'İç Ünite - Kaset') + ' soğ.'
+            short = r['ad'].split(' soğ.')[0].replace('İç Ünite, Kaset Tip 4 Yöne Üflemeli,', 'İç Ünite - Kaset').replace('İç Ünite, Gizli Tavan Tipi, Alından Üflemeli,', 'İç Ünite - Gizli Tavan') + ' soğ.'
         if len(short) > 58:
             short = short[:56] + '…'
         mah = r['mah'][:32]
@@ -333,7 +364,7 @@ for kat in ('Z', '1', '2'):
 # --- 07 nolu pafta: kat çerçevesini kopyala
 src_frame = None
 for e in msp.query('INSERT'):
-    if e.dxf.name == '*U4' and abs(e.dxf.insert.x - 2310) < 5:
+    if abs(e.dxf.insert.x - 2309.806) < 5 and abs(e.dxf.insert.y - 13.05) < 6 and any(a.dxf.tag == 'PAFTA_ADI' for a in e.attribs):
         src_frame = e
 DX7 = 26612.547 - 2309.806
 fr = src_frame.copy(); msp.add_entity(fr); fr.translate(DX7, 0, 0)
@@ -374,14 +405,14 @@ cols2 = [('KAT', 110, 'C'), ('MAHAL NO', 95, 'C'), ('MAHAL ADI', 300, 'L'), ('AL
          ('ELK. GÜCÜ (W)', 130, 'R'), ('SİSTEM', 100, 'C')]
 rows2 = []
 for kat, no, ad, alan, kaps, sistem, ovr in VRF_ODALAR:
-    kap = kaps[0]; tip, tipad, qh, ekw, olc = VRF_TIP[kap]
+    kap = kaps[0]; tip, tipad, qh, ekw, olc = tip_bilgi(kat, no, kap)
     rows2.append([KAT_AD[kat], no, ad, tr(alan), tr(YUK[(kat, no)]), tip, len(kaps), tr(kap*len(kaps), 1), tr(qh*len(kaps), 1), int(round(ekw*1000*len(kaps))), sistem])
 tq = sum(sum(r[4]) for r in VRF_ODALAR)
 tn = sum(len(r[4]) for r in VRF_ODALAR)
-tw = sum(VRF_TIP[r[4][0]][3]*1000*len(r[4]) for r in VRF_ODALAR)
+tw = sum(tip_bilgi(r[0], r[1], r[4][0])[3]*1000*len(r[4]) for r in VRF_ODALAR)
 rows2.append(['', '', 'TOPLAM', '', tr(sum(YUK.values()), 1), '', tn, tr(tq, 1), '', int(tw), ''])
 y2top = yb - 90
-yb2 = table(X7 + 180, y2top, cols2, rows2, 22, 8.5, title='SOĞUTMA YÜKÜ ÖZETİ VE VRF İÇ ÜNİTE SEÇİM TABLOSU (KASET TİP 4 YÖNE)', title_h=13, bold_rows=(len(rows2),))
+yb2 = table(X7 + 180, y2top, cols2, rows2, 22, 8.5, title='SOĞUTMA YÜKÜ ÖZETİ VE VRF İÇ ÜNİTE SEÇİM TABLOSU (KASET 4 YÖNE / GİZLİ TAVAN)', title_h=13, bold_rows=(len(rows2),))
 
 # Tablo-3: VRF dış ünite seçim tablosu
 cols3 = [('SİSTEM', 110, 'C'), ('MODÜL', 120, 'C'), ('KAPASİTE (HP)', 130, 'C'), ('SOĞUTMA (kW)', 140, 'R'),
@@ -404,6 +435,7 @@ yb3 = table(x3, y2top, cols3, rows3, 24, 9, title='VRF DIŞ ÜNİTE SEÇİM TABL
 ly = yb3 - 80
 text(x3, ly, 'SEMBOL LEJANTI', 13, 'MEK-ELK-TABLO')
 leg = [('MEK_VRF_KASET_570', 'VRF iç ünite - kaset tip 4 yöne üflemeli', 'MEK-ELK-VRF-IC'),
+       ('MEK_VRF_GIZLI', 'VRF iç ünite - gizli tavan, alından üflemeli (ok: üfleme yönü)', 'MEK-ELK-VRF-IC'),
        ('MEK_VRF_DIS_L', 'VRF dış ünite (bahçe, beton kaide)', 'MEK-ELK-VRF-DIS'),
        ('MEK_KAZAN', 'Yoğuşmalı duvar tipi doğalgaz kazanı', 'MEK-ELK-ISITMA'),
        ('MEK_POMPA2', 'İkiz sirkülasyon pompası (1 asıl + 1 yedek)', 'MEK-ELK-ISITMA'),
@@ -420,7 +452,7 @@ leg = [('MEK_VRF_KASET_570', 'VRF iç ünite - kaset tip 4 yöne üflemeli', 'ME
        ('MEK_KUMANDA', 'VRF merkezi kumanda', 'MEK-ELK-KLIMA')]
 yy = ly - 70
 for i, (bn, s, lay) in enumerate(leg):
-    col = i // 8; row = i % 8
+    col = i // 9; row = i % 9
     bx = x3 + 80 + col*720; by = yy - row*95
     msp.add_blockref(bn, (bx, by), dxfattribs={'layer': lay, 'xscale': 0.8 if 'DIS' in bn else 1, 'yscale': 0.8 if 'DIS' in bn else 1})
     text(bx + 90, by, s, 9, 'MEK-ELK-TABLO', TextEntityAlignment.MIDDLE_LEFT)
@@ -437,11 +469,11 @@ notes = [
     '3. VRF iç üniteleri mahal bazında soğutma yükü hesabına göre seçilmiştir (Mardin 38,5 °C KT / iç 24 °C; cam güneş+iletim, dış duvar, çatı, insan, aydınlatma, cihaz, infiltrasyon, %10 emniyet). Detay: Excel "Soğutma Yükü" sayfası.',
     '4. VRF dış üniteler üstten hava atışlı olacak, 10 cm beton kaide ve çelik kafes içinde bahçeye konulacaktır. Merkezi kumanda Z-04 Güvenlik-Danışma mahallindedir.',
     '5. Teshin merkezi fanları ex-proof olacak, gaz alarmı ile kazan ve selenoid vana enterlokajı yapılacaktır. Kanal tipi WC fanları aydınlatma/zaman rölesi ile çalışacaktır.',
-    '6. Talep gücü: yedek (stand-by) cihazlar hariç çalışan cihaz adedi ile hesaplanmıştır. Pano kodları: MP=Mekanik Pano (Teshin Merkezi), VRF-P=VRF Dış Ünite Panosu, ZKTP/1KTP/2KTP=Kat Tali Panoları, ADP=Ana Dağıtım Panosu (teknik hacim klimaları, 7/24).',
+    '6. Talep gücü: yedek (stand-by) cihazlar hariç çalışan cihaz adedi ile hesaplanmıştır. Pano kodları: MP=Mekanik Pano (Teshin Merkezi), VRF-P=VRF Dış Ünite Panosu, ZKTP/1KTP/2KTP=Kat Tali Panoları, YNG-P/YNG-PJ=Yangın Pompa Panosu (şebeke / jeneratör), ADP=Ana Dağıtım Panosu (teknik hacim klimaları, 7/24).',
     '7. Z-10 Server ve Z-11 Elektrik Pano odaları ortak multi split ile soğutulur: 2 duvar tipi iç ünite, 1 asıl (MSP-1) + 1 yedek (MSP-1Y) dış ünite; yedek ünite arıza/alarmda otomatik devreye girer.',
-    '8. Yangın pompası (YGP-1) ve jokey pompası (JP-1) ayrı yangın panosundan (YNG-P) ana şalterden önce / jeneratör beslemeli bağlanacaktır; Q = sprinkler 12 x 60 lt/dk (43,2 m³/h) + yangın dolabı 6 m³/h ≈ 50 m³/h, Hm = 80 mSS (OT1); yangın suyu deposu 50 m³.',
+    '8. Yangın pompaları 1 asıl (YGP-1, şebeke - YNG-P) + 1 yedek (YGP-2, jeneratör beslemeli - YNG-PJ) ve jokey pompası (JP-1); yangın panoları ana şalterden önce bağlanacaktır; Q = sprinkler 12 x 60 lt/dk (43,2 m³/h) + yangın dolabı 6 m³/h ≈ 50 m³/h, Hm = 80 mSS (OT1); yangın suyu deposu 50 m³.',
 ]
-ny = ly - 70 - 8*95 - 40
+ny = ly - 70 - 9*95 - 40
 for i, s in enumerate(notes):
     text(x3, ny - i*24, s, 9 if i else 11, 'MEK-ELK-TABLO')
 
