@@ -61,7 +61,7 @@ def kk_hesap(pipe_len):
 
 
 # --------------------------------------------------------------------------- doküman
-doc = ezdxf.new("R2018", setup=True)
+doc = ezdxf.new("R2010", setup=True)
 doc.units = ezdxf.units.M
 doc.header["$INSUNITS"] = 6
 doc.header["$MEASUREMENT"] = 1
@@ -69,20 +69,20 @@ doc.styles.add("TR", font="arial.ttf")
 
 LAYERS = {
     "SINIR-YOL": (8, "DASHED"),
-    "BINA": (7, "CONTINUOUS"),
+    "BINA": (7, "Continuous"),
     "KANOPI": (4, "DASHED"),
-    "POMPA-ADASI": (3, "CONTINUOUS"),
-    "LPG-SAHA": (1, "CONTINUOUS"),
-    "LPG-TANK": (1, "HIDDEN"),
-    "LPG-HAT": (6, "CONTINUOUS"),
-    "KK-ANOT": (30, "CONTINUOUS"),
+    "POMPA-ADASI": (3, "Continuous"),
+    "LPG-SAHA": (1, "Continuous"),
+    "LPG-TANK": (1, "DASHED2"),
+    "LPG-HAT": (6, "Continuous"),
+    "KK-ANOT": (30, "Continuous"),
     "KK-KABLO": (5, "DASHED2"),
-    "KK-OLCUM": (2, "CONTINUOUS"),
-    "KK-IZOLASYON": (140, "CONTINUOUS"),
-    "OLCU": (9, "CONTINUOUS"),
-    "YAZI": (7, "CONTINUOUS"),
-    "PAFTA": (7, "CONTINUOUS"),
-    "TEYIT": (11, "CONTINUOUS"),
+    "KK-OLCUM": (2, "Continuous"),
+    "KK-IZOLASYON": (140, "Continuous"),
+    "OLCU": (9, "Continuous"),
+    "YAZI": (7, "Continuous"),
+    "PAFTA": (7, "Continuous"),
+    "TEYIT": (11, "Continuous"),
 }
 for name, (color, lt) in LAYERS.items():
     doc.layers.add(name, color=color, linetype=lt)
@@ -375,6 +375,10 @@ nx, ny = 3.0, 36.0
 pline([(nx, ny), (nx - 0.5, ny - 1.2), (nx, ny - 0.9), (nx + 0.5, ny - 1.2)], "PAFTA", closed=True)
 text("K ? (teyit)", (nx, ny + 0.4), 0.3, "TEYIT")
 
+# AutoCAD tanımsız çizgi tipine başvuran katmanı olan dosyayı açmaz
+_lts = {lt.dxf.name.lower() for lt in doc.linetypes}
+assert all(l.dxf.linetype.lower() in _lts for l in doc.layers), "tanımsız çizgi tipi"
+doc.encoding = "cp1254"  # Türkçe kod sayfası (ANSI_1254)
 doc.saveas(DXF_PATH)
 print("DXF:", DXF_PATH)
 print({k: round(v, 3) for k, v in H.items()}, "boru boyu", round(pipe_len, 1))

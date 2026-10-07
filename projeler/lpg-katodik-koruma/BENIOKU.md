@@ -2,7 +2,7 @@
 
 | Dosya | İçerik |
 |---|---|
-| `istasyon_lpg_kk_taslak.dxf` | AutoCAD R2018 DXF, birim metre (1 birim = 1 m) |
+| `istasyon_lpg_kk_taslak.dxf` | AutoCAD 2010 DXF (AutoCAD 2010 ve sonrası açar), birim metre (1 birim = 1 m) |
 | `istasyon_lpg_kk_taslak.png` | Önizleme |
 | `plan_uret.py` | DXF'i üreten script (`pip install ezdxf matplotlib` → `python3 plan_uret.py --png`) |
 
