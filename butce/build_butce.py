@@ -55,6 +55,7 @@ vrows = [
     ("Risk/belirsizlik payı – Elektrik AG / aydınlatma / yangın ihbar / topraklama", 0.05, "Kalem bazlı; referans kapsaması düşük"),
     ("Risk/belirsizlik payı – Kontrol ve haberleşme (SCADA, CCTV, telsiz, YBS, turnike)", 0.05, "Kalem bazlı; turnike adedi mimariden sayılacak"),
     ("Metraj payları geri alınsın mı? (1 = evet, 0 = RFQ metrajı)", 1, "RFQ'da bilinçli şişirme: uzunluklara %10 fire; Mekanik+Elektrik set alt kalemlerinde dağıtık malzemeye %30 (devir notu bölüm 10). Bütçe net metrajla hesaplanır."),
+    ("Mitaş direk teklifine nakliye + işçilik (dikim) + overhead payı", 0.20, "Mitaş teklifi FCA Ankara, montaj hariç: ~850 km nakliye + boşaltma, vinçle dikim/şakül/tork, şantiye genel giderleri (teklif bedelinin %)"),
     ("Fiyat esası", "EUR, Ekim 2026, KDV hariç, Şanlıurfa şantiye teslim, montaj+test+devreye alma dahil (taşeron fiyatı)", ""),
 ]
 for i, r in enumerate(vrows, start=3):
@@ -66,7 +67,7 @@ for i, r in enumerate(vrows, start=3):
         elif j == 2 and i < 3 + len(vrows) - 1:
             c.fill = FILL_IN
 V["B8"].number_format = "0.0000"
-for a in ("B14", "B15", "B16", "B17", "B18", "B19", "B20"):
+for a in ("B14", "B15", "B16", "B17", "B18", "B19", "B20", "B22"):
     V[a].number_format = "0%"
 V.column_dimensions["A"].width = 58
 V.column_dimensions["B"].width = 16
@@ -75,6 +76,7 @@ P_USD, P_TRY, P_HAT, P_ARAC_RFQ, P_ARAC, P_RING_RFQ, P_RING, P_KG = (
     "Varsayimlar!$B$4", "Varsayimlar!$B$5", "Varsayimlar!$B$8", "Varsayimlar!$B$9",
     "Varsayimlar!$B$10", "Varsayimlar!$B$11", "Varsayimlar!$B$12", "Varsayimlar!$B$13")
 P_PAY = "Varsayimlar!$B$21"
+P_NAK = "Varsayimlar!$B$22"
 RISK = {"MEKANIK": "Varsayimlar!$B$18", "ELK_AG": "Varsayimlar!$B$19", "HAB": "Varsayimlar!$B$20",
         "ASANSOR": "Varsayimlar!$B$14", "SINYAL": "Varsayimlar!$B$15",
         "KATENER": "Varsayimlar!$B$16", "CER": "Varsayimlar!$B$17"}
@@ -434,12 +436,17 @@ sinyal = [
 ws_sn, SN_TOT, SN_RFQ, SN_MAIN = sheet("Sinyal", "4 SİNYALİZASYON VE ARAÇ TAKİP (AVLS) – Sıra 228–235", sinyal, "SK")
 
 # ================================================================ KATENER
-direk = lambda kod, ad, n, kg, bulon: (kod, ad, [
-    (f"{ad} gövdesi – galvanizli çelik (imalat+galvaniz+dikim)", "kg", kg, None, f"={P_KG}",
-     "REF medyan 1,80 €/kg + pay (Varsayımlar)", "Mitaş teklifi bekleniyor (dikişli S355)"),
-    (f"{ad} ankraj bulonu M30 (somun+rondela HDG)", "adet", bulon, None, 22, "TAHMİN", "Temel inşaat kapsamında"),
-    (f"{ad} dikim/montaj (vinç, şakül, tork)", "adet", n, None, 300, "TAHMİN", ""),
+MITAS = "TEKLİF (Mitaş POLT-3709-R0, 06.10.2026, FCA Ankara, USD, KDV hariç) + %20 nakliye/işçilik/overhead"
+direk = lambda kod, ad, n, kg, usd_govde, usd_sablon, ek=(): (kod, ad, [
+    (f"{ad} gövdesi – sıcak daldırma galvanizli dikişli boru, taban plakası + kapak dahil ({kg:,.0f} kg toplam) – nakliye ve dikim dahil".replace(",", "."),
+     "adet", n, None, f"={usd_govde}/{P_USD}*(1+{P_NAK})", MITAS,
+     f"Mitaş {usd_govde:,.0f} USD/direk".replace(",", ".") + " × (1+%20 nakliye+işçilik+overhead); topraklama, etiket, testler hariç"),
+    (f"{ad} ankraj şablonu (ankraj bulonları + şablon, alt montaj takımı)", "takım", n, None, f"={usd_sablon}/{P_USD}*(1+{P_NAK})", MITAS,
+     f"Mitaş {usd_sablon:,.0f} USD/takım".replace(",", ".") + " × (1+%20); temel inşaat kapsamında"),
+    *ek,
 ])
+TOZ_BOYA = [("OPSİYON – Direklere toz boya (galvaniz üzeri, 228 direğin tümü)", "set", 1, None, f"=45000/{P_USD}*(1+{P_NAK})",
+             MITAS.replace("TEKLİF (", "TEKLİF – OPSİYON ("), "Mitaş opsiyonu 45.000 USD (tüm direkler) × (1+%20); bütçeye dahil edildi")]
 katener = [
     ("220", "2012.A", "Hat Boyu ve Depo Bağlantı Hatları Katener Sistemi", [
         ("Kontak teli 120 mm² Cu ETP (EN 50149, Ø13,2) – çekme dahil", "m", 18748.5, f"=18748.5*{H}", 18,
@@ -515,11 +522,11 @@ katener = [
         ("Depo lente temelleri (kazı, beton, kalıp, donatı, dolgu)", "set", 1, 0, 30000, "TAHMİN", "Temel işleri inşaat kapsamı (sıra 13)"),
         ("Depo katener uygulama projesi, test ve devreye alma", "set", 1, None, 25000, "TAHMİN", ""),
     ]),
-    direk("222", "T1-A Tipi Katener Direği (114 adet)", 114, 39216, 456),
-    direk("223", "T2-B Tipi Katener Direği (17 adet)", 17, 7293, 136),
-    direk("224", "T2-B1 Tipi Katener Direği (4 adet)", 4, 1452, 32),
-    direk("225", "T3-D Tipi Katener Direği (33 adet)", 33, 21912, 330),
-    direk("226", "T3-C Tipi Katener Direği (60 adet)", 60, 39840, 600),
+    direk("222", "T1-A Tipi Katener Direği (114 adet)", 114, 39216, 746, 226),
+    direk("223", "T2-B Tipi Katener Direği (17 adet)", 17, 7293, 956, 425),
+    direk("224", "T2-B1 Tipi Katener Direği (4 adet)", 4, 1452, 860, 426),
+    direk("225", "T3-D Tipi Katener Direği (33 adet)", 33, 21912, 1374, 523),
+    direk("226", "T3-C Tipi Katener Direği (60 adet)", 60, 39840, 1361, 523, TOZ_BOYA),
 ]
 # direk() returns (sira, title, items) – add poz
 katener = katener[:2] + [(s, p, t, it) for (s, t, it), p in zip(katener[2:], ("2012.C", "2012.D", "2012.E", "2012.G", "2012.F"))]
@@ -831,7 +838,7 @@ for k, t in enumerate([
     "• Point Link (CASCO) teklifi, idare cevaplarına göre uyarlandığında bile bütçemizin belirgin üstündedir. Fark, makas motoru veya aks sayacı gibi saha ekipmanından değil; kontrol kabinleri (SKP/TSP), yazılım, tasarım/ISA ve test-devreye alma hizmetlerinden kaynaklanır.",
     "• Teklifteki birim fiyatların bir kısmı firmanın kendi beyanına göre Konya ve Adapazarı CASCO tekliflerinden aktarılmış, döngü/sorgulayıcı/AVLS kalemleri 'mühendislik tahmini'dir. Teklif SIL4 → SIL3/SIL2 düşürmesini yalnız kısmen yansıtır.",
     "• Bütçe kararı: sinyalizasyon bütçesi geçmiş teklif emsalleri ve Mukan AVLS teklifiyle korunmuştur; Point Link uyarlanmış toplamı 'üst sınır / ithal anahtar teslim senaryosu' olarak raporlanır. Gümrük vergisi ve ithalat masrafları ayrıca eklenmelidir.",
-    "• Teklifin kaynağı (Fwd ile ulaşmış, yapay zekâ imzalı, orijinal mail mepcenter Gmail'de yok) teyit edilmeden kullanılmamalıdır."], start=_n):
+    "• Teklif PDF'i (Quotation_Sanliurfa_Phase1_Signalling_AVLS_20261001, 01.10.2026) 07.10.2026'da doğrudan iletildi; veri/gelen_teklifler arşivindedir. Rakamlar bu PDF ile birebir aynıdır."], start=_n):
     c = PL.cell(row=k, column=1, value=t); c.alignment = WRAP
     PL.merge_cells(start_row=k, start_column=1, end_row=k, end_column=7); PL.row_dimensions[k].height = 15 if t == "DEĞERLENDİRME" else 30
 PL.cell(row=_n, column=1).font = BOLD
@@ -852,6 +859,7 @@ for j, h in enumerate(eh, 1):
 E.row_dimensions[4].height = 32
 as12 = f"'Asansor'!{AS_MAIN['364']}"; as1 = f"'Asansor'!{AS_MAIN['365']}"
 avls = "+".join(f"'Sinyal'!{SN_MAIN[k]}" for k in ("233", "234", "235"))
+KAT_DIREK = "+".join(f"'Katener'!{KT_MAIN[k]}" for k in ("222", "223", "224", "225", "226"))
 MSS_BUT = "+".join(f"'Haberlesme'!{HB_MAIN[k]}" for k in ("281", "282", "283", "284", "285", "286", "287", "288", "289"))
 YBS_BUT = "+".join(f"'Haberlesme'!{HB_MAIN[k]}" for k in ("310", "311", "312", "313", "314", "315", "316", "317"))
 erows = [
@@ -879,10 +887,14 @@ erows = [
      "55\" dış ortam ekran 3.500; askı 1.250; yazılım 25.000; tasarım+doküman 26.000", "Medya oynatıcı ekrana dahil",
      "Kablolar ana yüklenicide; geçerlilik belirtilmemiş", "Kalem kalem bütçeye işlendi",
      "Mevcut depo entegrasyonu (11.000) idare cevabıyla düşüldü"),
+    ("Katener – direkler", "Mitaş Endüstri", "06.10.2026", "222–226 (228 direk + ankraj şablonu + toz boya ops.)", 360070, "USD", "", f"={KAT_DIREK}",
+     "Direk 746–1.374 USD; ankraj şablonu 226–523 USD", "Sıcak daldırma galvaniz, dikişli boru, EN 1090-2 EXC2; C/D tipleri Mitaş çizimine göre",
+     "FCA Ankara (nakliye hariç); %40 avans, bakiye teslimden önce; 13.10.2026'ya kadar sabit; montaj, topraklama, testler hariç",
+     "Kalem kalem bütçeye işlendi: teklif + toz boya opsiyonu, üzerine %20 nakliye+işçilik+overhead", "Teklif tutarı 315.070 + 45.000 USD toz boya opsiyonu; bütçe = teklif × 1,20"),
     ("Sinyalizasyon (tümü)", "Point Link / CASCO (Çin)", "01.10.2026", "228–235 (RFQ miktarlarıyla)", 7281784, "EUR", "=E12", f"={SN_TOT}",
      "Makas motoru 7.950; SKP 166.750; TSP 78.200; aks sayacı 5.340; araç başı 82.019 (sinyal+AVLS)",
      "Kalem kalem döküm var (PointLink_Kiyas). Aks sayacı ray devresi yerine; TSKP/trafik ekipmanı dahil; mevcut sistem entegrasyonu dahil; 15 araç",
-     "DAP şantiye; KDV, gümrük vergisi hariç; 180 gün; garanti 24 ay. Mail Fwd ile ulaşmış, 'Eva' yapay zekâ imzalı, Gmail'de yok",
+     "DAP şantiye; KDV, gümrük vergisi hariç; 180 gün; garanti 24 ay. Orijinal PDF 07.10.2026'da iletildi (veri/gelen_teklifler)",
      "Kullanılmadı – üst sınır senaryosu", "İdareye göre uyarlanmış toplam da bütçenin belirgin üstünde; fark kabin, yazılım ve hizmet kalemlerinde (PointLink_Kiyas)"),
 ]
 for i, row in enumerate(erows, start=5):
@@ -909,7 +921,7 @@ ozet_txt = [
     "Mekanik: Fiyatlı teklif yok. Ekura en geç 09.10 verecek; Protek (FM200) soru sordu. MET, Demta, Birleşim, Genç Müh. vermiyor.",
     "Asansör: 3 teklif (Schindler, TK, Emlift). Edoux verecek; Adakon (Orona) ithal ürünle bütçe verecek; KONE dönmedi.",
     "Sinyalizasyon: Mukan (AVLS) teklifi geldi; Point Link/CASCO kalem kalem teklifi (7,28 M€) win1 arşivinden alındı. Hugotek ve İntetra dönecek; Alstom ve Savronik vermiyor (bütçe istendi); Hanning & Kahl dönmedi.",
-    "Elektrifikasyon: Mitaş katener direği teklifi geldi (06.10, POLT-3709-R0; ek 9,3 MB, tutar henüz okunamadı); Best Transformer trafo için dönmedi; DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk) sorularına cevap verildi; Doruk ve KAM vermiyor.",
+    "Elektrifikasyon: Mitaş katener direği teklifi (315.070 USD FCA Ankara + 45.000 USD toz boya opsiyonu) %20 nakliye/işçilik/overhead ile bütçeye işlendi; Best Transformer trafo için dönmedi; DeSA (seksiyon izolatörü), Erbakır (iletken), Kambeton (beton direk) sorularına cevap verildi; Doruk ve KAM vermiyor.",
     "Ulaşmayan adres: 26 (mailer-daemon). Ayrıntı: Teklif_Durumu sayfası.",
 ]
 for k, t in enumerate(ozet_txt):
@@ -1173,7 +1185,7 @@ sub = [  # (disiplin, alt kalem, sıralar, tutar, risk, rfq, kıyas, kıyas kayn
     ("3 ASANSÖR", "13 asansör (12 üst geçit 1000 kg + 1 idari bina 800 kg)", "364–365",
      AS_TOT, RISK['ASANSOR'], AS_RFQ, "=MIN(Teklifler!F4:F6)", "En düşük teklif (Emlift, sapmalı)", "3 teklifin medyanı (Schindler 480.000 USD, TK 414.200 EUR, Emlift 19,5 M TL); bakım hariç"),
     ("4 SİNYALİZASYON", "Hat boyu + depo sinyalizasyon, araç üstü, merkez, araç takip (AVLS)", "228–235",
-     SN_TOT, RISK['SINYAL'], SN_RFQ, "=Teklifler!F8", "Sistem bazlı ref. (makas başı)", "AVLS 233–235 Mukan Rail teklifiyle; Point Link 7,28 M€ kıyas dışı (Gmail'de bulunamadı)"),
+     SN_TOT, RISK['SINYAL'], SN_RFQ, "=Teklifler!F8", "Sistem bazlı ref. (makas başı)", "AVLS 233–235 Mukan Rail teklifiyle; Point Link 7,28 M€ kıyas dışı (kalem dökümü PointLink_Kiyas)"),
     ("5 ELEKTRİFİKASYON", "Güç temini ve cer gücü (OG ring, TEİAŞ bağlantısı, 34,5 kV hücreler, 5 cer TM, kaçak akım)", "169–179, 187–189, 197, 200–210, 219, 227",
      CG_TOT, RISK['CER'], CG_RFQ, "=Teklifler!F12", "Sistem bazlı ref. (5 TM; yalnız OG+trafo+DC)", ""),
     ("5 ELEKTRİFİKASYON", "Katener (hat boyu, depo, direkler)", "220–226",
@@ -1332,7 +1344,7 @@ notes = [
     "2. İdare cevaplarına göre düzeltmeler Idare_Duzeltme sayfasında; değişen miktarlar disiplin sayfalarında turuncu işaretlidir. 'RFQ miktarlarıyla' sütunu aynı birim fiyatlarla düzeltmesiz tutarı gösterir.",
     "3. Risk payı, eksik teklif ve öngörü miktarları için Varsayımlar sayfasından değiştirilebilir. Önerilen bütçe = kalem bazlı × (1 + risk payı).",
     "4. Kapsam dışı: katener direk temelleri (sıra 13, inşaat), depo ekipmanları (vinç, lift, katener bakım aracı – yüklenici), modüler kabinler ve kabin splitleri (sıra 143), asansör kuyusu; yürüyen merdiven ihalede yok. Kavşak TSKP/trafik lambaları kapsam dışı.",
-    "5. Sinyalizasyonda ayrı proje yoktur; miktarlar şematik paftalardan öngörülmüştür. Point Link/CASCO teklifi (7.281.784 € DAP, gümrük ve KDV hariç) kalem dökümü alınana kadar yalnız üst sınır göstergesidir.",
+    "5. Sinyalizasyonda ayrı proje yoktur; miktarlar şematik paftalardan öngörülmüştür. Point Link/CASCO teklifi (7.281.784 € DAP, gümrük ve KDV hariç) kalem kalem PointLink_Kiyas sayfasında idare cevaplarına göre uyarlanmıştır; bütçede kullanılmamış, üst sınır senaryosu olarak raporlanmıştır.",
     "6. Kur: EUR/USD ve EUR/TRY Varsayımlar sayfasındadır (Eylül 2026 sonu piyasa değerleri); teklif günü kuruyla güncellenmelidir.",
     "7. Gelen yeni teklifler (Mitaş, Erbakır, DeSA, Best Transformer, Contirail vb.) ilgili satırın birim fiyatına yazılarak bütçe güncellenebilir.",
 ]

@@ -221,7 +221,7 @@ if "PointLink_Kiyas" in wb.sheetnames:
         cls = " class='tot'" if lab.startswith(("Ara toplam", "GENEL")) else ""
         fark = f"{r[6]*100:+.0f}%" if isinstance(r[6], (int, float)) else ""
         P.append(f"<tr{cls}><td>{esc(r[0] or '')}</td><td>{esc(lab)}</td><td class='n'>{e(r[2])}</td><td class='n'>{e(r[3])}</td><td class='n'>{e(r[5]) if isinstance(r[5],(int,float)) else ''}</td><td class='n'><b>{fark}</b></td></tr>")
-    P.append("</table><p class='note'>Point Link fiyatları kontrol kabinleri (SKP 166.750 €, TSP 78.200 €), yazılım (299.000 €), tasarım/ISA (540.000 €) ve test-devreye alma (360.000 €) kalemlerinde yüksektir; makas motoru (7.950 €) ve aks sayacı (5.340 €) bütçemizin altındadır. Teklif Fwd ile ulaşmış, yapay zekâ imzalıdır ve orijinal mail mepcenter Gmail'de yoktur – kaynak teyidi gerekir. Bütçede kullanılmamış, üst sınır senaryosu olarak raporlanmıştır.</p>")
+    P.append("</table><p class='note'>Point Link fiyatları kontrol kabinleri (SKP 166.750 €, TSP 78.200 €), yazılım (299.000 €), tasarım/ISA (540.000 €) ve test-devreye alma (360.000 €) kalemlerinde yüksektir; makas motoru (7.950 €) ve aks sayacı (5.340 €) bütçemizin altındadır. Orijinal teklif PDF'i (01.10.2026) arşivdedir. Bütçede kullanılmamış, üst sınır senaryosu olarak raporlanmıştır.</p>")
 
 # Kapsam dışı + Rayba (vurgu)
 P.append('<h2>4. Kapsam Dışı Kalemler ve İhale Geneli Bilgi</h2>')
