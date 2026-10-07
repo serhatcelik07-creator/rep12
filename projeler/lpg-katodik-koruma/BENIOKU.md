@@ -18,3 +18,13 @@ Katmanlar: `SINIR-YOL, BINA, KANOPI, POMPA-ADASI, LPG-SAHA, LPG-TANK, LPG-HAT, K
 ## Saha plakasından okunanlar (bkz. `plaka/PLAKA_ANALIZI.md`)
 - Poz 25: LPG stok tankı **10 m³** · Poz 24: **2 × 10 Lb** Mg anot · Poz 17: **2 × 3,5 Lb** Mg anot · Poz 13: 6 × izole flanş kiti
 - Taslak bu verilere göre güncellendi: **4 × 10 Lb + 2 × 3,5 Lb** Mg anot, gereken akım ≈ 92 mA, ömür ≈ 28 yıl.
+
+## Proje paftası (TASLAK3 üzerine) - `ZIVER_PETROL_LPG_KK_PROJE.dxf`
+- Altlık: `kaynak/TASLAK3.dxf` (kullanıcının düzenlediği yerleşim). Üretici: `proje_uret.py` (`python3 proje_uret.py --png`).
+- AutoCAD 2010 DXF, birim metre, pafta ölçeği **1/50**; pafta yüksekliği TASLAK3 ile aynı (38,01 m = 760 mm), genişlik 2199 mm.
+- Yazı yükseklikleri: en küçük 0,100 m (2,0 mm), en büyük 0,1275 m (2,55 mm). Ölçüler cm (detaylarda mm).
+- İçerik: vaziyet + KK uygulama planı, lejant, KK malzeme listesi, genel notlar, izometrik tesisat şeması (plakadan),
+  tesisat malzeme listesi (25 poz), perspektif tank görünüşü, Kesit A-A (1/25), Mg anot detayı (1/5), ölçüm kutusu
+  bağlantı şeması, izole flanş detayı, termit kaynak detayı, referans elektrot detayı, KK hesabı, ölçüm formu, antet.
+- Mevcut sistem (İPRAGAZ): 2 x 10 Lb + 2 x 3,5 Lb Mg anot. Hesap: A = 32,2 m², I = 40 mA, kapasite 137 mA, ömür ≈ 36 yıl
+  (ortalama kaplama verimi %95, ρ = 30 Ω·m kabulü).
