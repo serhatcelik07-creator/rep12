@@ -8,6 +8,7 @@
 |---|---|
 | `TEMIZ_1_MEKANIK_ELEKTRIK_GUCLERI.dxf` | Zemin, 1. ve 2. kat planlarında semboller, cihaz kodları ve kW / V / faz etiketleri. Her kat paftasında o katın güç tablosu var. Yeni **07** paftasında genel güç tablosu, soğutma yükü + VRF iç ünite tablosu, VRF dış ünite tablosu, sembol lejantı ve notlar yer alıyor. |
 | `TMO_MARDIN_MEKANIK_EKIPMAN_ELEKTRIK_GUCLERI.xlsx` | Formüllü tablolar. Sayfalar: Elektrik Güç Tablosu · Pano ve Kat Özeti · Tablolar · **Soğutma Yükü** · VRF İç Üniteler · VRF Dış Üniteler |
+| `ISI_KAZANCI_HESABI.xlsx` / `.pdf` | **Isı kazancı (soğutma yükü) hesabı** — tek başına dosya; 34 mahal bileşen bazında + teknik hacimler (aynı hesap ana Excel'de 2. sayfa "Soğutma Yükü") |
 | `onizleme/*.png` | Paftaların önizlemeleri |
 | `scripts/` | Çizimi ve Excel'i yeniden üreten Python betikleri (ezdxf, openpyxl) |
 
